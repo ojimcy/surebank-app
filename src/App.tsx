@@ -19,7 +19,7 @@ import { QueryProvider } from '@/lib/query-provider';
 import { ToastProvider } from '@/lib/toast-provider';
 import { LoaderProvider } from '@/lib/loader-provider';
 import { setupSafeArea } from '@/lib/safe-area';
-import { useAuth } from '@/lib/auth-provider';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 // Auth routes don't need the main layout
 function AuthRoutes() {
@@ -40,7 +40,6 @@ function AuthRoutes() {
 // App routes with the main layout
 function AppRoutes() {
   const location = useLocation();
-  const { isAuthenticated } = useAuth();
 
   // Track page views and route changes
   useEffect(() => {
@@ -48,37 +47,33 @@ function AppRoutes() {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
-  // Redirect to login if not authenticated
-  if (!isAuthenticated) {
-    return <Navigate to="/auth/login" replace />;
-  }
-
   return (
-    <Layout>
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/packages" element={<PackageList />} />
-        <Route path="/packages/new" element={<NewPackage />} />
-        <Route path="/products" element={<ProductCatalog />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/payments/deposit" element={<Deposit />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Layout>
+    <AuthGuard>
+      <Layout>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/packages" element={<PackageList />} />
+          <Route path="/packages/new" element={<NewPackage />} />
+          <Route path="/products" element={<ProductCatalog />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/payments/deposit" element={<Deposit />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Layout>
+    </AuthGuard>
   );
 }
 
 // Main router that decides between auth and app routes
 function MainRoutes() {
-  const { isAuthenticated } = useAuth();
   const location = useLocation();
 
   // Check if current route is an auth route
   const isAuthRoute =
     location.pathname.startsWith('/auth/') || location.pathname === '/login';
 
-  // Show auth routes if on auth path or not authenticated
-  if (isAuthRoute && !isAuthenticated) {
+  // Show auth routes if on auth path, otherwise show protected app routes
+  if (isAuthRoute) {
     return <AuthRoutes />;
   }
 
@@ -99,15 +94,15 @@ function App() {
   return (
     // Order matters - innermost context is first
     <ThemeProvider>
-      <AuthProvider>
-        <QueryProvider>
-          <ToastProvider>
+      <QueryProvider>
+        <ToastProvider>
+          <AuthProvider>
             <LoaderProvider>
               <MainRoutes />
             </LoaderProvider>
-          </ToastProvider>
-        </QueryProvider>
-      </AuthProvider>
+          </AuthProvider>
+        </ToastProvider>
+      </QueryProvider>
     </ThemeProvider>
   );
 }

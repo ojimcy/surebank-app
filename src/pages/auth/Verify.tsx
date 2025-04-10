@@ -3,6 +3,7 @@ import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth-provider';
 import { Button } from '@/components/ui/button';
 import AuthLayout from '@/components/layout/AuthLayout';
+import Spinner from '@/components/ui/Spinner';
 
 function Verify() {
   const [code, setCode] = useState(['', '', '', '', '', '']);
@@ -12,7 +13,8 @@ function Verify() {
   const {
     verifyCode,
     resendVerificationCode,
-    isLoading,
+    isVerifyLoading,
+    isResendLoading,
     pendingVerification,
     verificationIdentifier,
   } = useAuth();
@@ -84,14 +86,41 @@ function Verify() {
     }
   };
 
+  // Mask identifier for display
+  const maskIdentifier = (identifier?: string) => {
+    if (!identifier) return '';
+
+    if (identifier.includes('@')) {
+      // For email: show first 3 chars and domain, hide the rest
+      const [username, domain] = identifier.split('@');
+      const maskedUsername =
+        username.slice(0, 3) + '*'.repeat(username.length - 3);
+      return `${maskedUsername}@${domain}`;
+    } else {
+      // For phone: show last 4 digits, hide the rest
+      return '*'.repeat(identifier.length - 4) + identifier.slice(-4);
+    }
+  };
+
   const handleResendCode = async () => {
-    setError(null);
+    if (!canResend) return;
+
     try {
+      setError(null);
       await resendVerificationCode();
+
+      // Reset the countdown
       setCountdown(60);
       setCanResend(false);
-    } catch {
-      setError('Failed to resend verification code. Please try again.');
+    } catch (error: unknown) {
+      console.error('Error resending verification code:', error);
+      const axiosError = error as {
+        response?: { data?: { message?: string } };
+      };
+      const errorMessage =
+        axiosError.response?.data?.message ||
+        'Failed to resend code. Please try again.';
+      setError(errorMessage);
     }
   };
 
@@ -108,22 +137,27 @@ function Verify() {
     try {
       await verifyCode(code.join(''));
       navigate('/');
-    } catch {
-      setError('Invalid verification code. Please try again.');
-    }
-  };
+    } catch (error: unknown) {
+      const axiosError = error as {
+        response?: { data?: { message?: string } };
+      };
+      const errorMessage =
+        axiosError.response?.data?.message ||
+        'Invalid verification code. Please try again.';
 
-  // Mask identifier for privacy
-  const maskIdentifier = (identifier: string) => {
-    if (identifier.includes('@')) {
-      // Mask email: a***@example.com
-      const [username, domain] = identifier.split('@');
-      return `${username.charAt(0)}${'*'.repeat(
-        username.length - 1
-      )}@${domain}`;
-    } else {
-      // Mask phone: ***-***-1234
-      return `${'*'.repeat(identifier.length - 4)}${identifier.slice(-4)}`;
+      // Handle specific error types
+      if (errorMessage.includes('expired')) {
+        setError('Verification code has expired. Please request a new code.');
+      } else if (
+        errorMessage.includes('invalid') ||
+        errorMessage.includes('incorrect')
+      ) {
+        setError('Invalid verification code. Please try again.');
+      } else if (errorMessage.includes('attempts')) {
+        setError('Too many failed attempts. Please request a new code.');
+      } else {
+        setError(errorMessage);
+      }
     }
   };
 
@@ -135,12 +169,23 @@ function Verify() {
       )}`}
     >
       {error && (
-        <div className="mb-6 p-3 bg-destructive/10 border border-destructive/20 text-destructive rounded-md text-sm">
+        <div className="mb-6 p-3 bg-[#f8d7da] border border-[#f5c2c7] text-[#DC3545] rounded-md text-sm">
           {error}
         </div>
       )}
 
-      <form className="space-y-6" onSubmit={handleSubmit}>
+      <form className="space-y-6 relative" onSubmit={handleSubmit}>
+        {isVerifyLoading && (
+          <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] rounded-md flex items-center justify-center z-10">
+            <div className="flex flex-col items-center">
+              <Spinner size="md" color="primary" />
+              <p className="mt-2 text-sm text-gray-600 font-medium">
+                Verifying code...
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="flex justify-between gap-2 sm:gap-3">
           {code.map((digit, index) => (
             <input
@@ -151,23 +196,24 @@ function Verify() {
               value={digit}
               ref={(el) => {
                 inputRefs.current[index] = el;
-                // No explicit return needed for void
               }}
               onChange={(e) => handleChange(e, index)}
               onKeyDown={(e) => handleKeyDown(e, index)}
               onPaste={index === 0 ? handlePaste : undefined}
               className="w-full aspect-square text-center text-lg font-semibold rounded-md border border-input bg-background ring-offset-background focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-50"
               required
+              disabled={isVerifyLoading}
             />
           ))}
         </div>
 
         <Button
           type="submit"
-          className="w-full py-3 font-semibold h-12 bg-[#0066A1] text-white hover:bg-[#007DB8] transition-colors"
-          disabled={isLoading}
+          className="w-full py-3 font-semibold h-12 bg-[#0066A1] text-white hover:bg-[#007DB8] transition-colors flex items-center justify-center gap-2"
+          disabled={isVerifyLoading}
         >
-          {isLoading ? 'Verifying...' : 'Verify'}
+          {isVerifyLoading && <Spinner size="sm" color="white" />}
+          <span>{isVerifyLoading ? 'Verifying...' : 'Verify'}</span>
         </Button>
       </form>
 
@@ -178,10 +224,11 @@ function Verify() {
             <button
               type="button"
               onClick={handleResendCode}
-              className="text-primary hover:underline font-medium"
-              disabled={isLoading}
+              className="text-primary hover:underline font-medium flex items-center justify-center gap-1 mx-auto"
+              disabled={isResendLoading || isVerifyLoading}
             >
-              Resend code
+              {isResendLoading && <Spinner size="sm" color="primary" />}
+              <span>{isResendLoading ? 'Sending...' : 'Resend code'}</span>
             </button>
           ) : (
             <span className="text-muted-foreground">

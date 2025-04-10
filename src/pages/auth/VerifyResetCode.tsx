@@ -16,7 +16,8 @@ function VerifyResetCode() {
   const {
     verifyPasswordResetCode,
     requestPasswordReset,
-    isLoading,
+    isVerifyResetLoading,
+    isResetRequestLoading,
     resetIdentifier,
   } = useAuth();
   const navigate = useNavigate();
@@ -106,9 +107,15 @@ function VerifyResetCode() {
       await requestPasswordReset(resetIdentifier);
       setCountdown(60);
       setCanResend(false);
-    } catch {
+    } catch (error: unknown) {
+      const axiosError = error as {
+        response?: { data?: { message?: string } };
+      };
+      const errorMessage =
+        axiosError.response?.data?.message ||
+        'Failed to resend verification code. Please try again.';
       setErrors({
-        general: 'Failed to resend verification code. Please try again.',
+        general: errorMessage,
       });
     }
   };
@@ -128,10 +135,28 @@ function VerifyResetCode() {
     try {
       await verifyPasswordResetCode(code.join(''));
       navigate('/auth/reset-password');
-    } catch {
-      setErrors({
-        general: 'Invalid verification code. Please try again.',
-      });
+    } catch (error: unknown) {
+      const axiosError = error as {
+        response?: { data?: { message?: string } };
+      };
+      const errorMessage =
+        axiosError.response?.data?.message ||
+        'Invalid verification code. Please try again.';
+
+      // Handle specific error cases
+      if (errorMessage.includes('expired')) {
+        setErrors({
+          code: 'Verification code has expired. Please request a new code.',
+        });
+      } else if (errorMessage.includes('attempts')) {
+        setErrors({
+          general: 'Too many failed attempts. Please request a new code.',
+        });
+      } else {
+        setErrors({
+          general: errorMessage,
+        });
+      }
     }
   };
 
@@ -206,9 +231,9 @@ function VerifyResetCode() {
         <Button
           type="submit"
           className="w-full py-3 font-semibold h-12 bg-[#0066A1] text-white hover:bg-[#007DB8] transition-colors"
-          disabled={isLoading}
+          disabled={isVerifyResetLoading}
         >
-          {isLoading ? 'Verifying...' : 'Verify code'}
+          {isVerifyResetLoading ? 'Verifying...' : 'Verify code'}
         </Button>
       </form>
 
@@ -220,9 +245,9 @@ function VerifyResetCode() {
               type="button"
               onClick={handleResendCode}
               className="text-[#0066A1] hover:underline font-medium"
-              disabled={isLoading}
+              disabled={isResetRequestLoading || isVerifyResetLoading}
             >
-              Resend code
+              {isResetRequestLoading ? 'Sending...' : 'Resend code'}
             </button>
           ) : (
             <span className="text-[#6C757D]">Resend in {countdown}s</span>

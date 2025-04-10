@@ -1,8 +1,36 @@
 import { Link } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 
 function Dashboard() {
+  const { user } = useAuth();
+
   return (
     <div className="space-y-6">
+      {/* User Welcome Card */}
+      <div className="bg-[#0066A1] text-white rounded-xl shadow-sm p-6">
+        <h1 className="text-xl font-bold mb-2">
+          Welcome, {user ? `${user.firstName} ${user.lastName}` : 'User'}
+        </h1>
+        <p className="text-sm opacity-90">
+          {user?.email
+            ? `Email: ${user.email}`
+            : user?.phoneNumber
+            ? `Phone: ${user.phoneNumber}`
+            : 'Manage your savings with SureBank'}
+        </p>
+        {user?.kycStatus && (
+          <div className="mt-2 flex items-center gap-2 text-xs">
+            <span
+              className={`px-2 py-1 rounded-full ${
+                user.kycStatus === 'verified' ? 'bg-green-500' : 'bg-yellow-500'
+              }`}
+            >
+              KYC: {user.kycStatus}
+            </span>
+          </div>
+        )}
+      </div>
+
       {/* Balance Card */}
       <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
         <h2 className="text-sm font-medium text-[#6c757d] mb-1">
@@ -10,7 +38,7 @@ function Dashboard() {
         </h2>
         <p className="text-3xl font-bold text-[#212529]">₦120,500.00</p>
         <div className="mt-4 flex gap-4">
-          <Link 
+          <Link
             to="/payments/deposit"
             className="flex-1 bg-[#0066A1] text-white rounded-md py-2 font-medium text-sm hover:bg-[#007DB8] transition-colors"
           >

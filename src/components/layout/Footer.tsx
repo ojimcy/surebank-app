@@ -6,7 +6,7 @@ function Footer() {
   return (
     <footer
       className={cn(
-        'fixed bottom-0 left-0 right-0 bg-white border-t border-[#e5e8ed] py-2',
+        'fixed bottom-0 left-0 right-0 bg-white border-t border-[#e5e8ed] py-2 z-30 shadow-sm',
         safeAreaClasses.paddingBottom
       )}
     >

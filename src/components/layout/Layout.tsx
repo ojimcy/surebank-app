@@ -18,7 +18,7 @@ function Layout({ children }: LayoutProps) {
       )}
     >
       <Header />
-      <main className="flex-1 container mx-auto px-4 py-6 pb-24">
+      <main className="flex-1 container mx-auto px-4 py-6 pb-28">
         {children}
       </main>
       <Footer />

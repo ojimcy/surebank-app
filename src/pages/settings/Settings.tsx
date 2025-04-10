@@ -1,4 +1,12 @@
+import { useAuth } from '@/hooks/useAuth';
+
 function Settings() {
+  const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+  };
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
@@ -23,8 +31,10 @@ function Settings() {
             </svg>
           </div>
           <div>
-            <h2 className="font-bold text-lg">John Doe</h2>
-            <p className="text-gray-500">johndoe@example.com</p>
+            <h2 className="font-bold text-lg">
+              {user ? `${user.firstName} ${user.lastName}` : 'User'}
+            </h2>
+            <p className="text-gray-500">{user?.email || 'No email'}</p>
           </div>
           <button className="ml-auto bg-[#0066A1] text-white rounded-md px-4 py-2 text-sm">
             Edit Profile
@@ -353,7 +363,10 @@ function Settings() {
       </div>
 
       {/* Logout Button */}
-      <button className="w-full border border-red-500 text-red-500 rounded-md py-3 font-medium">
+      <button
+        onClick={handleLogout}
+        className="w-full border border-red-500 text-red-500 rounded-md py-3 font-medium hover:bg-red-50 transition-colors"
+      >
         Log Out
       </button>
     </div>

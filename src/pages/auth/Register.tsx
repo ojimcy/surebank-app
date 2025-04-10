@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/lib/auth-provider';
 import { Button } from '@/components/ui/button';
 import AuthLayout from '@/components/layout/AuthLayout';
+import Spinner from '@/components/ui/Spinner';
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -33,7 +34,7 @@ function Register() {
     general?: string;
   }>({});
 
-  const { register, isLoading } = useAuth();
+  const { register, isRegisterLoading } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -137,10 +138,31 @@ function Register() {
 
       // Navigate to verification page
       navigate('/auth/verify');
-    } catch {
-      setErrors({
-        general: 'Registration failed. Please try again.',
-      });
+    } catch (error: unknown) {
+      // Handle specific error messages from the API
+      const axiosError = error as {
+        response?: { data?: { message?: string } };
+      };
+      const errorMessage =
+        axiosError.response?.data?.message ||
+        'Registration failed. Please try again.';
+
+      // Check for specific error messages
+      if (errorMessage.includes('email already taken')) {
+        setErrors({
+          email:
+            'This email is already registered. Please use a different email or sign in.',
+        });
+      } else if (errorMessage.includes('phone number already taken')) {
+        setErrors({
+          phone:
+            'This phone number is already registered. Please use a different number or sign in.',
+        });
+      } else {
+        setErrors({
+          general: errorMessage,
+        });
+      }
     }
   };
 
@@ -155,7 +177,18 @@ function Register() {
         </div>
       )}
 
-      <form className="space-y-5" onSubmit={handleSubmit}>
+      <form className="space-y-5 relative" onSubmit={handleSubmit}>
+        {isRegisterLoading && (
+          <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] rounded-md flex items-center justify-center z-10">
+            <div className="flex flex-col items-center">
+              <Spinner size="md" color="primary" />
+              <p className="mt-2 text-sm text-gray-600 font-medium">
+                Creating account...
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Personal Information */}
         <div>
           <h3 className="text-base font-semibold mb-3 text-[#212529]">
@@ -457,10 +490,13 @@ function Register() {
 
         <Button
           type="submit"
-          className="w-full py-3 font-semibold h-12 mt-6 bg-[#0066A1] text-white hover:bg-[#0066A1]/90"
-          disabled={isLoading}
+          className="w-full py-3 font-semibold h-12 bg-[#0066A1] text-white hover:bg-[#0066A1]/90 flex items-center justify-center gap-2"
+          disabled={isRegisterLoading}
         >
-          {isLoading ? 'Creating account...' : 'Create account'}
+          {isRegisterLoading && <Spinner size="sm" color="white" />}
+          <span>
+            {isRegisterLoading ? 'Creating account...' : 'Create account'}
+          </span>
         </Button>
       </form>
 
@@ -470,6 +506,7 @@ function Register() {
           <Link
             to="/auth/login"
             className="text-[#0066A1] hover:underline font-medium"
+            tabIndex={isRegisterLoading ? -1 : 0}
           >
             Sign in
           </Link>

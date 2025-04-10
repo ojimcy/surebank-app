@@ -3,6 +3,8 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/auth-provider';
 import { Button } from '@/components/ui/button';
 import AuthLayout from '@/components/layout/AuthLayout';
+import Spinner from '@/components/ui/Spinner';
+import { useToast } from '@/lib/toast-provider';
 
 function Login() {
   const [identifier, setIdentifier] = useState('');
@@ -14,9 +16,10 @@ function Login() {
   }>({});
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const { login, isLoading } = useAuth();
+  const { login, isLoginLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { addToast } = useToast();
 
   // Check for success message in location state (e.g., from password reset)
   useEffect(() => {
@@ -56,11 +59,85 @@ function Login() {
     try {
       await login(identifier, password);
       navigate('/');
-    } catch {
-      setErrors({
-        general: 'Invalid credentials. Please try again.',
-      });
+    } catch (error: unknown) {
+      const axiosError = error as {
+        response?: { data?: { message?: string } };
+      };
+      const errorMessage =
+        axiosError.response?.data?.message || 'Authentication failed.';
+
+      // Handle specific error types
+      if (errorMessage.includes('not found')) {
+        setErrors({
+          identifier:
+            'Account not found. Please check your email or phone number.',
+        });
+      } else if (
+        errorMessage.includes('password') ||
+        errorMessage.includes('credentials')
+      ) {
+        setErrors({
+          password: 'Incorrect password. Please try again.',
+        });
+      } else if (
+        errorMessage.includes('locked') ||
+        errorMessage.includes('disabled')
+      ) {
+        setErrors({
+          general:
+            'Your account has been temporarily locked. Please contact support.',
+        });
+      } else if (
+        errorMessage.includes('verification') ||
+        errorMessage.includes('verify')
+      ) {
+        setErrors({
+          general:
+            'Your account is not verified. Please verify your account first.',
+        });
+      } else {
+        setErrors({
+          general: errorMessage,
+        });
+      }
     }
+  };
+
+  // Test toast - will remove this later
+  const testToast = () => {
+    addToast({
+      title: 'Welcome to SureBank',
+      description: 'Thank you for logging in to our application.',
+      variant: 'success',
+    });
+  };
+
+  // Add test examples for all toast types
+  const testToasts = () => {
+    // Success toast
+    addToast({
+      title: 'Success Message',
+      description: 'This is a success toast notification example.',
+      variant: 'success',
+    });
+
+    // After a delay, show error toast
+    setTimeout(() => {
+      addToast({
+        title: 'Error Message',
+        description: 'This is an error toast notification example.',
+        variant: 'destructive',
+      });
+    }, 1000);
+
+    // After another delay, show info toast
+    setTimeout(() => {
+      addToast({
+        title: 'Information',
+        description: 'This is a default/info toast notification example.',
+        variant: 'default',
+      });
+    }, 2000);
   };
 
   return (
@@ -80,7 +157,18 @@ function Login() {
         </div>
       )}
 
-      <form className="space-y-5" onSubmit={handleSubmit}>
+      <form className="space-y-5 relative" onSubmit={handleSubmit}>
+        {isLoginLoading && (
+          <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] rounded-md flex items-center justify-center z-10">
+            <div className="flex flex-col items-center">
+              <Spinner size="md" color="primary" />
+              <p className="mt-2 text-sm text-gray-600 font-medium">
+                Signing in...
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="space-y-1">
           <label
             htmlFor="identifier"
@@ -101,6 +189,8 @@ function Login() {
                 : 'focus:ring-[#0066A1]/30'
             } disabled:cursor-not-allowed disabled:opacity-50 h-12`}
             placeholder="Enter your email or phone"
+            disabled={isLoginLoading}
+            autoComplete="username"
           />
           {errors.identifier && (
             <p className="mt-1 text-xs text-[#DC3545]">{errors.identifier}</p>
@@ -127,6 +217,8 @@ function Login() {
                 : 'focus:ring-[#0066A1]/30'
             } disabled:cursor-not-allowed disabled:opacity-50 h-12`}
             placeholder="Enter your password"
+            disabled={isLoginLoading}
+            autoComplete="current-password"
           />
           {errors.password && (
             <p className="mt-1 text-xs text-[#DC3545]">{errors.password}</p>
@@ -137,6 +229,7 @@ function Login() {
           <Link
             to="/auth/forgot-password"
             className="text-sm text-[#0066A1] hover:underline"
+            tabIndex={isLoginLoading ? -1 : 0}
           >
             Forgot Password?
           </Link>
@@ -144,11 +237,30 @@ function Login() {
 
         <Button
           type="submit"
-          className="w-full py-3 font-semibold h-12 bg-[#0066A1] text-white hover:bg-[#0066A1]/90"
-          disabled={isLoading}
+          className="w-full py-3 font-semibold h-12 bg-[#0066A1] text-white hover:bg-[#0066A1]/90 flex items-center justify-center gap-2"
+          disabled={isLoginLoading}
         >
-          {isLoading ? 'Signing in...' : 'Sign in'}
+          {isLoginLoading && <Spinner size="sm" color="white" />}
+          <span>{isLoginLoading ? 'Signing in...' : 'Sign in'}</span>
         </Button>
+
+        {/* Toast test button - for development only */}
+        <div className="pt-2 flex justify-center gap-2">
+          <button
+            type="button"
+            onClick={testToast}
+            className="text-xs text-[#6C757D] hover:underline"
+          >
+            Test success toast
+          </button>
+          <button
+            type="button"
+            onClick={testToasts}
+            className="text-xs text-[#6C757D] hover:underline"
+          >
+            Test all toasts
+          </button>
+        </div>
       </form>
 
       <div className="mt-6 text-center">
@@ -157,6 +269,7 @@ function Login() {
           <Link
             to="/auth/register"
             className="text-[#0066A1] hover:underline font-medium"
+            tabIndex={isLoginLoading ? -1 : 0}
           >
             Create account
           </Link>

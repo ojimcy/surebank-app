@@ -10,7 +10,7 @@ function ForgotPassword() {
     identifier?: string;
     general?: string;
   }>({});
-  const { requestPasswordReset, isLoading } = useAuth();
+  const { requestPasswordReset, isResetRequestLoading } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -36,11 +36,35 @@ function ForgotPassword() {
     try {
       await requestPasswordReset(identifier);
       navigate('/auth/verify-reset-code');
-    } catch (error) {
+    } catch (error: unknown) {
       console.log('Error sending reset code', error);
-      setErrors({
-        general: 'Failed to send reset code. Please try again.',
-      });
+      const axiosError = error as {
+        response?: { data?: { message?: string } };
+      };
+      const errorMessage =
+        axiosError.response?.data?.message ||
+        'Failed to send reset code. Please try again.';
+
+      // Handle specific error types
+      if (
+        errorMessage.includes('not found') ||
+        errorMessage.includes('no account')
+      ) {
+        setErrors({
+          identifier: 'No account found with this email or phone number.',
+        });
+      } else if (
+        errorMessage.includes('too many') ||
+        errorMessage.includes('rate limit')
+      ) {
+        setErrors({
+          general: 'Too many requests. Please try again later.',
+        });
+      } else {
+        setErrors({
+          general: errorMessage,
+        });
+      }
     }
   };
 
@@ -85,9 +109,9 @@ function ForgotPassword() {
         <Button
           type="submit"
           className="w-full py-3 font-semibold h-12 bg-[#0066A1] text-white hover:bg-[#0066A1]/90"
-          disabled={isLoading}
+          disabled={isResetRequestLoading}
         >
-          {isLoading ? 'Sending code...' : 'Send reset code'}
+          {isResetRequestLoading ? 'Sending code...' : 'Send reset code'}
         </Button>
       </form>
 

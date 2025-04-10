@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/lib/auth-provider';
 import { Button } from '@/components/ui/button';
 import AuthLayout from '@/components/layout/AuthLayout';
+import Spinner from '@/components/ui/Spinner';
 
 function ResetPassword() {
   const [formData, setFormData] = useState({
@@ -14,8 +15,12 @@ function ResetPassword() {
     confirmPassword?: string;
     general?: string;
   }>({});
-  const { resetPassword, isLoading, passwordResetVerified, resetIdentifier } =
-    useAuth();
+  const {
+    resetPassword,
+    isResetPasswordLoading,
+    passwordResetVerified,
+    resetIdentifier,
+  } = useAuth();
   const navigate = useNavigate();
 
   // If the reset code hasn't been verified, redirect to forgot password
@@ -75,11 +80,33 @@ function ResetPassword() {
             'Password reset successful. You can now log in with your new password.',
         },
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.log('Error resetting password', error);
-      setErrors({
-        general: 'Password reset failed. Please try again.',
-      });
+      const axiosError = error as {
+        response?: { data?: { message?: string } };
+      };
+      const errorMessage =
+        axiosError.response?.data?.message ||
+        'Password reset failed. Please try again.';
+
+      // Handle specific error types
+      if (
+        errorMessage.includes('expired') ||
+        errorMessage.includes('invalid session')
+      ) {
+        setErrors({
+          general:
+            'Your reset session has expired. Please restart the password reset process.',
+        });
+      } else if (errorMessage.includes('password')) {
+        setErrors({
+          password: errorMessage,
+        });
+      } else {
+        setErrors({
+          general: errorMessage,
+        });
+      }
     }
   };
 
@@ -175,10 +202,15 @@ function ResetPassword() {
 
         <Button
           type="submit"
-          className="w-full py-3 font-semibold h-12 mt-6 bg-[#0066A1] text-white hover:bg-[#0066A1]/90"
-          disabled={isLoading}
+          className="w-full py-3 font-semibold h-12 bg-[#0066A1] text-white hover:bg-[#0066A1]/90 flex items-center justify-center gap-2"
+          disabled={isResetPasswordLoading}
         >
-          {isLoading ? 'Updating password...' : 'Reset password'}
+          {isResetPasswordLoading && <Spinner size="sm" color="white" />}
+          <span>
+            {isResetPasswordLoading
+              ? 'Updating password...'
+              : 'Set new password'}
+          </span>
         </Button>
       </form>
 
