@@ -1,7 +1,11 @@
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { usePin } from '@/lib/pin-provider';
 
 function Settings() {
   const { user, logout } = useAuth();
+  const { isPinSet } = usePin();
+  const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
@@ -50,7 +54,7 @@ function Settings() {
           <ul className="space-y-3">
             <li>
               <button className="w-full flex items-center justify-between py-2">
-                <div className="flex items-center">
+                <div className="flex text-left">
                   <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -85,9 +89,13 @@ function Settings() {
                 </svg>
               </button>
             </li>
+
             <li>
-              <button className="w-full flex items-center justify-between py-2">
-                <div className="flex items-center">
+              <button
+                onClick={() => navigate('/settings/setup-pin')}
+                className="w-full flex items-center justify-between py-2"
+              >
+                <div className="flex text-left">
                   <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -104,7 +112,14 @@ function Settings() {
                       />
                     </svg>
                   </div>
-                  <span>Security Settings</span>
+                  <div>
+                    <span className="block">Security PIN</span>
+                    <span className="text-xs text-gray-500">
+                      {isPinSet
+                        ? 'PIN is configured'
+                        : 'Set up a PIN for app security'}
+                    </span>
+                  </div>
                 </div>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -122,9 +137,10 @@ function Settings() {
                 </svg>
               </button>
             </li>
+
             <li>
               <button className="w-full flex items-center justify-between py-2">
-                <div className="flex items-center">
+                <div className="flex text-left">
                   <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -168,7 +184,7 @@ function Settings() {
           <ul className="space-y-3">
             <li>
               <button className="w-full flex items-center justify-between py-2">
-                <div className="flex items-center">
+                <div className="flex text-left">
                   <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -205,7 +221,7 @@ function Settings() {
             </li>
             <li>
               <button className="w-full flex items-center justify-between py-2">
-                <div className="flex items-center">
+                <div className="flex text-left">
                   <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -242,7 +258,7 @@ function Settings() {
             </li>
             <li>
               <button className="w-full flex items-center justify-between py-2">
-                <div className="flex items-center">
+                <div className="flex text-left">
                   <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -286,7 +302,7 @@ function Settings() {
           <ul className="space-y-3">
             <li>
               <button className="w-full flex items-center justify-between py-2">
-                <div className="flex items-center">
+                <div className="flex text-left">
                   <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -323,7 +339,7 @@ function Settings() {
             </li>
             <li>
               <button className="w-full flex items-center justify-between py-2">
-                <div className="flex items-center">
+                <div className="flex text-left">
                   <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"

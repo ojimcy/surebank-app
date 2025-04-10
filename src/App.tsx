@@ -13,13 +13,18 @@ import Deposit from '@/pages/payments/Deposit';
 import ForgotPassword from '@/pages/auth/ForgotPassword';
 import VerifyResetCode from '@/pages/auth/VerifyResetCode';
 import ResetPassword from '@/pages/auth/ResetPassword';
+import PinLock from '@/pages/auth/PinLock';
+import SetupPin from '@/pages/settings/SetupPin';
+import PinSettings from '@/pages/settings/PinSettings';
 import { ThemeProvider } from '@/lib/theme-provider';
 import { AuthProvider } from '@/lib/auth-provider';
+import { PinProvider } from '@/lib/pin-provider';
 import { QueryProvider } from '@/lib/query-provider';
 import { ToastProvider } from '@/lib/toast-provider';
 import { LoaderProvider } from '@/lib/loader-provider';
 import { setupSafeArea } from '@/lib/safe-area';
 import AuthGuard from '@/components/auth/AuthGuard';
+import PinGuard from '@/components/auth/PinGuard';
 
 // Auth routes don't need the main layout
 function AuthRoutes() {
@@ -49,17 +54,22 @@ function AppRoutes() {
 
   return (
     <AuthGuard>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/packages" element={<PackageList />} />
-          <Route path="/packages/new" element={<NewPackage />} />
-          <Route path="/products" element={<ProductCatalog />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/payments/deposit" element={<Deposit />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Layout>
+      <PinGuard>
+        <Layout>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/packages" element={<PackageList />} />
+            <Route path="/packages/new" element={<NewPackage />} />
+            <Route path="/products" element={<ProductCatalog />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/settings/setup-pin" element={<SetupPin />} />
+            <Route path="/settings/pin-settings" element={<PinSettings />} />
+            <Route path="/payments/deposit" element={<Deposit />} />
+            <Route path="/pin-lock" element={<PinLock />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Layout>
+      </PinGuard>
     </AuthGuard>
   );
 }
@@ -97,9 +107,11 @@ function App() {
       <QueryProvider>
         <ToastProvider>
           <AuthProvider>
-            <LoaderProvider>
-              <MainRoutes />
-            </LoaderProvider>
+            <PinProvider>
+              <LoaderProvider>
+                <MainRoutes />
+              </LoaderProvider>
+            </PinProvider>
           </AuthProvider>
         </ToastProvider>
       </QueryProvider>
