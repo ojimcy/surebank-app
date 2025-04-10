@@ -1,0 +1,112 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# SureBank-Builder AI Agent Guidelines
+
+## Technical Foundation Rules
+
+1. **React + TypeScript Best Practices**
+   - Use functional components with TypeScript interfaces for props
+   - Implement React hooks for state management
+   - Follow proper TypeScript type definitions for all variables, function parameters, and return types
+
+2. **Project Structure**
+   - Place new components in appropriate directories: UI components in `src/components/ui`, layout components in `src/components/layout`
+   - Create new pages in the `src/pages` directory organized by feature
+   - Follow existing router pattern in App.tsx when adding new routes
+
+3. **Styling Approach**
+   - Use Tailwind CSS utility classes as the primary styling approach
+   - Apply the established color variables from App.css (e.g., `bg-[--primary]`)
+   - Use the utility function `cn()` from `@/lib/utils` for merging Tailwind classes
+   - Respect light/dark mode theming with CSS variables
+
+4. **shadcn/ui Implementation**
+   - Follow shadcn/ui patterns for creating and extending components
+   - Use the class-variance-authority (cva) pattern for component variants
+   - Maintain accessibility standards with proper ARIA attributes
+   - Use Radix UI primitives for complex interactive components
+   - Implement proper keyboard navigation and focus management
+
+5. **Color System**
+   - Adhere to the SureBank color palette defined in App.css
+   - Use semantic color variables (e.g., `--primary`, `--destructive`) rather than direct hex codes
+   - Implement proper color contrast ratios for accessibility
+   - Support both light and dark themes with appropriate color mappings
+
+## Component Development Guidelines
+
+1. **Component Structure**
+   - Keep components small and focused on a single responsibility
+   - Implement proper prop validation with TypeScript interfaces
+   - Avoid components exceeding 200-300 lines (refactor at that point)
+   - Extract reusable logic into custom hooks in the `src/hooks` directory
+
+2. **UI Components**
+   - Create variants using cva for different component states and appearances
+   - Maintain consistent sizing, spacing, and border-radius across components
+   - Follow the established styling patterns from existing components like button.tsx
+   - Implement responsive designs that work across device sizes
+
+3. **Form Components**
+   - Create consistent input fields with proper validation states
+   - Implement form components with proper label associations
+   - Use proper error handling and display for form validation
+   - Support floating labels and input states as per design system
+
+4. **Navigation Components**
+   - Implement the bottom navigation bar with 5 primary sections
+   - Use consistent icon styles from Lucide React
+   - Ensure proper active state indicators for current route
+
+## Code Quality Standards
+
+1. **Performance Optimization**
+   - Use React.memo for expensive render components
+   - Implement proper dependency arrays in useEffect and useMemo hooks
+   - Avoid unnecessary re-renders with proper state management
+   - Lazy load components and routes for better initial load time
+
+2. **Accessibility Standards**
+   - Ensure all interactive elements are keyboard accessible
+   - Implement proper ARIA attributes for custom components
+   - Maintain sufficient color contrast ratios
+   - Support screen readers with proper element roles
+
+3. **Error Handling**
+   - Implement proper error boundaries for component failures
+   - Provide user-friendly error messages
+   - Include fallback UI for error states
+   - Log errors appropriately for debugging
+
+4. **Testing Approach**
+   - Write unit tests for critical components and functionality
+   - Implement component tests for UI behavior
+   - Test for both success and error states
+   - Ensure proper test coverage for core functionality
+
+## Implementation Principles
+
+1. **Code First, Then Refine**
+   - Prioritize working implementations before optimizing
+   - Use established patterns from existing code
+   - Refactor only after functionality is proven
+
+2. **Progressive Enhancement**
+   - Build core functionality first, then add enhancements
+   - Ensure baseline usability before adding advanced features
+   - Implement responsive designs that work across device sizes
+
+3. **Follow Existing Patterns**
+   - Look for similar implementations before creating new patterns
+   - Maintain consistency with existing code and component styles
+   - Use established utilities like cn() for class merging
+
+4. **Optimize for Maintainability**
+   - Write clean, self-documenting code
+   - Use meaningful variable and function names
+   - Implement proper TypeScript types for better code intellisense
+   - Keep components focused and avoid excessive complexity 
+   
