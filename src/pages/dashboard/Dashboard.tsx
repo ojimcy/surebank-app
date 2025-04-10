@@ -10,7 +10,7 @@ function Dashboard() {
         </h2>
         <p className="text-3xl font-bold text-[#212529]">₦120,500.00</p>
         <div className="mt-4 flex gap-4">
-          <Link
+          <Link 
             to="/payments/deposit"
             className="flex-1 bg-[#0066A1] text-white rounded-md py-2 font-medium text-sm hover:bg-[#007DB8] transition-colors"
           >

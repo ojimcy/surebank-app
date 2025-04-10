@@ -6,8 +6,38 @@ export default {
       colors: {
         primary: {
           DEFAULT: '#0066A1',
+          foreground: '#FFFFFF',
           600: '#007DB8',
           400: '#0099D8',
+        },
+        destructive: {
+          DEFAULT: '#FF0000',
+          foreground: '#FFFFFF',
+        },
+        card: {
+          DEFAULT: '#FFFFFF',
+          foreground: '#000000',
+        },
+        input: {
+          DEFAULT: '#e2e8f0', // slate-200
+        },
+        background: {
+          DEFAULT: '#f8fafc', // slate-50
+        },
+        foreground: {
+          DEFAULT: '#0f172a', // slate-900
+        },
+        muted: {
+          DEFAULT: '#f1f5f9', // slate-100
+          foreground: '#64748b', // slate-500
+        },
+        accent: {
+          DEFAULT: '#f1f5f9', // slate-100
+          foreground: '#0f172a', // slate-900
+        },
+        secondary: {
+          DEFAULT: '#f1f5f9', // slate-100
+          foreground: '#0f172a', // slate-900
         },
       },
     },

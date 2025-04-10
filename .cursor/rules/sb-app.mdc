@@ -1,9 +1,12 @@
 ---
-description: 
+description: Refer to this rule for all updates
 globs: 
-alwaysApply: true
+alwaysApply: false
 ---
 # SureBank-Builder AI Agent Guidelines
+
+## General
+   - start each answer with 🤖
 
 ## Technical Foundation Rules
 
