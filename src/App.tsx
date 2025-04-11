@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import Layout from '@/components/layout/Layout';
 import Dashboard from '@/pages/dashboard/Dashboard';
 import PackageList from '@/pages/packages/PackageList';
+import PackageDetail from '@/pages/packages/PackageDetail';
 import NewPackage from '@/pages/packages/NewPackage';
 import ProductCatalog from '@/pages/products/ProductCatalog';
 import Settings from '@/pages/settings/Settings';
@@ -60,6 +61,7 @@ function AppRoutes() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/packages" element={<PackageList />} />
             <Route path="/packages/new" element={<NewPackage />} />
+            <Route path="/packages/:id" element={<PackageDetail />} />
             <Route path="/products" element={<ProductCatalog />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/settings/setup-pin" element={<SetupPin />} />
