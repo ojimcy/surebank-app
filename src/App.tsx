@@ -17,6 +17,7 @@ import ResetPassword from '@/pages/auth/ResetPassword';
 import PinLock from '@/pages/auth/PinLock';
 import SetupPin from '@/pages/settings/SetupPin';
 import PinSettings from '@/pages/settings/PinSettings';
+import AccountDetail from '@/pages/dashboard/AccountDetail';
 import { ThemeProvider } from '@/lib/theme-provider';
 import { AuthProvider } from '@/lib/auth-provider';
 import { PinProvider } from '@/lib/pin-provider';
@@ -63,6 +64,7 @@ function AppRoutes() {
             <Route path="/packages/new" element={<NewPackage />} />
             <Route path="/packages/:id" element={<PackageDetail />} />
             <Route path="/products" element={<ProductCatalog />} />
+            <Route path="/accounts/:accountType" element={<AccountDetail />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/settings/setup-pin" element={<SetupPin />} />
             <Route path="/settings/pin-settings" element={<PinSettings />} />

@@ -7,11 +7,23 @@ import { SavingsPackages } from '@/components/dashboard/SavingsPackages';
 import { PackageTypes } from '@/components/dashboard/PackageTypes';
 import { RecentTransactions } from '@/components/dashboard/RecentTransactions';
 import { SavingsPackage, PackageType } from '@/components/dashboard/types';
+import { useAccountQueries } from '@/hooks/queries/useAccountQueries';
 
 function Dashboard() {
   const { user } = useAuth();
   const [hasPackages, setHasPackages] = useState(false); // This would normally be fetched from an API
   const [showBalance, setShowBalance] = useState(true); // Toggle for showing/hiding balance
+  console.log('user', user);
+
+  // Use account queries to get accounts data
+  const {
+    totalAvailableBalance,
+    hasAccounts,
+    isAccountsLoading,
+    createAccount,
+    isCreateAccountLoading,
+    accounts,
+  } = useAccountQueries();
 
   // Sample savings packages data
   const savingsPackages: SavingsPackage[] = [
@@ -104,10 +116,15 @@ function Dashboard() {
 
       {/* Enhanced Balance Card */}
       <BalanceCard
-        balance={120500}
+        balance={totalAvailableBalance}
         showBalance={showBalance}
         setShowBalance={setShowBalance}
         formatCurrency={formatCurrency}
+        hasAccounts={hasAccounts}
+        isAccountsLoading={isAccountsLoading}
+        createAccount={createAccount}
+        isCreateAccountLoading={isCreateAccountLoading}
+        accounts={accounts}
       />
 
       {/* Quick Actions */}

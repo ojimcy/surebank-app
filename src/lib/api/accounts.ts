@@ -1,0 +1,75 @@
+import api from './axios';
+import { AxiosError } from 'axios';
+
+export interface AccountType {
+  ds: 'Daily savings account';
+  sb: 'Surebank account';
+  ibs: 'Investment banking services account';
+}
+
+export interface Account {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  accountNumber: string;
+  availableBalance: number;
+  ledgerBalance: number;
+  accountType: 'ds' | 'sb' | 'ibs';
+  createdBy: string;
+  branchId: {
+    _id: string;
+    name: string;
+  };
+  status: 'active' | 'inactive' | 'suspended';
+  paystackCustomerId: string;
+  _id: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Get all accounts for the authenticated user
+ */
+export const getUserAccounts = async (): Promise<Account[]> => {
+  try {
+    const response = await api.get('/accounts/self/all');
+    // If response is a single account, wrap it in an array
+    return Array.isArray(response.data) ? response.data : [response.data];
+  } catch (error) {
+    // Return empty array if 404 (user has no accounts)
+    const axiosError = error as AxiosError;
+    if (axiosError.response?.status === 404) {
+      return [];
+    }
+    throw error;
+  }
+};
+
+/**
+ * Get a specific account by type for the authenticated user
+ */
+export const getUserAccountByType = async (
+  accountType: 'ds' | 'sb' | 'ibs'
+): Promise<Account> => {
+  const response = await api.get(
+    `/v1/accounts/self?accountType=${accountType}`
+  );
+  return response.data;
+};
+
+/**
+ * Create a new account for the authenticated user
+ */
+export const createAccount = async (
+  accountType: 'ds' | 'sb' | 'ibs'
+): Promise<Account> => {
+  const response = await api.post('/v1/accounts/self', { accountType });
+  return response.data;
+};
+
+export const ACCOUNT_TYPE_DISPLAY: Record<string, string> = {
+  ds: 'Daily Savings',
+  sb: 'Surebank',
+  ibs: 'Investment Banking',
+};

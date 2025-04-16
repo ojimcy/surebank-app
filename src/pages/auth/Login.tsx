@@ -16,7 +16,7 @@ function Login() {
   }>({});
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const { login, isLoginLoading } = useAuth();
+  const { login, isLoginLoading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { addToast } = useToast();
@@ -139,6 +139,12 @@ function Login() {
       });
     }, 2000);
   };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/');
+    }
+  }, [isAuthenticated, navigate]);
 
   return (
     <AuthLayout
