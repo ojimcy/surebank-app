@@ -28,6 +28,8 @@ interface UIPackage {
   interestRate?: string;
   maturityDate?: string;
   productImage?: string;
+  totalContribution: number;
+  amountPerDay: number;
   startDate: string;
   endDate?: string;
 }
@@ -194,6 +196,8 @@ function PackageDetail() {
             nextContribution: 'Not available',
             startDate: dsPackage.startDate,
             endDate: dsPackage.endDate,
+            totalContribution: dsPackage.totalContribution,
+            amountPerDay: dsPackage.amountPerDay,
             productImage: getRandomPackageImage(
               'Daily Savings',
               dsPackage.target
@@ -230,6 +234,8 @@ function PackageDetail() {
             nextContribution: 'Not available',
             startDate: sbPackage.startDate,
             endDate: sbPackage.endDate,
+            totalContribution: sbPackage.totalContribution,
+            amountPerDay: 0,
             productImage:
               sbPackage.product?.images?.[0] ||
               getRandomPackageImage('SB Package', sbPackage.product?.name),
@@ -267,6 +273,8 @@ function PackageDetail() {
             nextContribution: 'Not available',
             startDate: ibPackage.startDate,
             endDate: ibPackage.endDate,
+            totalContribution: ibPackage.totalContribution,
+            amountPerDay: 0,
             productImage: getRandomPackageImage('Interest-Based'),
           });
 
@@ -443,6 +451,9 @@ function PackageDetail() {
         maturityDate={packageData.maturityDate}
         nextContribution={packageData.nextContribution}
         productImage={packageData.productImage}
+        type={packageData.type}
+        totalContribution={packageData.totalContribution}
+        amountPerDay={packageData.amountPerDay}
         formatCurrency={formatCurrency}
         formatDate={formatDate}
       />

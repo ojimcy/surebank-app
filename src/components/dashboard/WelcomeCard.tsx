@@ -2,14 +2,10 @@ import { UserType } from './types';
 
 interface WelcomeCardProps {
   user: UserType | null;
-  togglePackagesView?: () => void;
-  hasPackages?: boolean;
 }
 
 export function WelcomeCard({
   user,
-  togglePackagesView,
-  hasPackages,
 }: WelcomeCardProps) {
   return (
     <div className="bg-[#0066A1] text-white rounded-xl shadow-sm p-6">
@@ -32,17 +28,6 @@ export function WelcomeCard({
           >
             KYC: {user.kycStatus}
           </span>
-
-          {togglePackagesView && (
-            <button
-              onClick={togglePackagesView}
-              className="mt-2 text-xs bg-white/20 px-2 py-1 rounded hover:bg-white/30"
-            >
-              {hasPackages
-                ? 'Demo: Show Available Packages'
-                : 'Demo: Show My Packages'}
-            </button>
-          )}
         </div>
       )}
     </div>

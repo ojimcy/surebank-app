@@ -2,6 +2,8 @@ import React from 'react';
 
 interface PackageOverviewProps {
   current: number;
+  totalContribution: number;
+  amountPerDay: number;
   target: number;
   progress: number;
   color: string;
@@ -11,12 +13,15 @@ interface PackageOverviewProps {
   maturityDate?: string;
   nextContribution?: string;
   productImage?: string;
+  type: string;
   formatCurrency: (amount: number) => string;
   formatDate: (date: string) => string;
 }
 
 export function PackageOverview({
   current,
+  totalContribution,
+  amountPerDay,
   target,
   progress,
   color,
@@ -26,6 +31,7 @@ export function PackageOverview({
   maturityDate,
   nextContribution,
   productImage,
+  type,
   formatCurrency,
   formatDate,
 }: PackageOverviewProps) {
@@ -89,13 +95,21 @@ export function PackageOverview({
                   <div className="mb-2">
                     <div className="text-sm text-gray-500">Current Balance</div>
                     <div className="font-bold text-xl">
-                      {formatCurrency(current)}
+                      {type !== 'Interest-Based'
+                        ? formatCurrency(totalContribution)
+                        : formatCurrency(current)}
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-500">Target Amount</div>
+                    <div className="text-sm text-gray-500">
+                      {type === 'Daily Savings'
+                        ? 'Amount Per Day'
+                        : 'Target Balance'}
+                    </div>
                     <div className="font-bold text-xl">
-                      {formatCurrency(target)}
+                      {type === 'Daily Savings'
+                        ? formatCurrency(amountPerDay)
+                        : formatCurrency(target)}
                     </div>
                   </div>
                 </div>

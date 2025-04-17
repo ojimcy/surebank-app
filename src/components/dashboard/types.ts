@@ -13,6 +13,8 @@ export interface SavingsPackage {
   icon: string;
   progress: number;
   current: number;
+  amountPerDay: number;
+  totalContribution: number;
   target: number;
   color: string;
 }

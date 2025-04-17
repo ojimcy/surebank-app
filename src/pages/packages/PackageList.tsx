@@ -831,16 +831,6 @@ function PackageList() {
                           </span>
                         </div>
                       )}
-                      {pkg.type === 'Daily Savings' && pkg.nextContribution && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-600 text-sm">
-                            Next Contribution:
-                          </span>
-                          <span className="font-medium text-primary">
-                            {pkg.nextContribution}
-                          </span>
-                        </div>
-                      )}
                       {pkg.type === 'Interest-Based' && pkg.interestRate && (
                         <div className="flex justify-between">
                           <span className="text-gray-600 text-sm">

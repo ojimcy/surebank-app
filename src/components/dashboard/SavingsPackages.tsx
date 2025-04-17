@@ -161,12 +161,20 @@ export function SavingsPackages({
               </div>
               <div className="flex justify-between items-center mb-4">
                 <div>
-                  <p className="text-xs text-gray-500">Current</p>
+                  <p className="text-xs text-gray-500">Current Balance</p>
                   <p className="font-bold">{formatCurrency(pkg.current)}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-gray-500">Target</p>
-                  <p className="font-bold">{formatCurrency(pkg.target)}</p>
+                  <p className="text-xs text-gray-500">
+                    {pkg.type === 'Daily Savings'
+                      ? 'Amount Per Day'
+                      : 'Target '}
+                  </p>
+                  <p className="font-bold">
+                    {pkg.type === 'Daily Savings'
+                      ? formatCurrency(pkg.amountPerDay)
+                      : formatCurrency(pkg.target)}
+                  </p>
                 </div>
               </div>
               <button

@@ -41,6 +41,17 @@ export interface IBPackage {
   maturityDate: string;
 }
 
+// Package creation interfaces
+export interface CreateDailySavingsPackageParams {
+  amountPerDay: number;
+  target: string;
+}
+
+export interface CreateSBPackageParams {
+  product: string;
+  targetAmount?: number;
+}
+
 // Packages API functions
 const packagesApi = {
   // Get daily savings packages for a user
@@ -86,6 +97,39 @@ const packagesApi = {
       sbPackages: sbResponse,
       ibPackages: [],
     };
+  },
+
+  // Create a new daily savings package
+  createDailySavingsPackage: async (
+    data: CreateDailySavingsPackageParams
+  ): Promise<DailySavingsPackage> => {
+    const response = await api.post<DailySavingsPackage>(
+      '/daily-savings/self-package',
+      data
+    );
+    return response.data;
+  },
+
+  // Create a new Savings-Buying (SB) package
+  createSBPackage: async (data: CreateSBPackageParams): Promise<SBPackage> => {
+    const response = await api.post<SBPackage>(
+      '/daily-savings/sb/self-package',
+      data
+    );
+    return response.data;
+  },
+
+  // Check if user has required account type
+  checkAccountType: async (accountType: 'ds' | 'sb'): Promise<boolean> => {
+    try {
+      const response = await api.get(
+        `/self-accounts?accountType=${accountType}`
+      );
+      return response.status === 200;
+    } catch (error) {
+      console.error('Error checking account type:', error);
+      return false;
+    }
   },
 };
 
