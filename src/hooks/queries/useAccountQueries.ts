@@ -24,7 +24,6 @@ export function useAccountQueries() {
     queryKey: ['accounts'],
     queryFn: async () => {
       const fetchedAccounts = await getUserAccounts();
-      console.log('Fetched accounts:', fetchedAccounts);
       return fetchedAccounts;
     },
   });
@@ -91,9 +90,7 @@ export function useAccountQueries() {
   } = useMutation({
     mutationFn: async (accountType: 'ds' | 'sb' | 'ibs') => {
       try {
-        console.log('Creating account:', accountType);
         const result = await createAccount(accountType);
-        console.log('Create account result:', result);
         return result;
       } catch (error) {
         console.error('Error creating account:', error);

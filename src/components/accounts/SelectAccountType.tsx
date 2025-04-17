@@ -1,20 +1,28 @@
 import { ACCOUNT_TYPE_DISPLAY } from '@/lib/api/accounts';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface SelectAccountTypeProps {
   onSelect: (accountType: 'ds' | 'sb' | 'ibs') => void;
   onCancel: () => void;
   isLoading: boolean;
+  preselectedType?: 'ds' | 'sb' | 'ibs' | null;
 }
 
 export function SelectAccountType({
   onSelect,
   onCancel,
   isLoading = false,
+  preselectedType = null,
 }: SelectAccountTypeProps) {
   const [selectedType, setSelectedType] = useState<'ds' | 'sb' | 'ibs' | null>(
-    null
+    preselectedType
   );
+
+  useEffect(() => {
+    if (preselectedType) {
+      setSelectedType(preselectedType);
+    }
+  }, [preselectedType]);
 
   const accountTypes: Array<{
     id: 'ds' | 'sb' | 'ibs';

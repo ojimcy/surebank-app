@@ -90,7 +90,7 @@ export const createAccount = async (
 };
 
 export const ACCOUNT_TYPE_DISPLAY: Record<string, string> = {
-  ds: 'Daily Savings',
-  sb: 'Surebank',
-  ibs: 'Investment Banking',
+  ds: 'DS',
+  sb: 'SB',
+  ibs: 'IBS',
 };

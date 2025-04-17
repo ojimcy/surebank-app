@@ -35,7 +35,7 @@ function Dashboard() {
   const packageTypes: PackageType[] = [
     {
       id: 'ds',
-      title: 'Daily Savings',
+      title: 'DS',
       description:
         'Save regularly with flexible daily, weekly, or monthly deposits',
       icon: 'calendar',
@@ -45,7 +45,7 @@ function Dashboard() {
     },
     {
       id: 'is',
-      title: 'Interest Savings',
+      title: 'IBS',
       description: 'Earn competitive interest rates on your locked savings',
       icon: 'trending-up',
       color: '#28A745',
@@ -54,7 +54,7 @@ function Dashboard() {
     },
     {
       id: 'sb',
-      title: 'Target Savings',
+      title: 'SB',
       description: 'Save towards specific products with SureBank packages',
       icon: 'target',
       color: '#7952B3',

@@ -7,7 +7,6 @@ export interface Product {
   price: number;
   images: string[];
   category: string;
-  isSbAvailable: boolean;
   isAvailable: boolean;
   createdAt: string;
   updatedAt: string;
@@ -17,7 +16,7 @@ const productsApi = {
   // Get all products that are available for SB
   getSBProducts: async (): Promise<Product[]> => {
     const response = await api.get<Product[]>(
-      '/products/catalogue?isSbAvailable=true'
+      '/products/catalogue'
     );
     return response.data;
   },
@@ -31,7 +30,7 @@ const productsApi = {
   // Get products by category
   getProductsByCategory: async (category: string): Promise<Product[]> => {
     const response = await api.get<Product[]>(
-      `/products/catalogue?category=${category}&isSbAvailable=true`
+      `/products/catalogue?category=${category}`
     );
     return response.data;
   },
@@ -39,14 +38,14 @@ const productsApi = {
   // Search products
   searchProducts: async (query: string): Promise<Product[]> => {
     const response = await api.get<Product[]>(
-      `/products/catalogue?search=${query}&isSbAvailable=true`
+      `/products/catalogue?search=${query}`
     );
     return response.data;
   },
 
   // Get product categories
   getCategories: async (): Promise<string[]> => {
-    const response = await api.get<string[]>('/products/categories');
+    const response = await api.get<string[]>('/stores/categories');
     return response.data;
   },
 };

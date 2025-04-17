@@ -25,13 +25,14 @@ interface UIPackage {
   productImage?: string;
   startDate: string;
   endDate?: string;
+  amountPerDay?: number;
 }
 
 // Available package types
 const packageTypes = [
   {
     id: 'daily',
-    title: 'Daily Savings',
+    title: 'DS',
     description:
       'Save regularly with flexible daily, weekly, or monthly deposits',
     icon: 'calendar',
@@ -41,7 +42,7 @@ const packageTypes = [
   },
   {
     id: 'interest',
-    title: 'Interest Savings',
+    title: 'IBS',
     description: 'Earn competitive interest rates on your locked savings',
     icon: 'trending-up',
     color: '#28A745',
@@ -50,7 +51,7 @@ const packageTypes = [
   },
   {
     id: 'product',
-    title: 'Target Savings',
+    title: 'SB',
     description: 'Save towards specific products with SureBank packages',
     icon: 'target',
     color: '#7952B3',
@@ -61,24 +62,24 @@ const packageTypes = [
 
 // Package type icons mapping
 const pkgTypeIcons: Record<string, string> = {
-  'Daily Savings': '/icons/calendar.svg',
-  'Interest-Based': '/icons/trending-up.svg',
-  'SB Package': '/icons/target.svg',
+  DS: '/icons/calendar.svg',
+  IBS: '/icons/trending-up.svg',
+  SB: '/icons/target.svg',
 };
 
 // Random images for packages by type
 const packageImages = {
-  'Daily Savings': [
+  DS: [
     'https://images.unsplash.com/photo-1580048915913-4f8f5cb481c4?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3',
     'https://images.unsplash.com/photo-1518458028785-8fbcd101ebb9?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3',
     'https://images.unsplash.com/photo-1633158829875-e5316a358c6c?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3',
   ],
-  'Interest-Based': [
+  IBS: [
     'https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3',
     'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3',
     'https://images.unsplash.com/photo-1565372195458-9de0b320ef04?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3',
   ],
-  'SB Package': [
+  SB: [
     'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3',
     'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3',
     'https://images.unsplash.com/photo-1556742502-ec7c0e9f34b1?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3',
@@ -302,6 +303,7 @@ function PackageList() {
           accountNumber: pkg.accountNumber,
           lastContribution: formatDate(pkg.updatedAt),
           nextContribution: calculateNextContribution(pkg.amountPerDay),
+          amountPerDay: pkg.amountPerDay,
           startDate: pkg.startDate,
           endDate: pkg.endDate,
           productImage: getRandomPackageImage('Daily Savings', pkg.target),
@@ -809,7 +811,7 @@ function PackageList() {
                             Daily Amount:
                           </span>
                           <span className="font-medium">
-                            ₦{pkg.current?.toLocaleString() || '0'}
+                            ₦{pkg.amountPerDay?.toLocaleString() || '0'}
                           </span>
                         </div>
                       )}

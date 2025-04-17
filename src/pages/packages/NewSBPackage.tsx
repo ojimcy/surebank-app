@@ -4,6 +4,8 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import packagesApi, { CreateSBPackageParams } from '../../lib/api/packages';
 import productsApi, { Product } from '../../lib/api/products';
 import { toast } from 'react-hot-toast';
+import { useAccountQueries } from '@/hooks/queries/useAccountQueries';
+import { SelectAccountType } from '@/components/accounts/SelectAccountType';
 
 // Error type for API errors
 interface ApiError {
@@ -27,6 +29,10 @@ function NewSBPackage() {
     null
   );
   const [isLoading, setIsLoading] = useState(false);
+  const [showAccountTypeModal, setShowAccountTypeModal] = useState(false);
+
+  // Get the createAccount function
+  const { createAccount, isCreateAccountLoading } = useAccountQueries();
 
   useEffect(() => {
     const checkAccount = async () => {
@@ -44,6 +50,25 @@ function NewSBPackage() {
 
     checkAccount();
   }, []);
+
+  // Recheck account status after account creation attempt
+  useEffect(() => {
+    if (!isCreateAccountLoading && hasRequiredAccount === false) {
+      // Only recheck if we previously didn't have an account
+      const recheckAccount = async () => {
+        try {
+          const hasAccount = await packagesApi.checkAccountType('sb');
+          if (hasAccount) {
+            setHasRequiredAccount(true);
+          }
+        } catch (error) {
+          console.error('Error rechecking account:', error);
+        }
+      };
+
+      recheckAccount();
+    }
+  }, [isCreateAccountLoading, hasRequiredAccount]);
 
   const { data: categories = [] } = useQuery({
     queryKey: ['productCategories'],
@@ -106,6 +131,12 @@ function NewSBPackage() {
     createPackageMutation.mutate(packageData);
   };
 
+  const handleCreateAccount = (accountType: 'ds' | 'sb' | 'ibs') => {
+    createAccount(accountType);
+    // The useEffect watching isCreateAccountLoading will recheck if we have the required account
+    // Modal will close automatically when account creation completes via the hook's built-in behavior
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-48">
@@ -161,20 +192,30 @@ function NewSBPackage() {
               </div>
             </div>
             <h2 className="text-lg font-medium text-[#212529] mb-2">
-              Savings-Buying Account Required
+              SB Account Required
             </h2>
             <p className="text-[#6c757d] mb-6">
-              You need to have a Savings-Buying account before creating a
-              package. Please visit one of our branches to set up your account.
+              You need to have an SB account before creating a package. Click
+              the button below to create your SB account.
             </p>
-            <Link
-              to="/packages"
+            <button
+              onClick={() => setShowAccountTypeModal(true)}
               className="inline-block px-4 py-2 bg-[#0066A1] text-white rounded-lg hover:bg-[#005085] transition-colors"
             >
-              Back to Packages
-            </Link>
+              Create SB Account
+            </button>
           </div>
         </div>
+
+        {/* Account Type Selection Modal */}
+        {showAccountTypeModal && (
+          <SelectAccountType
+            onSelect={handleCreateAccount}
+            onCancel={() => setShowAccountTypeModal(false)}
+            isLoading={isCreateAccountLoading}
+            preselectedType="sb"
+          />
+        )}
       </div>
     );
   }
@@ -332,7 +373,7 @@ function NewSBPackage() {
                         {product.name}
                       </h3>
                       <p className="text-[#0066A1] font-bold">
-                        ₦{product.price.toLocaleString()}
+                        ₦{product.sellingPrice?.toLocaleString() || '0'}
                       </p>
                     </div>
                   </div>
@@ -406,7 +447,7 @@ function NewSBPackage() {
                 {selectedProduct.description}
               </p>
               <p className="text-[#0066A1] font-bold text-lg mb-6">
-                ₦{selectedProduct.price.toLocaleString()}
+                ₦{selectedProduct.price?.toLocaleString() || '0'}
               </p>
 
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -428,7 +469,8 @@ function NewSBPackage() {
                     className="w-full p-3 border border-[#CED4DA] rounded-lg focus:ring-2 focus:ring-[#0066A1] focus:border-[#0066A1] outline-none transition"
                   />
                   <p className="text-xs text-[#6c757d] mt-1">
-                    Minimum amount: ₦{selectedProduct.price.toLocaleString()}{' '}
+                    Minimum amount: ₦
+                    {selectedProduct.price?.toLocaleString() || '0'}
                     (Product price)
                   </p>
                 </div>
