@@ -33,7 +33,8 @@ export interface Account {
  */
 export const getUserAccounts = async (): Promise<Account[]> => {
   try {
-    const response = await api.get('/accounts/self/all');
+    // The API should extract userId from the JWT token
+    const response = await api.get('/self-accounts/all');
     // If response is a single account, wrap it in an array
     return Array.isArray(response.data) ? response.data : [response.data];
   } catch (error) {
@@ -50,12 +51,31 @@ export const getUserAccounts = async (): Promise<Account[]> => {
  * Get a specific account by type for the authenticated user
  */
 export const getUserAccountByType = async (
-  accountType: 'ds' | 'sb' | 'ibs'
-): Promise<Account> => {
-  const response = await api.get(
-    `/v1/accounts/self?accountType=${accountType}`
-  );
-  return response.data;
+  accountType: 'ds' | 'sb' | 'ibs',
+  abortSignal?: AbortSignal
+): Promise<Account | null> => {
+  try {
+    // The API should extract userId from the JWT token
+    const response = await api.get(
+      `/self-accounts?accountType=${accountType}`,
+      {
+        signal: abortSignal,
+      }
+    );
+    return response.data;
+  } catch (error) {
+    // If the request was aborted, handle it quietly
+    if (error instanceof Error && error.name === 'AbortError') {
+      return null;
+    }
+
+    // Return null if 404 (user has no account of this type)
+    const axiosError = error as AxiosError;
+    if (axiosError.response?.status === 404) {
+      return null;
+    }
+    throw error;
+  }
 };
 
 /**
@@ -64,7 +84,8 @@ export const getUserAccountByType = async (
 export const createAccount = async (
   accountType: 'ds' | 'sb' | 'ibs'
 ): Promise<Account> => {
-  const response = await api.post('/v1/accounts/self', { accountType });
+  // The API should extract userId from the JWT token
+  const response = await api.post('/self-accounts', { accountType });
   return response.data;
 };
 

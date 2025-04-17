@@ -41,21 +41,27 @@ export default function AccountDetail() {
       try {
         setLoading(true);
         const data = await getAccountByType(accountType);
+
+        if (data === null) {
+          setAccount(null);
+          return;
+        }
+
         setAccount(data);
       } catch (error) {
+        // Only log errors that are not related to 404 (account not found)
         console.error('Error fetching account:', error);
         showError({
           title: 'Error',
           description: 'Failed to load account details',
         });
-        navigate('/dashboard');
       } finally {
         setLoading(false);
       }
     };
 
     fetchAccount();
-  }, [accountType, getAccountByType, navigate, showError]);
+  }, [accountType, showError]);
 
   if (loading) {
     return (
@@ -90,19 +96,15 @@ export default function AccountDetail() {
       {/* Account Header */}
       <div className="bg-white rounded-xl shadow-md p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold text-gray-800">Account Details</h1>
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="text-sm text-[--primary] hover:underline"
-          >
-            Back to Dashboard
-          </button>
+          <h1 className="text-2xl font-bold text-gray-800">Account Overview</h1>
         </div>
 
         <div className="flex flex-col md:flex-row md:items-center justify-between p-4 bg-gray-50 rounded-lg">
           <div>
-            <p className="text-sm text-gray-500">Account Number</p>
-            <p className="text-lg font-medium">{account.accountNumber}</p>
+            <p className="text-sm text-gray-500">Available Balance</p>
+            <p className="text-lg font-medium">
+              {formatCurrency(account.availableBalance)}
+            </p>
           </div>
           <div className="mt-2 md:mt-0">
             <p className="text-sm text-gray-500">Status</p>
@@ -117,27 +119,6 @@ export default function AccountDetail() {
             >
               {account.status.charAt(0).toUpperCase() + account.status.slice(1)}
             </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Account Overview */}
-      <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-        <h2 className="text-lg font-semibold mb-4">Account Overview</h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <p className="text-sm text-gray-500">Available Balance</p>
-            <p className="text-2xl font-semibold text-gray-900">
-              {formatCurrency(account.availableBalance)}
-            </p>
-          </div>
-
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <p className="text-sm text-gray-500">Ledger Balance</p>
-            <p className="text-2xl font-semibold text-gray-900">
-              {formatCurrency(account.ledgerBalance)}
-            </p>
           </div>
         </div>
       </div>
@@ -196,14 +177,8 @@ export default function AccountDetail() {
 
       {/* Actions Section */}
       <div className="flex flex-wrap gap-3 mb-6">
-        <button className="flex-1 min-w-[120px] px-4 py-3 bg-[--primary] text-white rounded-lg hover:bg-opacity-90 transition-colors">
+        <button className="flex-1 min-w-[120px] px-4 py-3 border border-[--primary] text-[--primary] rounded-lg hover:bg-gray-50 transition-colors">
           View Transactions
-        </button>
-        <button className="flex-1 min-w-[120px] px-4 py-3 border border-[--primary] text-[--primary] rounded-lg hover:bg-gray-50 transition-colors">
-          Transfer Funds
-        </button>
-        <button className="flex-1 min-w-[120px] px-4 py-3 border border-[--primary] text-[--primary] rounded-lg hover:bg-gray-50 transition-colors">
-          Update Details
         </button>
       </div>
     </div>

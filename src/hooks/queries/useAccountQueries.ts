@@ -31,8 +31,18 @@ export function useAccountQueries() {
 
   // Get specific account by type
   const getAccountByType = async (accountType: 'ds' | 'sb' | 'ibs') => {
+    // Create an AbortController for this request
+    const abortController = new AbortController();
+
     try {
-      return await getUserAccountByType(accountType);
+      const result = await getUserAccountByType(
+        accountType,
+        abortController.signal
+      );
+      if (result === null) {
+        return null;
+      }
+      return result;
     } catch (error) {
       const axiosError = error as AxiosError<{ message?: string }>;
       console.error('Get account by type error:', {
