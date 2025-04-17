@@ -75,11 +75,7 @@ function Dashboard() {
   return (
     <div className="space-y-6">
       {/* User Welcome Card */}
-      <WelcomeCard
-        user={user || null}
-        togglePackagesView={() => {}}
-        hasPackages={hasPackages}
-      />
+      <WelcomeCard user={user || null} />
 
       {/* Enhanced Balance Card */}
       <BalanceCard
