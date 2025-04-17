@@ -50,19 +50,21 @@ export function BalanceCard({
   // Helper function to get account type display name
   const getAccountTypeName = (type: string) => {
     const typeMap: Record<string, string> = {
-      ds: 'Daily Savings',
-      sb: 'Surebank',
-      ibs: 'Investment Banking',
+      ds: 'DS',
+      sb: 'SB',
+      ibs: 'IBS',
     };
     return typeMap[type] || type.toUpperCase();
   };
 
   return (
-    <div className="bg-gradient-to-r from-[#0066A1] to-[#0088CC] rounded-xl shadow-md p-6 text-white">
+    <div className="bg-gradient-to-br from-[#0066A1] via-[#0077B5] to-[#0088CC] rounded-xl shadow-lg p-7 text-white border border-blue-400/10 backdrop-blur-sm">
       <div className="flex justify-between items-start">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <h2 className="text-sm font-medium text-gray-100">My Savings</h2>
+            <h2 className="text-sm uppercase tracking-wider font-semibold text-blue-50">
+              My Savings
+            </h2>
             {hasAccounts && (
               <button
                 onClick={() => setShowBalance(!showBalance)}
@@ -109,66 +111,26 @@ export function BalanceCard({
               </button>
             )}
           </div>
-          <div className="flex items-center gap-2 mt-5">
+          <div className="flex items-center gap-2 mt-6">
             {isAccountsLoading ? (
               <p className="text-4xl font-bold">Loading...</p>
             ) : hasAccounts ? (
               showBalance ? (
-                <p className="text-4xl font-bold">{formatCurrency(balance)}</p>
+                <p className="text-4xl font-bold text-blue-50 drop-shadow-sm">
+                  {formatCurrency(balance)}
+                </p>
               ) : (
-                <p className="text-4xl font-bold">•••••••</p>
+                <p className="text-4xl font-bold text-blue-50">•••••••</p>
               )
             ) : (
-              <p className="text-lg">No accounts yet</p>
+              <p className="text-lg text-blue-50">No accounts yet</p>
             )}
           </div>
-
-          {/* Account type links */}
-          {hasAccounts && accountTypes.length > 0 && (
-            <div className="mt-3">
-              <button
-                onClick={() => setShowAccountLinks(!showAccountLinks)}
-                className="text-xs text-white/80 hover:text-white flex items-center gap-1"
-              >
-                View accounts
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className={`h-3 w-3 transition-transform ${
-                    showAccountLinks ? 'rotate-180' : ''
-                  }`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              </button>
-
-              {showAccountLinks && (
-                <div className="mt-2 space-y-1">
-                  {accountTypes.map((type) => (
-                    <Link
-                      key={type}
-                      to={`/accounts/${type}`}
-                      className="block text-xs bg-white/10 px-3 py-2 rounded hover:bg-white/20 transition-colors"
-                    >
-                      {getAccountTypeName(type)} Account
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
         </div>
-        <div className="bg-white/20 p-3 rounded-full">
+        <div className="bg-gradient-to-br from-white/20 to-white/10 p-3 rounded-full shadow-inner backdrop-blur-sm border border-white/10">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6"
+            className="h-6 w-6 text-blue-50"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -182,12 +144,74 @@ export function BalanceCard({
           </svg>
         </div>
       </div>
+
+      {/* Account type links */}
+      {hasAccounts && accountTypes.length > 0 && (
+        <div className="mt-5">
+          <button
+            onClick={() => setShowAccountLinks(!showAccountLinks)}
+            className="text-xs font-medium text-blue-100 hover:text-white flex items-center gap-1 transition-colors"
+          >
+            View accounts
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className={`h-3 w-3 transition-transform ${
+                showAccountLinks ? 'rotate-180' : ''
+              }`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+
+          {showAccountLinks && (
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              {accountTypes.map((type) => (
+                <Link
+                  key={type}
+                  to={`/accounts/${type}`}
+                  className="text-xs bg-white/10 px-3 py-2 rounded-lg hover:bg-white/20 transition-colors font-medium border border-white/5 backdrop-blur-sm text-center"
+                >
+                  {getAccountTypeName(type)}
+                </Link>
+              ))}
+              <button
+                onClick={() => setShowAccountTypeModal(true)}
+                className="text-xs bg-blue-500/30 hover:bg-blue-500/40 px-3 py-2 rounded-lg transition-colors font-medium border border-blue-400/20 text-center flex items-center justify-center gap-1 text-white"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-3 w-3"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                New
+              </button>
+            </div>
+          )}
+        </div>
+      )}
       <div className="mt-10 flex gap-4">
         {hasAccounts ? (
           <>
             <Link
               to="/payments/deposit"
-              className="flex-1 bg-white text-[#0066A1] rounded-md py-3 font-medium text-sm hover:bg-gray-100 transition-colors flex items-center justify-center gap-2 shadow-sm"
+              className="flex-1 bg-gradient-to-r from-white to-blue-50 text-[#0066A1] rounded-lg py-3 font-semibold text-sm hover:from-blue-50 hover:to-white transition-all flex items-center justify-center gap-2 shadow-md border border-white/80"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -207,7 +231,7 @@ export function BalanceCard({
             </Link>
             <Link
               to="/payments/withdraw"
-              className="flex-1 border border-white text-white rounded-md py-3 font-medium text-sm hover:bg-white/10 transition-all flex items-center justify-center gap-2"
+              className="flex-1 border border-white/30 text-white rounded-lg py-3 font-semibold text-sm hover:bg-white/10 transition-all flex items-center justify-center gap-2 backdrop-blur-sm"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -230,7 +254,7 @@ export function BalanceCard({
           <button
             onClick={() => setShowAccountTypeModal(true)}
             disabled={isCreateAccountLoading}
-            className="w-full bg-white text-[#0066A1] rounded-md py-3 font-medium text-sm hover:bg-gray-100 transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
+            className="w-full bg-gradient-to-r from-white to-blue-50 text-[#0066A1] rounded-lg py-3 font-semibold text-sm hover:from-blue-50 hover:to-white transition-all flex items-center justify-center gap-2 shadow-md disabled:opacity-70 disabled:cursor-not-allowed border border-white/80"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
