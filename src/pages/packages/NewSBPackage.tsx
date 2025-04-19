@@ -2,7 +2,11 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import packagesApi, { CreateSBPackageParams } from '../../lib/api/packages';
-import productsApi, { Product } from '../../lib/api/products';
+import productsApi, {
+  Product,
+  Category,
+  PaginatedResponse,
+} from '../../lib/api/products';
 import { toast } from 'react-hot-toast';
 import { useAccountQueries } from '@/hooks/queries/useAccountQueries';
 import { SelectAccountType } from '@/components/accounts/SelectAccountType';
@@ -17,19 +21,137 @@ interface ApiError {
   message: string;
 }
 
+// Pagination component
+function Pagination({
+  currentPage,
+  totalPages,
+  onPageChange,
+}: {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) {
+  // Generate array of page numbers to display
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    const maxPagesToShow = 5;
+
+    if (totalPages <= maxPagesToShow) {
+      // Show all pages if there are few
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      // Always show first page
+      pageNumbers.push(1);
+
+      // Calculate middle pages
+      const startPage = Math.max(2, currentPage - 1);
+      const endPage = Math.min(totalPages - 1, currentPage + 1);
+
+      // Add ellipsis if needed
+      if (startPage > 2) {
+        pageNumbers.push('...');
+      }
+
+      // Add middle pages
+      for (let i = startPage; i <= endPage; i++) {
+        pageNumbers.push(i);
+      }
+
+      // Add ellipsis if needed
+      if (endPage < totalPages - 1) {
+        pageNumbers.push('...');
+      }
+
+      // Always show last page
+      pageNumbers.push(totalPages);
+    }
+
+    return pageNumbers;
+  };
+
+  return (
+    <div className="flex justify-center items-center space-x-1 mt-6">
+      <button
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className="p-2 rounded-md bg-[#F6F8FA] hover:bg-[#E5E8ED] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        aria-label="Previous page"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-5 w-5 text-[#212529]"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15 19l-7-7 7-7"
+          />
+        </svg>
+      </button>
+
+      {getPageNumbers().map((page, index) =>
+        page === '...' ? (
+          <span key={`ellipsis-${index}`} className="px-3 py-2 text-[#6c757d]">
+            ...
+          </span>
+        ) : (
+          <button
+            key={`page-${page}`}
+            onClick={() => onPageChange(page as number)}
+            className={`w-10 h-10 rounded-md flex items-center justify-center transition-colors ${
+              currentPage === page
+                ? 'bg-[#0066A1] text-white'
+                : 'bg-[#F6F8FA] text-[#495057] hover:bg-[#E5E8ED]'
+            }`}
+          >
+            {page}
+          </button>
+        )
+      )}
+
+      <button
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages || totalPages === 0}
+        className="p-2 rounded-md bg-[#F6F8FA] hover:bg-[#E5E8ED] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        aria-label="Next page"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-5 w-5 text-[#212529]"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 5l7 7-7 7"
+          />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
 function NewSBPackage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [customTargetAmount, setCustomTargetAmount] = useState<
-    number | undefined
-  >(undefined);
   const [hasRequiredAccount, setHasRequiredAccount] = useState<boolean | null>(
     null
   );
   const [isLoading, setIsLoading] = useState(false);
   const [showAccountTypeModal, setShowAccountTypeModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(9); // Show 9 products per page (3x3 grid)
 
   // Get the createAccount function
   const { createAccount, isCreateAccountLoading } = useAccountQueries();
@@ -70,25 +192,50 @@ function NewSBPackage() {
     }
   }, [isCreateAccountLoading, hasRequiredAccount]);
 
-  const { data: categories = [] } = useQuery({
+  // Reset to first page when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory, searchQuery]);
+
+  const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ['productCategories'],
     queryFn: () => productsApi.getCategories(),
     enabled: hasRequiredAccount === true,
   });
 
-  const { data: products = [], isLoading: isProductsLoading } = useQuery({
-    queryKey: ['products', selectedCategory, searchQuery],
+  const { data: productData, isLoading: isProductsLoading } = useQuery<
+    PaginatedResponse<Product>
+  >({
+    queryKey: [
+      'products',
+      selectedCategory,
+      searchQuery,
+      currentPage,
+      pageSize,
+    ],
     queryFn: async () => {
       if (searchQuery) {
-        return productsApi.searchProducts(searchQuery);
+        return productsApi.searchProducts(searchQuery, currentPage, pageSize);
       }
       if (selectedCategory) {
-        return productsApi.getProductsByCategory(selectedCategory);
+        return productsApi.getProductsByCategory(
+          selectedCategory,
+          currentPage,
+          pageSize
+        );
       }
-      return productsApi.getSBProducts();
+      return productsApi.getSBProducts(currentPage, pageSize);
     },
     enabled: hasRequiredAccount === true,
   });
+
+  const products = productData?.data || [];
+  const pagination = productData?.pagination || {
+    total: 0,
+    page: 1,
+    limit: pageSize,
+    totalPages: 0,
+  };
 
   const createPackageMutation = useMutation({
     mutationFn: (data: CreateSBPackageParams) =>
@@ -99,7 +246,7 @@ function NewSBPackage() {
         state: {
           packageType: 'sb',
           product: selectedProduct?.name,
-          amount: customTargetAmount || selectedProduct?.price,
+          amount: selectedProduct?.price,
         },
       });
     },
@@ -110,7 +257,6 @@ function NewSBPackage() {
 
   const handleProductSelect = (product: Product) => {
     setSelectedProduct(product);
-    setCustomTargetAmount(product.price);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -124,10 +270,6 @@ function NewSBPackage() {
       product: selectedProduct._id,
     };
 
-    if (customTargetAmount && customTargetAmount !== selectedProduct.price) {
-      packageData.targetAmount = customTargetAmount;
-    }
-
     createPackageMutation.mutate(packageData);
   };
 
@@ -135,6 +277,12 @@ function NewSBPackage() {
     createAccount(accountType);
     // The useEffect watching isCreateAccountLoading will recheck if we have the required account
     // Modal will close automatically when account creation completes via the hook's built-in behavior
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll back to top when changing pages
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   if (isLoading) {
@@ -286,17 +434,17 @@ function NewSBPackage() {
                 >
                   All Products
                 </button>
-                {categories.map((category) => (
+                {categories.map((category, index) => (
                   <button
-                    key={category}
-                    onClick={() => setSelectedCategory(category)}
+                    key={category.id || index}
+                    onClick={() => setSelectedCategory(category.id)}
                     className={`px-4 py-2 rounded-lg whitespace-nowrap ${
-                      selectedCategory === category
+                      selectedCategory === category.id
                         ? 'bg-[#0066A1] text-white'
                         : 'bg-[#F6F8FA] text-[#495057] hover:bg-[#E5E8ED]'
                     } transition-colors`}
                   >
-                    {category}
+                    {category.title}
                   </button>
                 ))}
               </div>
@@ -304,9 +452,19 @@ function NewSBPackage() {
           </div>
 
           <div className="bg-white rounded-xl shadow-sm p-6">
-            <h2 className="text-lg font-medium text-[#212529] mb-4">
-              Select a Product
-            </h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-medium text-[#212529]">
+                Select a Product
+              </h2>
+              {pagination.total > 0 && (
+                <p className="text-sm text-[#6c757d]">
+                  Showing{' '}
+                  {Math.min((currentPage - 1) * pageSize + 1, pagination.total)}{' '}
+                  - {Math.min(currentPage * pageSize, pagination.total)} of{' '}
+                  {pagination.total} products
+                </p>
+              )}
+            </div>
 
             {isProductsLoading ? (
               <div className="flex justify-center items-center h-48">
@@ -335,50 +493,93 @@ function NewSBPackage() {
                 <p className="text-[#6c757d]">No products found</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {products.map((product) => (
-                  <div
-                    key={product._id}
-                    onClick={() => handleProductSelect(product)}
-                    className="border border-[#E5E8ED] rounded-lg overflow-hidden hover:shadow-md transition-all cursor-pointer"
-                  >
-                    <div className="h-40 overflow-hidden bg-[#F6F8FA]">
-                      {product.images && product.images.length > 0 ? (
-                        <img
-                          src={product.images[0]}
-                          alt={product.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-[#6c757d]">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-12 w-12"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                            />
-                          </svg>
-                        </div>
-                      )}
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {products.map((product) => (
+                    <div
+                      key={product._id}
+                      onClick={() => handleProductSelect(product)}
+                      className={`border rounded-lg overflow-hidden hover:shadow-md transition-all cursor-pointer ${
+                        selectedProduct &&
+                        (selectedProduct as Product)._id === product._id
+                          ? 'border-[#0066A1] shadow-md ring-2 ring-[#0066A1]'
+                          : 'border-[#E5E8ED]'
+                      }`}
+                    >
+                      <div className="h-40 overflow-hidden bg-[#F6F8FA] relative">
+                        {product.images && product.images.length > 0 ? (
+                          <img
+                            src={product.images[0]}
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-[#6c757d]">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-12 w-12"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                              />
+                            </svg>
+                          </div>
+                        )}
+                        {selectedProduct &&
+                          (selectedProduct as Product)._id === product._id && (
+                            <div className="absolute top-2 right-2 bg-[#0066A1] text-white p-1 rounded-full">
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-5 w-5"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth={2}
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                            </div>
+                          )}
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-medium text-[#212529] mb-1">
+                          {product.name}
+                        </h3>
+                        {product.description && (
+                          <p className="text-sm text-[#6c757d] mb-2 line-clamp-2">
+                            {product.description}
+                          </p>
+                        )}
+                        <p className="text-[#0066A1] font-bold">
+                          ₦
+                          {product.sellingPrice?.toLocaleString() ||
+                            product.price?.toLocaleString() ||
+                            '0'}
+                        </p>
+                      </div>
                     </div>
-                    <div className="p-4">
-                      <h3 className="font-medium text-[#212529] mb-1">
-                        {product.name}
-                      </h3>
-                      <p className="text-[#0066A1] font-bold">
-                        ₦{product.sellingPrice?.toLocaleString() || '0'}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+
+                {/* Pagination Component */}
+                {pagination.totalPages > 1 && (
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={pagination.totalPages}
+                    onPageChange={handlePageChange}
+                  />
+                )}
+              </>
             )}
           </div>
         </>
@@ -405,7 +606,7 @@ function NewSBPackage() {
               </svg>
             </button>
             <h2 className="text-lg font-medium text-[#212529]">
-              Configure SB Package
+              Review SB Package
             </h2>
           </div>
 
@@ -446,35 +647,21 @@ function NewSBPackage() {
               <p className="text-[#6c757d] mb-4">
                 {selectedProduct.description}
               </p>
-              <p className="text-[#0066A1] font-bold text-lg mb-6">
-                ₦{selectedProduct.price?.toLocaleString() || '0'}
-              </p>
+
+              <div className="bg-[#F6F8FA] p-4 rounded-lg mb-6">
+                <p className="text-[#495057] mb-1">Target Amount</p>
+                <p className="text-[#0066A1] font-bold text-lg">
+                  ₦
+                  {selectedProduct.sellingPrice?.toLocaleString() ||
+                    selectedProduct.price?.toLocaleString() ||
+                    '0'}
+                </p>
+                <p className="text-xs text-[#6c757d] mt-1">
+                  You can save any amount towards this goal
+                </p>
+              </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                  <label
-                    htmlFor="targetAmount"
-                    className="block text-sm font-medium text-[#495057] mb-1"
-                  >
-                    Target Amount (₦)
-                  </label>
-                  <input
-                    type="number"
-                    id="targetAmount"
-                    value={customTargetAmount}
-                    onChange={(e) =>
-                      setCustomTargetAmount(Number(e.target.value))
-                    }
-                    min={selectedProduct.price}
-                    className="w-full p-3 border border-[#CED4DA] rounded-lg focus:ring-2 focus:ring-[#0066A1] focus:border-[#0066A1] outline-none transition"
-                  />
-                  <p className="text-xs text-[#6c757d] mt-1">
-                    Minimum amount: ₦
-                    {selectedProduct.price?.toLocaleString() || '0'}
-                    (Product price)
-                  </p>
-                </div>
-
                 <div className="pt-4">
                   <button
                     type="submit"
