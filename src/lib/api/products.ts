@@ -185,20 +185,17 @@ function normalizeProduct(product: ProductResponse): Product {
       product.sellingPrice ||
       product.costPrice ||
       product.price ||
-      product.productId.sellingPrice ||
-      product.productId.costPrice ||
-      product.productId.price ||
       0;
 
     return {
       _id: product.id || product._id || '',
       // Get name and description from productId if available
-      name: product.productId.name || product.name,
-      description: product.productId.description || product.description,
+      name: product.name,
+      description: product.description,
       // Get price information from either source
       price: price,
       costPrice: product.costPrice || undefined,
-      sellingPrice: product.sellingPrice || product.productId.sellingPrice,
+      sellingPrice: product.sellingPrice,
       discount: product.discount,
       quantity: product.quantity,
       images: product.images || [],

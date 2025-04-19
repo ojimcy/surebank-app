@@ -10,6 +10,9 @@ import productsApi, {
 import { toast } from 'react-hot-toast';
 import { useAccountQueries } from '@/hooks/queries/useAccountQueries';
 import { SelectAccountType } from '@/components/accounts/SelectAccountType';
+import { ProductCard } from '@/components/ui/product-card';
+import { cn } from '@/lib/utils';
+import { CheckCircle } from 'lucide-react';
 
 // Error type for API errors
 interface ApiError {
@@ -380,84 +383,43 @@ function NewSBPackage() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                   {allProducts.map((product, index) => {
                     // Add ref to the last product for infinite scroll
                     const isLastProduct = index === allProducts.length - 1;
+                    const price = product.sellingPrice || product.price || 0;
 
                     return (
                       <div
                         key={product._id}
                         ref={isLastProduct ? lastProductRef : null}
-                        onClick={() => handleProductSelect(product)}
-                        className={`border rounded-lg overflow-hidden hover:shadow-md transition-all cursor-pointer ${
-                          selectedProduct &&
-                          (selectedProduct as Product)._id === product._id
-                            ? 'border-[#0066A1] shadow-md ring-2 ring-[#0066A1]'
-                            : 'border-[#E5E8ED]'
-                        }`}
                       >
-                        <div className="h-40 overflow-hidden bg-[#F6F8FA] relative">
-                          {product.images && product.images.length > 0 ? (
-                            <img
-                              src={product.images[0]}
-                              alt={product.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-[#6c757d]">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-12 w-12"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                />
-                              </svg>
-                            </div>
-                          )}
+                        <div
+                          onClick={() => handleProductSelect(product)}
+                          className="h-full relative"
+                        >
+                          <ProductCard
+                            id={product._id}
+                            name={product.name}
+                            description={product.description || ''}
+                            price={price}
+                            image={product.images?.[0] || ''}
+                            category={product.category}
+                            className={cn(
+                              'cursor-pointer transition-all duration-200',
+                              selectedProduct &&
+                                (selectedProduct as Product)._id === product._id
+                                ? 'ring-2 ring-primary transform scale-[1.02]'
+                                : 'hover:scale-[1.01]'
+                            )}
+                          />
                           {selectedProduct &&
                             (selectedProduct as Product)._id ===
                               product._id && (
-                              <div className="absolute top-2 right-2 bg-[#0066A1] text-white p-1 rounded-full">
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  className="h-5 w-5"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="currentColor"
-                                  strokeWidth={2}
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M5 13l4 4L19 7"
-                                  />
-                                </svg>
+                              <div className="absolute top-3 right-3 bg-primary text-white p-1 rounded-full">
+                                <CheckCircle className="h-5 w-5" />
                               </div>
                             )}
-                        </div>
-                        <div className="p-4">
-                          <h3 className="font-medium text-[#212529] mb-1">
-                            {product.name}
-                          </h3>
-                          {product.description && (
-                            <p className="text-sm text-[#6c757d] mb-2 line-clamp-2">
-                              {product.description}
-                            </p>
-                          )}
-                          <p className="text-[#0066A1] font-bold">
-                            ₦
-                            {product.sellingPrice?.toLocaleString() ||
-                              product.price?.toLocaleString() ||
-                              '0'}
-                          </p>
                         </div>
                       </div>
                     );
@@ -467,7 +429,7 @@ function NewSBPackage() {
                 {/* Loading indicator at the bottom when fetching more products */}
                 {isFetchingNextPage && (
                   <div className="flex justify-center items-center py-4 mt-4">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                   </div>
                 )}
 
