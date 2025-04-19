@@ -8,11 +8,18 @@ export interface ProductResponse {
   price?: number;
   costPrice?: number;
   sellingPrice?: number;
+  discount?: number;
+  quantity?: number;
   images?: string[];
   category?: string;
   isAvailable?: boolean;
+  isSbAvailable?: boolean;
+  tags?: string[];
   createdAt: string;
   updatedAt: string;
+  merchantId?: string;
+  variations?: unknown[];
+  reviews?: unknown[];
   productId?: {
     name: string;
     description?: string;
@@ -25,6 +32,15 @@ export interface ProductResponse {
       name: string;
       id: string;
     };
+    status?: string;
+    features?: unknown[];
+    tags?: string[];
+    isFeatured?: boolean;
+    isOutOfStock?: boolean;
+    isSbAvailable?: boolean;
+    barcode?: string;
+    variations?: unknown[];
+    reviews?: unknown[];
     createdAt: string;
     updatedAt: string;
     id: string;
@@ -40,10 +56,15 @@ export interface Product {
   name: string;
   description?: string;
   price: number;
+  costPrice?: number;
   sellingPrice?: number;
+  discount?: number;
+  quantity?: number;
   images: string[];
   category: string;
   isAvailable: boolean;
+  isSbAvailable?: boolean;
+  tags?: string[];
   createdAt: string;
   updatedAt: string;
   productId?: {
@@ -66,13 +87,11 @@ export interface Product {
 }
 
 export interface PaginatedResponse<T> {
-  data: T[];
-  pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
+  results: T[];
+  page: number;
+  limit: number;
+  totalPages: number;
+  totalResults: number;
 }
 
 // Define the category interface
@@ -88,26 +107,18 @@ const productsApi = {
   // Get all products that are available for SB with pagination
   getSBProducts: async (
     page = 1,
-    limit = 10
+    limit = 20
   ): Promise<PaginatedResponse<Product>> => {
-    const response = await api.get<ProductResponse[]>(
+    const response = await api.get<PaginatedResponse<ProductResponse>>(
       `/products/catalogue?page=${page}&limit=${limit}`
     );
 
-    // If the API doesn't return pagination info, simulate it
-    const total =
-      parseInt(response.headers['x-total-count'] || '0', 10) ||
-      response.data.length;
-    const totalPages = Math.ceil(total / limit);
-
     return {
-      data: response.data.map(normalizeProduct),
-      pagination: {
-        total,
-        page,
-        limit,
-        totalPages,
-      },
+      results: response.data.results.map(normalizeProduct),
+      page: response.data.page,
+      limit: response.data.limit,
+      totalPages: response.data.totalPages,
+      totalResults: response.data.totalResults,
     };
   },
 
@@ -125,24 +136,16 @@ const productsApi = {
     page = 1,
     limit = 10
   ): Promise<PaginatedResponse<Product>> => {
-    const response = await api.get<ProductResponse[]>(
+    const response = await api.get<PaginatedResponse<ProductResponse>>(
       `/products/catalogue?categoryId=${categoryId}&page=${page}&limit=${limit}`
     );
 
-    // If the API doesn't return pagination info, simulate it
-    const total =
-      parseInt(response.headers['x-total-count'] || '0', 10) ||
-      response.data.length;
-    const totalPages = Math.ceil(total / limit);
-
     return {
-      data: response.data.map(normalizeProduct),
-      pagination: {
-        total,
-        page,
-        limit,
-        totalPages,
-      },
+      results: response.data.results.map(normalizeProduct),
+      page: response.data.page,
+      limit: response.data.limit,
+      totalPages: response.data.totalPages,
+      totalResults: response.data.totalResults,
     };
   },
 
@@ -150,26 +153,18 @@ const productsApi = {
   searchProducts: async (
     query: string,
     page = 1,
-    limit = 10
+    limit = 20
   ): Promise<PaginatedResponse<Product>> => {
-    const response = await api.get<ProductResponse[]>(
+    const response = await api.get<PaginatedResponse<ProductResponse>>(
       `/products/catalogue?search=${query}&page=${page}&limit=${limit}`
     );
 
-    // If the API doesn't return pagination info, simulate it
-    const total =
-      parseInt(response.headers['x-total-count'] || '0', 10) ||
-      response.data.length;
-    const totalPages = Math.ceil(total / limit);
-
     return {
-      data: response.data.map(normalizeProduct),
-      pagination: {
-        total,
-        page,
-        limit,
-        totalPages,
-      },
+      results: response.data.results.map(normalizeProduct),
+      page: response.data.page,
+      limit: response.data.limit,
+      totalPages: response.data.totalPages,
+      totalResults: response.data.totalResults,
     };
   },
 
@@ -202,11 +197,16 @@ function normalizeProduct(product: ProductResponse): Product {
       description: product.productId.description || product.description,
       // Get price information from either source
       price: price,
+      costPrice: product.costPrice || undefined,
       sellingPrice: product.sellingPrice || product.productId.sellingPrice,
+      discount: product.discount,
+      quantity: product.quantity,
       images: product.images || [],
       // Get category from productId if available
       category: product.productId.categoryId?.title || product.category || '',
       isAvailable: product.isAvailable !== false,
+      isSbAvailable: product.isSbAvailable,
+      tags: product.tags,
       createdAt: product.createdAt || '',
       updatedAt: product.updatedAt || '',
       productId: product.productId,
@@ -219,10 +219,15 @@ function normalizeProduct(product: ProductResponse): Product {
     name: product.name,
     description: product.description,
     price: product.sellingPrice || product.costPrice || product.price || 0,
+    costPrice: product.costPrice,
     sellingPrice: product.sellingPrice,
+    discount: product.discount,
+    quantity: product.quantity,
     images: product.images || [],
     category: product.category || '',
     isAvailable: product.isAvailable !== false,
+    isSbAvailable: product.isSbAvailable,
+    tags: product.tags,
     createdAt: product.createdAt || '',
     updatedAt: product.updatedAt || '',
     productId: product.productId,

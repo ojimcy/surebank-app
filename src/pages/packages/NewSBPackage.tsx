@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import packagesApi, { CreateSBPackageParams } from '../../lib/api/packages';
 import productsApi, {
   Product,
@@ -21,125 +21,6 @@ interface ApiError {
   message: string;
 }
 
-// Pagination component
-function Pagination({
-  currentPage,
-  totalPages,
-  onPageChange,
-}: {
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-}) {
-  // Generate array of page numbers to display
-  const getPageNumbers = () => {
-    const pageNumbers = [];
-    const maxPagesToShow = 5;
-
-    if (totalPages <= maxPagesToShow) {
-      // Show all pages if there are few
-      for (let i = 1; i <= totalPages; i++) {
-        pageNumbers.push(i);
-      }
-    } else {
-      // Always show first page
-      pageNumbers.push(1);
-
-      // Calculate middle pages
-      const startPage = Math.max(2, currentPage - 1);
-      const endPage = Math.min(totalPages - 1, currentPage + 1);
-
-      // Add ellipsis if needed
-      if (startPage > 2) {
-        pageNumbers.push('...');
-      }
-
-      // Add middle pages
-      for (let i = startPage; i <= endPage; i++) {
-        pageNumbers.push(i);
-      }
-
-      // Add ellipsis if needed
-      if (endPage < totalPages - 1) {
-        pageNumbers.push('...');
-      }
-
-      // Always show last page
-      pageNumbers.push(totalPages);
-    }
-
-    return pageNumbers;
-  };
-
-  return (
-    <div className="flex justify-center items-center space-x-1 mt-6">
-      <button
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        className="p-2 rounded-md bg-[#F6F8FA] hover:bg-[#E5E8ED] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        aria-label="Previous page"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-5 w-5 text-[#212529]"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M15 19l-7-7 7-7"
-          />
-        </svg>
-      </button>
-
-      {getPageNumbers().map((page, index) =>
-        page === '...' ? (
-          <span key={`ellipsis-${index}`} className="px-3 py-2 text-[#6c757d]">
-            ...
-          </span>
-        ) : (
-          <button
-            key={`page-${page}`}
-            onClick={() => onPageChange(page as number)}
-            className={`w-10 h-10 rounded-md flex items-center justify-center transition-colors ${
-              currentPage === page
-                ? 'bg-[#0066A1] text-white'
-                : 'bg-[#F6F8FA] text-[#495057] hover:bg-[#E5E8ED]'
-            }`}
-          >
-            {page}
-          </button>
-        )
-      )}
-
-      <button
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages || totalPages === 0}
-        className="p-2 rounded-md bg-[#F6F8FA] hover:bg-[#E5E8ED] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        aria-label="Next page"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-5 w-5 text-[#212529]"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 5l7 7-7 7"
-          />
-        </svg>
-      </button>
-    </div>
-  );
-}
-
 function NewSBPackage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -150,8 +31,8 @@ function NewSBPackage() {
   );
   const [isLoading, setIsLoading] = useState(false);
   const [showAccountTypeModal, setShowAccountTypeModal] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(9); // Show 9 products per page (3x3 grid)
+  const pageSize = 20; // Increased from 9 to 20 products per page
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   // Get the createAccount function
   const { createAccount, isCreateAccountLoading } = useAccountQueries();
@@ -192,50 +73,64 @@ function NewSBPackage() {
     }
   }, [isCreateAccountLoading, hasRequiredAccount]);
 
-  // Reset to first page when filter changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [selectedCategory, searchQuery]);
-
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ['productCategories'],
     queryFn: () => productsApi.getCategories(),
     enabled: hasRequiredAccount === true,
   });
 
-  const { data: productData, isLoading: isProductsLoading } = useQuery<
-    PaginatedResponse<Product>
-  >({
-    queryKey: [
-      'products',
-      selectedCategory,
-      searchQuery,
-      currentPage,
-      pageSize,
-    ],
-    queryFn: async () => {
+  const {
+    data: productData,
+    isLoading: isProductsLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery<PaginatedResponse<Product>>({
+    queryKey: ['products', selectedCategory, searchQuery, pageSize],
+    queryFn: async ({ pageParam = 1 }) => {
+      const page = Number(pageParam);
       if (searchQuery) {
-        return productsApi.searchProducts(searchQuery, currentPage, pageSize);
+        return productsApi.searchProducts(searchQuery, page, pageSize);
       }
       if (selectedCategory) {
         return productsApi.getProductsByCategory(
           selectedCategory,
-          currentPage,
+          page,
           pageSize
         );
       }
-      return productsApi.getSBProducts(currentPage, pageSize);
+      return productsApi.getSBProducts(page, pageSize);
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      return lastPage.page < lastPage.totalPages
+        ? lastPage.page + 1
+        : undefined;
     },
     enabled: hasRequiredAccount === true,
   });
 
-  const products = productData?.data || [];
-  const pagination = productData?.pagination || {
-    total: 0,
-    page: 1,
-    limit: pageSize,
-    totalPages: 0,
-  };
+  const allProducts = productData?.pages.flatMap((page) => page.results) || [];
+  const totalResults = productData?.pages[0]?.totalResults || 0;
+
+  // Intersection observer for infinite scroll
+  const observer = useRef<IntersectionObserver | null>(null);
+  const lastProductRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (isProductsLoading || isFetchingNextPage) return;
+
+      if (observer.current) observer.current.disconnect();
+
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasNextPage) {
+          fetchNextPage();
+        }
+      });
+
+      if (node) observer.current.observe(node);
+    },
+    [isProductsLoading, isFetchingNextPage, fetchNextPage, hasNextPage]
+  );
 
   const createPackageMutation = useMutation({
     mutationFn: (data: CreateSBPackageParams) =>
@@ -277,12 +172,6 @@ function NewSBPackage() {
     createAccount(accountType);
     // The useEffect watching isCreateAccountLoading will recheck if we have the required account
     // Modal will close automatically when account creation completes via the hook's built-in behavior
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    // Scroll back to top when changing pages
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   if (isLoading) {
@@ -456,21 +345,18 @@ function NewSBPackage() {
               <h2 className="text-lg font-medium text-[#212529]">
                 Select a Product
               </h2>
-              {pagination.total > 0 && (
+              {totalResults > 0 && (
                 <p className="text-sm text-[#6c757d]">
-                  Showing{' '}
-                  {Math.min((currentPage - 1) * pageSize + 1, pagination.total)}{' '}
-                  - {Math.min(currentPage * pageSize, pagination.total)} of{' '}
-                  {pagination.total} products
+                  Showing products ({totalResults} total)
                 </p>
               )}
             </div>
 
-            {isProductsLoading ? (
+            {isProductsLoading && allProducts.length === 0 ? (
               <div className="flex justify-center items-center h-48">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               </div>
-            ) : products.length === 0 ? (
+            ) : allProducts.length === 0 ? (
               <div className="text-center py-8">
                 <div className="mb-4 flex justify-center">
                   <div className="h-16 w-16 bg-[#F6F8FA] rounded-full flex items-center justify-center text-[#6c757d]">
@@ -495,90 +381,98 @@ function NewSBPackage() {
             ) : (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {products.map((product) => (
-                    <div
-                      key={product._id}
-                      onClick={() => handleProductSelect(product)}
-                      className={`border rounded-lg overflow-hidden hover:shadow-md transition-all cursor-pointer ${
-                        selectedProduct &&
-                        (selectedProduct as Product)._id === product._id
-                          ? 'border-[#0066A1] shadow-md ring-2 ring-[#0066A1]'
-                          : 'border-[#E5E8ED]'
-                      }`}
-                    >
-                      <div className="h-40 overflow-hidden bg-[#F6F8FA] relative">
-                        {product.images && product.images.length > 0 ? (
-                          <img
-                            src={product.images[0]}
-                            alt={product.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-[#6c757d]">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-12 w-12"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                              />
-                            </svg>
-                          </div>
-                        )}
-                        {selectedProduct &&
-                          (selectedProduct as Product)._id === product._id && (
-                            <div className="absolute top-2 right-2 bg-[#0066A1] text-white p-1 rounded-full">
+                  {allProducts.map((product, index) => {
+                    // Add ref to the last product for infinite scroll
+                    const isLastProduct = index === allProducts.length - 1;
+
+                    return (
+                      <div
+                        key={product._id}
+                        ref={isLastProduct ? lastProductRef : null}
+                        onClick={() => handleProductSelect(product)}
+                        className={`border rounded-lg overflow-hidden hover:shadow-md transition-all cursor-pointer ${
+                          selectedProduct &&
+                          (selectedProduct as Product)._id === product._id
+                            ? 'border-[#0066A1] shadow-md ring-2 ring-[#0066A1]'
+                            : 'border-[#E5E8ED]'
+                        }`}
+                      >
+                        <div className="h-40 overflow-hidden bg-[#F6F8FA] relative">
+                          {product.images && product.images.length > 0 ? (
+                            <img
+                              src={product.images[0]}
+                              alt={product.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-[#6c757d]">
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
-                                className="h-5 w-5"
+                                className="h-12 w-12"
                                 fill="none"
                                 viewBox="0 0 24 24"
                                 stroke="currentColor"
-                                strokeWidth={2}
                               >
                                 <path
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
-                                  d="M5 13l4 4L19 7"
+                                  strokeWidth={2}
+                                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                                 />
                               </svg>
                             </div>
                           )}
-                      </div>
-                      <div className="p-4">
-                        <h3 className="font-medium text-[#212529] mb-1">
-                          {product.name}
-                        </h3>
-                        {product.description && (
-                          <p className="text-sm text-[#6c757d] mb-2 line-clamp-2">
-                            {product.description}
+                          {selectedProduct &&
+                            (selectedProduct as Product)._id ===
+                              product._id && (
+                              <div className="absolute top-2 right-2 bg-[#0066A1] text-white p-1 rounded-full">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="h-5 w-5"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                  strokeWidth={2}
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M5 13l4 4L19 7"
+                                  />
+                                </svg>
+                              </div>
+                            )}
+                        </div>
+                        <div className="p-4">
+                          <h3 className="font-medium text-[#212529] mb-1">
+                            {product.name}
+                          </h3>
+                          {product.description && (
+                            <p className="text-sm text-[#6c757d] mb-2 line-clamp-2">
+                              {product.description}
+                            </p>
+                          )}
+                          <p className="text-[#0066A1] font-bold">
+                            ₦
+                            {product.sellingPrice?.toLocaleString() ||
+                              product.price?.toLocaleString() ||
+                              '0'}
                           </p>
-                        )}
-                        <p className="text-[#0066A1] font-bold">
-                          ₦
-                          {product.sellingPrice?.toLocaleString() ||
-                            product.price?.toLocaleString() ||
-                            '0'}
-                        </p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
-                {/* Pagination Component */}
-                {pagination.totalPages > 1 && (
-                  <Pagination
-                    currentPage={currentPage}
-                    totalPages={pagination.totalPages}
-                    onPageChange={handlePageChange}
-                  />
+                {/* Loading indicator at the bottom when fetching more products */}
+                {isFetchingNextPage && (
+                  <div className="flex justify-center items-center py-4 mt-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                  </div>
                 )}
+
+                {/* Invisible element to trigger loading more items */}
+                <div ref={loadMoreRef} className="h-1" />
               </>
             )}
           </div>
