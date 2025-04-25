@@ -16,6 +16,21 @@ interface ApiError {
   message: string;
 }
 
+const commonTargets = [
+  'School Fees',
+  'House Rent',
+  'Building Projects',
+  'Shop Rent',
+  'Vacation',
+  'Wedding',
+  'Education',
+  'Healthcare',
+  'Business',
+  'Staff Salaries',
+  'Donations',
+  'Emergency Fund',
+];
+
 function NewDailySavings() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState<CreateDailySavingsPackageParams>({
@@ -26,6 +41,7 @@ function NewDailySavings() {
     null
   );
   const [isLoading, setIsLoading] = useState(false);
+  const [showCustomTarget, setShowCustomTarget] = useState(false);
 
   useEffect(() => {
     const checkAccount = async () => {
@@ -62,7 +78,9 @@ function NewDailySavings() {
     },
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
 
     if (name === 'amountPerDay') {
@@ -70,12 +88,29 @@ function NewDailySavings() {
         ...formData,
         [name]: Number(value),
       });
+    } else if (name === 'target') {
+      if (value === 'custom') {
+        setShowCustomTarget(true);
+      } else {
+        setShowCustomTarget(false);
+        setFormData({
+          ...formData,
+          [name]: value,
+        });
+      }
     } else {
       setFormData({
         ...formData,
         [name]: value,
       });
     }
+  };
+
+  const handleCustomTargetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      target: e.target.value,
+    });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -190,16 +225,35 @@ function NewDailySavings() {
             >
               Savings Target/Purpose
             </label>
-            <input
-              type="text"
+            <select
               id="target"
               name="target"
-              value={formData.target}
+              value={showCustomTarget ? 'custom' : formData.target}
               onChange={handleChange}
-              placeholder="e.g., New Car, Laptop, Emergency Fund"
-              className="w-full p-3 border border-[#CED4DA] rounded-lg focus:ring-2 focus:ring-[#0066A1] focus:border-[#0066A1] outline-none transition"
+              className="w-full p-3 border border-[#CED4DA] rounded-lg focus:ring-2 focus:ring-[#0066A1] focus:border-[#0066A1] outline-none transition mb-2"
               required
-            />
+            >
+              <option value="">Select a savings target</option>
+              {commonTargets.map((target) => (
+                <option key={target} value={target}>
+                  {target}
+                </option>
+              ))}
+              <option value="custom">Custom target...</option>
+            </select>
+
+            {showCustomTarget && (
+              <input
+                type="text"
+                id="customTarget"
+                name="customTarget"
+                value={formData.target}
+                onChange={handleCustomTargetChange}
+                placeholder="Enter your custom savings target"
+                className="w-full p-3 border border-[#CED4DA] rounded-lg focus:ring-2 focus:ring-[#0066A1] focus:border-[#0066A1] outline-none transition"
+                required
+              />
+            )}
           </div>
 
           <div>
@@ -253,7 +307,7 @@ function NewDailySavings() {
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     ></path>
                   </svg>
-                  Creating Package...
+                  Creating package...
                 </span>
               ) : (
                 'Create Package'

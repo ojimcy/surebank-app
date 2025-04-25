@@ -1,8 +1,16 @@
 import { NavLink, Link } from 'react-router-dom';
 import { safeAreaClasses } from '@/lib/safe-area';
 import { cn } from '@/lib/utils';
+import { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 
 function Footer() {
+  const [showFabMenu, setShowFabMenu] = useState(false);
+
+  const toggleFabMenu = () => {
+    setShowFabMenu(!showFabMenu);
+  };
+
   return (
     <footer
       className={cn(
@@ -68,26 +76,114 @@ function Footer() {
               <span className="text-xs mt-1">Packages</span>
             </NavLink>
           </li>
-          <li className="flex flex-col items-center">
-            <Link
-              to="/payments/deposit"
-              className="p-2 bg-[#0066A1] rounded-full flex flex-col items-center -mt-5 hover:bg-[#007DB8] transition-colors shadow-md hover:shadow-lg active:scale-95"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
+          <li className="flex flex-col items-center relative">
+            <div className="relative">
+              <AnimatePresence>
+                {showFabMenu && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute bottom-16 right-0 -translate-x-1/2 bg-white rounded-lg shadow-lg border border-gray-200 p-2 w-48 z-50"
+                  >
+                    <Link
+                      to="/payments/deposit"
+                      className="flex items-center gap-3 p-2 hover:bg-gray-100 rounded-md"
+                      onClick={() => setShowFabMenu(false)}
+                    >
+                      <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4 text-blue-600"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                          />
+                        </svg>
+                      </div>
+                      <span className="text-sm font-medium">Deposit</span>
+                    </Link>
+                    <Link
+                      to="/packages/new"
+                      className="flex items-center gap-3 p-2 hover:bg-gray-100 rounded-md"
+                      onClick={() => setShowFabMenu(false)}
+                    >
+                      <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4 text-green-600"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                      </div>
+                      <span className="text-sm font-medium">New Package</span>
+                    </Link>
+                    <Link
+                      to="/payments/withdraw"
+                      className="flex items-center gap-3 p-2 hover:bg-gray-100 rounded-md"
+                      onClick={() => setShowFabMenu(false)}
+                    >
+                      <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4 text-purple-600"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"
+                          />
+                        </svg>
+                      </div>
+                      <span className="text-sm font-medium">Withdraw</span>
+                    </Link>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <motion.button
+                onClick={toggleFabMenu}
+                className="p-2 bg-[#0066A1] rounded-full flex flex-col items-center -mt-5 shadow-md hover:shadow-lg active:scale-95"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                animate={{ rotate: showFabMenu ? 45 : 0 }}
+                transition={{ duration: 0.3 }}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                />
-              </svg>
-            </Link>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  />
+                </svg>
+              </motion.button>
+            </div>
           </li>
           <li className="flex flex-col items-center">
             <NavLink

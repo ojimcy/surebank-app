@@ -35,7 +35,7 @@ export function SavingsPackages({
 
     return () => clearInterval(interval);
   }, [activeSlide, packages.length]);
-
+  console.log(packages);
   return (
     <div className="py-2">
       <div className="flex justify-between items-center mb-4">
@@ -70,7 +70,7 @@ export function SavingsPackages({
       >
         {packages.map((pkg) => (
           <div
-            key={pkg.id}
+            key={pkg.title}
             className="min-w-[300px] max-w-[300px] flex-shrink-0 snap-center"
           >
             <div className="bg-white rounded-xl shadow-sm p-4 h-full border border-gray-100 hover:shadow-md transition-shadow">
