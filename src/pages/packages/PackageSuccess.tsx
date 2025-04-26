@@ -4,7 +4,15 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 function PackageSuccess() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { packageType, target, product, amount } = location.state || {};
+  const {
+    packageType,
+    target,
+    product,
+    amount,
+    interestRate,
+    lockPeriod,
+    compoundingFrequency,
+  } = location.state || {};
 
   useEffect(() => {
     // If there's no state, redirect to packages page
@@ -16,6 +24,45 @@ function PackageSuccess() {
   if (!location.state) {
     return null;
   }
+
+  // Calculate the maturity date for interest packages
+  const getMaturityDate = () => {
+    if (packageType !== 'interest' || !lockPeriod) return '';
+
+    const today = new Date();
+    const maturityDate = new Date(today);
+    maturityDate.setDate(today.getDate() + lockPeriod);
+
+    return maturityDate.toLocaleDateString('en-NG', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+  };
+
+  // Calculate estimated returns for interest packages
+  const calculateReturns = () => {
+    if (packageType !== 'interest' || !amount || !interestRate || !lockPeriod) {
+      return 0;
+    }
+
+    const principal = Number(amount);
+    const rate = Number(interestRate) / 100;
+    const period = Number(lockPeriod) / 365; // Convert days to years
+
+    if (!compoundingFrequency) {
+      // Simple interest calculation
+      return principal * rate * period;
+    } else {
+      // Compound interest calculation
+      const compoundFrequency = compoundingFrequency === 'quarterly' ? 4 : 1;
+      const compoundPeriods = period * compoundFrequency;
+      return (
+        principal * Math.pow(1 + rate / compoundFrequency, compoundPeriods) -
+        principal
+      );
+    }
+  };
 
   return (
     <div className="flex flex-col items-center justify-center max-w-md mx-auto h-full py-8">
@@ -43,7 +90,9 @@ function PackageSuccess() {
         </div>
 
         <h1 className="text-2xl font-bold text-[#212529] mb-2">
-          Package Created Successfully!
+          {packageType === 'interest'
+            ? 'Investment Created Successfully!'
+            : 'Package Created Successfully!'}
         </h1>
 
         <p className="text-[#6c757d] mb-6">
@@ -52,8 +101,10 @@ function PackageSuccess() {
             ? 'Daily Savings'
             : packageType === 'sb'
             ? 'SB'
-            : 'Interest-Based'}{' '}
-          package has been created and is now active.
+            : 'Interest-Based Investment'}{' '}
+          {packageType === 'interest'
+            ? 'has been created and your funds are now securely locked.'
+            : 'has been created and is now active.'}
         </p>
 
         <div className="bg-[#F6F8FA] rounded-lg p-4 mb-6">
@@ -87,16 +138,90 @@ function PackageSuccess() {
                 </div>
               </>
             )}
+
+            {packageType === 'interest' && (
+              <>
+                <div className="flex justify-between">
+                  <span className="text-[#6c757d]">Investment Name:</span>
+                  <span className="font-medium text-[#212529]">{target}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[#6c757d]">Principal Amount:</span>
+                  <span className="font-medium text-[#212529]">
+                    ₦{Number(amount).toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[#6c757d]">Interest Rate:</span>
+                  <span className="font-medium text-[#212529]">
+                    {interestRate}% p.a.
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[#6c757d]">Interest Type:</span>
+                  <span className="font-medium text-[#212529]">
+                    {compoundingFrequency
+                      ? `Compound (${
+                          compoundingFrequency === 'quarterly'
+                            ? 'Quarterly'
+                            : 'Annually'
+                        })`
+                      : 'Simple Interest'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[#6c757d]">Lock Period:</span>
+                  <span className="font-medium text-[#212529]">
+                    {lockPeriod === 30
+                      ? '1 Month'
+                      : lockPeriod === 90
+                      ? '3 Months'
+                      : lockPeriod === 180
+                      ? '6 Months'
+                      : lockPeriod === 365
+                      ? '1 Year'
+                      : '2 Years'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[#6c757d]">Maturity Date:</span>
+                  <span className="font-medium text-[#212529]">
+                    {getMaturityDate()}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[#6c757d]">Estimated Returns:</span>
+                  <span className="font-medium text-[#212529]">
+                    ₦
+                    {calculateReturns().toLocaleString(undefined, {
+                      maximumFractionDigits: 2,
+                    })}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[#6c757d]">Total at Maturity:</span>
+                  <span className="font-medium text-[#212529]">
+                    ₦
+                    {(Number(amount) + calculateReturns()).toLocaleString(
+                      undefined,
+                      { maximumFractionDigits: 2 }
+                    )}
+                  </span>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
         <div className="space-y-3">
-          <Link
-            to="/deposit"
-            className="block w-full bg-[#0066A1] text-white py-3 px-4 rounded-lg hover:bg-[#005085] transition-colors"
-          >
-            Make First Contribution
-          </Link>
+          {packageType !== 'interest' && (
+            <Link
+              to="/deposit"
+              className="block w-full bg-[#0066A1] text-white py-3 px-4 rounded-lg hover:bg-[#005085] transition-colors"
+            >
+              Make First Contribution
+            </Link>
+          )}
           <Link
             to="/packages"
             className="block w-full bg-white border border-[#CED4DA] text-[#495057] py-3 px-4 rounded-lg hover:bg-[#F6F8FA] transition-colors"

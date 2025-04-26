@@ -30,15 +30,18 @@ export interface SBPackage {
 }
 
 export interface IBPackage {
-  id: string;
-  accountNumber: string;
-  targetAmount: number;
-  totalContribution: number;
-  status: string;
-  startDate: string;
-  endDate?: string;
+  _id: string;
+  name: string;
+  userId: string;
+  principalAmount: number;
   interestRate: number;
+  lockPeriod: number;
+  compoundingFrequency: string;
+  status: string;
   maturityDate: string;
+  accruedInterest: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Package creation interfaces
@@ -50,6 +53,27 @@ export interface CreateDailySavingsPackageParams {
 export interface CreateSBPackageParams {
   product: string;
   targetAmount?: number;
+}
+
+export interface InitiateIBPackageParams {
+  name: string;
+  principalAmount: number;
+  interestRate: number;
+  lockPeriod: number;
+  compoundingFrequency?: string;
+}
+
+export interface CreateIBPackageParams extends InitiateIBPackageParams {
+  paymentReference: string;
+}
+
+export interface InitiateIBPackageResponse {
+  reference: string;
+  authorization_url: string;
+  access_code: string;
+  principalAmount: number;
+  interestRate: number;
+  lockPeriod: number;
 }
 
 // Packages API functions
@@ -70,14 +94,13 @@ const packagesApi = {
     return response.data;
   },
 
-  // TODO: Implement Interest-Based packages
   // Get Interest-Based packages for a user
-  //   getIBPackages: async (userId: string): Promise<IBPackage[]> => {
-  //     const response = await api.get<IBPackage[]>(
-  //       `/daily-savings/ib/package?userId=${userId}`
-  //     );
-  //     return response.data;
-  //   },
+  getIBPackages: async (userId: string): Promise<IBPackage[]> => {
+    const response = await api.get<IBPackage[]>(
+      `/interest-package/package?userId=${userId}`
+    );
+    return response.data;
+  },
 
   // Get all package types for a user
   getAllPackages: async (
@@ -87,15 +110,16 @@ const packagesApi = {
     sbPackages: SBPackage[];
     ibPackages: IBPackage[];
   }> => {
-    const [dsResponse, sbResponse] = await Promise.all([
+    const [dsResponse, sbResponse, ibResponse] = await Promise.all([
       packagesApi.getDailySavings(userId),
       packagesApi.getSBPackages(userId),
+      packagesApi.getIBPackages(userId),
     ]);
 
     return {
       dailySavings: dsResponse,
       sbPackages: sbResponse,
-      ibPackages: [],
+      ibPackages: ibResponse,
     };
   },
 
@@ -114,6 +138,26 @@ const packagesApi = {
   createSBPackage: async (data: CreateSBPackageParams): Promise<SBPackage> => {
     const response = await api.post<SBPackage>(
       '/daily-savings/sb/self-package',
+      data
+    );
+    return response.data;
+  },
+
+  // Initiate payment for Interest-Based package
+  initiateIBPackagePayment: async (
+    data: InitiateIBPackageParams
+  ): Promise<InitiateIBPackageResponse> => {
+    const response = await api.post<InitiateIBPackageResponse>(
+      '/interest-package/package/initiate-payment',
+      data
+    );
+    return response.data;
+  },
+
+  // Create a new Interest-Based package
+  createIBPackage: async (data: CreateIBPackageParams): Promise<IBPackage> => {
+    const response = await api.post<IBPackage>(
+      '/interest-package/package',
       data
     );
     return response.data;

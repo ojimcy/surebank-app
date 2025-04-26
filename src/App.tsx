@@ -7,6 +7,8 @@ import PackageDetail from '@/pages/packages/PackageDetail';
 import NewPackage from '@/pages/packages/NewPackage';
 import NewDailySavings from '@/pages/packages/NewDailySavings';
 import NewSBPackage from '@/pages/packages/NewSBPackage';
+import NewInterestPackage from '@/pages/packages/NewInterestPackage';
+import InterestPackageCallback from '@/pages/packages/InterestPackageCallback';
 import PackageSuccess from '@/pages/packages/PackageSuccess';
 import ProductCatalog from '@/pages/products/ProductCatalog';
 import Settings from '@/pages/settings/Settings';
@@ -67,6 +69,14 @@ function AppRoutes() {
             <Route path="/packages/new" element={<NewPackage />} />
             <Route path="/packages/new/daily" element={<NewDailySavings />} />
             <Route path="/packages/new/sb" element={<NewSBPackage />} />
+            <Route
+              path="/packages/new/interest"
+              element={<NewInterestPackage />}
+            />
+            <Route
+              path="/packages/new/interest/callback"
+              element={<InterestPackageCallback />}
+            />
             <Route path="/packages/new/success" element={<PackageSuccess />} />
             <Route path="/packages/:id" element={<PackageDetail />} />
             <Route path="/products" element={<ProductCatalog />} />
