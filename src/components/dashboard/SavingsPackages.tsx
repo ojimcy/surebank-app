@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback, memo } from 'react';
 import { Link } from 'react-router-dom';
 import { SavingsPackage } from './types';
 
@@ -7,35 +7,53 @@ interface SavingsPackagesProps {
   formatCurrency: (amount: number) => string;
 }
 
-export function SavingsPackages({
+export const SavingsPackages = memo(function SavingsPackages({
   packages,
   formatCurrency,
 }: SavingsPackagesProps) {
   const [activeSlide, setActiveSlide] = useState(0);
   const sliderRef = useRef<HTMLDivElement>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Handle slide change for savings packages
-  const handleSlideChange = (index: number) => {
-    setActiveSlide(index);
-    if (sliderRef.current) {
-      const slideWidth = sliderRef.current.scrollWidth / packages.length;
-      sliderRef.current.scrollTo({
-        left: slideWidth * index,
-        behavior: 'smooth',
-      });
-    }
-  };
+  // Handle slide change for savings packages with useCallback
+  const handleSlideChange = useCallback(
+    (index: number) => {
+      setActiveSlide(index);
+      if (sliderRef.current) {
+        const slideWidth = sliderRef.current.scrollWidth / packages.length;
+        sliderRef.current.scrollTo({
+          left: slideWidth * index,
+          behavior: 'smooth',
+        });
+      }
+    },
+    [packages.length]
+  );
 
-  // Auto slide every 5 seconds for package slides
+  // Setup and cleanup auto slide timer
   useEffect(() => {
-    const interval = setInterval(() => {
-      const nextSlide = (activeSlide + 1) % packages.length;
-      handleSlideChange(nextSlide);
-    }, 5000);
+    // Clear any existing interval when dependencies change
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
 
-    return () => clearInterval(interval);
-  }, [activeSlide, packages.length]);
-  console.log(packages);
+    // Only set up the interval if we have packages
+    if (packages.length > 0) {
+      intervalRef.current = setInterval(() => {
+        const nextSlide = (activeSlide + 1) % packages.length;
+        handleSlideChange(nextSlide);
+      }, 5000);
+    }
+
+    // Cleanup on unmount or when dependencies change
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [activeSlide, packages.length, handleSlideChange]);
+
   return (
     <div className="py-2">
       <div className="flex justify-between items-center mb-4">
@@ -227,4 +245,4 @@ export function SavingsPackages({
       </div>
     </div>
   );
-}
+});

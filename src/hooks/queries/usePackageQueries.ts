@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import packagesApi, {
@@ -8,46 +8,52 @@ import packagesApi, {
 } from '@/lib/api/packages';
 import { SavingsPackage } from '@/components/dashboard/types';
 
-// Helper function to map package type to color
-const getPackageColor = (type: string): string => {
-  switch (type) {
-    case 'Daily Savings':
-      return '#0066A1';
-    case 'Interest-Based':
-      return '#28A745';
-    case 'SB Package':
-      return '#7952B3';
-    default:
-      return '#0066A1';
-  }
+// Helper function to map package type to color - memoized with a simple object lookup
+const packageColors = {
+  'Daily Savings': '#0066A1',
+  'Interest-Based': '#28A745',
+  'SB Package': '#7952B3',
 };
+
+// Define the packages data structure
+interface PackagesData {
+  dailySavings: DailySavingsPackage[];
+  sbPackages: SBPackage[];
+  ibPackages: IBPackage[];
+}
 
 export const usePackageQueries = () => {
   const { user } = useAuth();
-  const [transformedPackages, setTransformedPackages] = useState<
-    SavingsPackage[]
-  >([]);
 
-  // Fetch all packages
+  // Fetch all packages with proper caching
   const {
     data: packages,
     isLoading,
     isError,
     error,
     refetch,
-  } = useQuery({
+  } = useQuery<PackagesData>({
     queryKey: ['userPackages', user?.id],
     queryFn: async () => {
       if (!user?.id) throw new Error('User not authenticated');
       return packagesApi.getAllPackages(user.id);
     },
     enabled: !!user?.id,
+    // Add caching and refetch strategies
+    staleTime: 5 * 60 * 1000, // Data is fresh for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes (formerly cacheTime)
   });
 
-  useEffect(() => {
-    if (!packages) return;
+  // Memoize the getPackageColor function
+  const getPackageColor = useCallback((type: string): string => {
+    return packageColors[type as keyof typeof packageColors] || '#0066A1';
+  }, []);
 
-    const { dailySavings, sbPackages, ibPackages } = packages;
+  // Memoize the transformed packages to prevent unnecessary recalculations
+  const transformedPackages = useMemo(() => {
+    if (!packages) return [];
+
+    const { dailySavings = [], sbPackages = [], ibPackages = [] } = packages;
 
     // Transform Daily Savings packages
     const dsPackages: SavingsPackage[] = dailySavings.map(
@@ -107,12 +113,8 @@ export const usePackageQueries = () => {
     );
 
     // Combine all package types
-    setTransformedPackages([
-      ...dsPackages,
-      ...sbMappedPackages,
-      ...ibMappedPackages,
-    ]);
-  }, [packages]);
+    return [...dsPackages, ...sbMappedPackages, ...ibMappedPackages];
+  }, [packages, getPackageColor]);
 
   const hasPackages = transformedPackages.length > 0;
 

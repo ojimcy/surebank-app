@@ -1,5 +1,5 @@
 import { useAuth } from '@/hooks/useAuth';
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { WelcomeCard } from '@/components/dashboard/WelcomeCard';
 import { BalanceCard } from '@/components/dashboard/BalanceCard';
 import { QuickActions } from '@/components/dashboard/QuickActions';
@@ -9,6 +9,7 @@ import { RecentTransactions } from '@/components/dashboard/RecentTransactions';
 import { PackageType } from '@/components/dashboard/types';
 import { useAccountQueries } from '@/hooks/queries/useAccountQueries';
 import { usePackageQueries } from '@/hooks/queries/usePackageQueries';
+import { memo } from 'react';
 
 function Dashboard() {
   const { user } = useAuth();
@@ -31,46 +32,49 @@ function Dashboard() {
     isLoading: isPackagesLoading,
   } = usePackageQueries();
 
-  // Available package types
-  const packageTypes: PackageType[] = [
-    {
-      id: 'ds',
-      title: 'DS',
-      description:
-        'Save regularly with flexible daily, weekly, or monthly deposits',
-      icon: 'calendar',
-      color: '#0066A1',
-      cta: 'Start Saving',
-      path: '/packages/new?type=daily',
-    },
-    {
-      id: 'is',
-      title: 'IBS',
-      description: 'Earn competitive interest rates on your locked savings',
-      icon: 'trending-up',
-      color: '#28A745',
-      cta: 'Lock Funds',
-      path: '/packages/new?type=interest',
-    },
-    {
-      id: 'sb',
-      title: 'SB',
-      description: 'Save towards specific products with SureBank packages',
-      icon: 'target',
-      color: '#7952B3',
-      cta: 'Choose Product',
-      path: '/packages/new?type=product',
-    },
-  ];
+  // Available package types - memoized to prevent recreation on each render
+  const packageTypes = useMemo<PackageType[]>(
+    () => [
+      {
+        id: 'ds',
+        title: 'DS',
+        description:
+          'Save regularly with flexible daily, weekly, or monthly deposits',
+        icon: 'calendar',
+        color: '#0066A1',
+        cta: 'Start Saving',
+        path: '/packages/new?type=daily',
+      },
+      {
+        id: 'is',
+        title: 'IBS',
+        description: 'Earn competitive interest rates on your locked savings',
+        icon: 'trending-up',
+        color: '#28A745',
+        cta: 'Lock Funds',
+        path: '/packages/new?type=interest',
+      },
+      {
+        id: 'sb',
+        title: 'SB',
+        description: 'Save towards specific products with SureBank packages',
+        icon: 'target',
+        color: '#7952B3',
+        cta: 'Choose Product',
+        path: '/packages/new?type=product',
+      },
+    ],
+    []
+  );
 
-  // Format currency
-  const formatCurrency = (amount: number) => {
+  // Format currency - memoized to avoid recreation on each render
+  const formatCurrency = useCallback((amount: number) => {
     return new Intl.NumberFormat('en-NG', {
       style: 'currency',
       currency: 'NGN',
       minimumFractionDigits: 2,
     }).format(amount);
-  };
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -115,4 +119,4 @@ function Dashboard() {
   );
 }
 
-export default Dashboard;
+export default memo(Dashboard);
