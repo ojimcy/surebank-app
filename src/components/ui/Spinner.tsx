@@ -1,5 +1,3 @@
-import React from 'react';
-
 type SpinnerProps = {
   size?: 'sm' | 'md' | 'lg';
   color?: 'primary' | 'white' | 'gray';

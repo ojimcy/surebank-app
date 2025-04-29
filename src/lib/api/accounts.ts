@@ -4,7 +4,7 @@ import { AxiosError } from 'axios';
 export interface AccountType {
   ds: 'Daily savings account';
   sb: 'Surebank account';
-  ibs: 'Investment banking services account';
+  ibs: 'Interest Based Savings Account';
 }
 
 export interface Account {

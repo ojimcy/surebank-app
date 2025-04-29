@@ -45,7 +45,6 @@ interface Contribution {
 // Get random image based on package type
 const getRandomPackageImage = (
   packageType: string,
-  target?: string,
   productImage?: string
 ): string => {
   // Default fallback images by package type
@@ -248,21 +247,19 @@ function PackageDetail() {
         }
 
         // Check in IB packages
-        const ibPackage = ibPackages.find((pkg) => pkg.id === id);
+        const ibPackage = ibPackages.find((pkg) => pkg._id === id);
         if (ibPackage) {
           setPackageData({
-            id: ibPackage.id,
-            title: 'Interest Savings',
+            id: ibPackage._id,
+            title: ibPackage.name || 'Interest Savings',
             type: 'Interest-Based',
             icon: 'trending-up',
             progress:
-              ibPackage.targetAmount > 0
-                ? Math.floor(
-                    (ibPackage.totalContribution / ibPackage.targetAmount) * 100
-                  )
+              ibPackage.principalAmount > 0
+                ? 100 // Always 100% since principal is the target
                 : 0,
-            current: ibPackage.totalContribution,
-            target: ibPackage.targetAmount,
+            current: ibPackage.principalAmount,
+            target: ibPackage.principalAmount,
             color: '#28A745',
             statusColor: getStatusColor(ibPackage.status),
             status: formatStatus(ibPackage.status),
@@ -271,15 +268,15 @@ function PackageDetail() {
             maturityDate: formatDate(ibPackage.maturityDate),
             lastContribution: 'Not available',
             nextContribution: 'Not available',
-            startDate: ibPackage.startDate,
-            endDate: ibPackage.endDate,
-            totalContribution: ibPackage.totalContribution,
+            startDate: ibPackage.createdAt,
+            endDate: ibPackage.maturityDate,
+            totalContribution: ibPackage.principalAmount,
             amountPerDay: 0,
             productImage: getRandomPackageImage('Interest-Based'),
           });
 
           // Mock contributions data for demo
-          generateMockContributions(ibPackage.totalContribution);
+          generateMockContributions(ibPackage.principalAmount);
           setLoading(false);
           return;
         }

@@ -25,3 +25,6 @@ dist-ssr
 
 # cursor
 .cursor
+
+# env
+.env

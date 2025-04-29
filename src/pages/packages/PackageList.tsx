@@ -334,16 +334,13 @@ function PackageList() {
 
         // Process IB packages
         const ibPackagesProcessed = ibPackages.map((pkg) => ({
-          id: pkg.id,
-          title: 'Interest Savings',
+          id: pkg._id,
+          title: pkg.name || 'Interest Savings',
           type: 'Interest-Based' as const,
           icon: 'trending-up',
-          progress:
-            pkg.targetAmount > 0
-              ? Math.floor((pkg.totalContribution / pkg.targetAmount) * 100)
-              : 0,
-          current: pkg.totalContribution,
-          target: pkg.targetAmount,
+          progress: pkg.principalAmount > 0 ? 100 : 0, // Always 100% since principal is the target
+          current: pkg.principalAmount,
+          target: pkg.principalAmount,
           color: '#28A745',
           statusColor: getStatusColor(pkg.status),
           status: formatStatus(pkg.status),
@@ -352,8 +349,8 @@ function PackageList() {
           maturityDate: formatDate(pkg.maturityDate),
           lastContribution: 'Not available',
           nextContribution: 'Not available',
-          startDate: pkg.startDate,
-          endDate: pkg.endDate,
+          startDate: pkg.createdAt,
+          endDate: pkg.maturityDate,
           productImage: getRandomPackageImage('Interest-Based'),
         }));
 

@@ -68,7 +68,7 @@ function NewPackage() {
         </Link>
 
         <Link
-          to="/packages/new/interest"
+          to="/packages/new/ibs"
           className="block bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-all transform hover:-translate-y-1"
         >
           <div className="flex items-start">

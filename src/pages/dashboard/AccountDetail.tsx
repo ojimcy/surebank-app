@@ -135,7 +135,7 @@ export default function AccountDetail() {
                 ? 'Daily Savings'
                 : account.accountType === 'sb'
                 ? 'Surebank'
-                : 'Investment Banking Services'}
+                : 'Interest Based Savings'}
             </p>
           </div>
 

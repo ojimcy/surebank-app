@@ -96,19 +96,16 @@ export const usePackageQueries = () => {
     // For now, no IB packages, but we can prepare for them
     const ibMappedPackages: SavingsPackage[] = ibPackages.map(
       (pkg: IBPackage) => ({
-        id: Number(pkg.id || '0'),
-        title: 'Interest Savings',
+        id: Number(pkg._id || '0'),
+        title: pkg.name || 'Interest Savings',
         type: 'Interest-Based',
         icon: 'book-open',
-        progress:
-          pkg.targetAmount > 0
-            ? Math.floor((pkg.totalContribution / pkg.targetAmount) * 100)
-            : 0,
-        current: pkg.totalContribution,
-        target: pkg.targetAmount,
+        progress: 0, 
+        current: pkg.principalAmount,
+        target: pkg.principalAmount, 
         color: getPackageColor('Interest-Based'),
         amountPerDay: 0, // IB packages don't have amountPerDay
-        totalContribution: pkg.totalContribution,
+        totalContribution: pkg.principalAmount,
       })
     );
 

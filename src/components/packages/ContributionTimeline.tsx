@@ -1,5 +1,3 @@
-import React from 'react';
-
 interface Contribution {
   id: string;
   amount: number;

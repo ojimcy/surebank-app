@@ -1,4 +1,3 @@
-import React from 'react';
 import { cn } from '@/lib/utils';
 
 interface CircularProgressProps {
@@ -19,8 +18,6 @@ export function CircularProgress({
   className,
 }: CircularProgressProps) {
   const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (value / 100) * circumference;
 
   return (
     <div className={cn('relative', className)}>

@@ -7,7 +7,9 @@ import PackageDetail from '@/pages/packages/PackageDetail';
 import NewPackage from '@/pages/packages/NewPackage';
 import NewDailySavings from '@/pages/packages/NewDailySavings';
 import NewSBPackage from '@/pages/packages/NewSBPackage';
+import NewIBSPackage from '@/pages/packages/NewIBSPackage';
 import PackageSuccess from '@/pages/packages/PackageSuccess';
+import IBSPackageSuccess from '@/pages/packages/IBSPackageSuccess';
 import ProductCatalog from '@/pages/products/ProductCatalog';
 import Settings from '@/pages/settings/Settings';
 import Login from '@/pages/auth/Login';
@@ -67,7 +69,12 @@ function AppRoutes() {
             <Route path="/packages/new" element={<NewPackage />} />
             <Route path="/packages/new/daily" element={<NewDailySavings />} />
             <Route path="/packages/new/sb" element={<NewSBPackage />} />
+            <Route path="/packages/new/ibs" element={<NewIBSPackage />} />
             <Route path="/packages/new/success" element={<PackageSuccess />} />
+            <Route
+              path="/packages/new/ibs-success"
+              element={<IBSPackageSuccess />}
+            />
             <Route path="/packages/:id" element={<PackageDetail />} />
             <Route path="/products" element={<ProductCatalog />} />
             <Route path="/accounts/:accountType" element={<AccountDetail />} />
