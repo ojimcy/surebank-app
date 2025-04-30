@@ -70,6 +70,9 @@ export interface InitiateIBSPackageParams {
   principalAmount: number;
   interestRate?: number;
   lockPeriod: number;
+  earlyWithdrawalPenalty?: number;
+  redirect_url?: string;
+  callbackUrl?: string;
 }
 
 export interface CreateIBSPackageParams extends InitiateIBSPackageParams {

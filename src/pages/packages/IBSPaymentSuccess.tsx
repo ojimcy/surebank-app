@@ -62,7 +62,8 @@ function IBSPackageSuccess() {
     };
 
     createPackage();
-  }, [showLoader, hideLoader, toast, navigate]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (status === 'loading') {
     return (

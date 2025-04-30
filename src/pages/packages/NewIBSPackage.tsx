@@ -174,8 +174,8 @@ function NewIBSPackage() {
         name: formData.name,
         principalAmount: formData.principalAmount,
         lockPeriod: formData.lockPeriod,
+        redirect_url: `${window.location.origin}/packages/new/ibs-payment-success`,
       };
-      console.log('paymentData', paymentData);
 
       // Initiate payment
       const response = await packagesApi.initiateIBSPackagePayment(paymentData);
@@ -188,9 +188,9 @@ function NewIBSPackage() {
           paymentReference: response.reference,
         })
       );
-
+      console.log('response', response);
       // Redirect to payment gateway - using window.location.replace for a more forceful redirect
-      window.location.replace(response.authorizationUrl);
+      window.location.href = response.authorizationUrl;
     } catch (error) {
       console.error('Failed to initiate payment:', error);
       toast.error({ title: 'Failed to initiate payment' });

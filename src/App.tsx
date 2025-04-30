@@ -9,7 +9,8 @@ import NewDailySavings from '@/pages/packages/NewDailySavings';
 import NewSBPackage from '@/pages/packages/NewSBPackage';
 import NewIBSPackage from '@/pages/packages/NewIBSPackage';
 import PackageSuccess from '@/pages/packages/PackageSuccess';
-import IBSPackageSuccess from '@/pages/packages/IBSPackageSuccess';
+import IBSPackageSuccess from '@/pages/packages/IBSPaymentSuccess';
+import IBSPaymentErrorPage from '@/pages/packages/IBSPaymentErrorPage';
 import ProductCatalog from '@/pages/products/ProductCatalog';
 import Settings from '@/pages/settings/Settings';
 import Login from '@/pages/auth/Login';
@@ -74,6 +75,10 @@ function AppRoutes() {
             <Route
               path="/packages/new/ibs-success"
               element={<IBSPackageSuccess />}
+            />
+            <Route
+              path="/packages/new/ibs-error"
+              element={<IBSPaymentErrorPage />}
             />
             <Route path="/packages/:id" element={<PackageDetail />} />
             <Route path="/products" element={<ProductCatalog />} />
