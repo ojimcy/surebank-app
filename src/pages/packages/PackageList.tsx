@@ -349,7 +349,7 @@ function PackageList() {
           maturityDate: formatDate(pkg.maturityDate),
           lastContribution: 'Not available',
           nextContribution: 'Not available',
-          startDate: pkg.createdAt,
+          startDate: pkg.startDate,
           endDate: pkg.maturityDate,
           productImage: getRandomPackageImage('Interest-Based'),
         }));

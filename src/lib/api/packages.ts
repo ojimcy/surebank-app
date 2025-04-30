@@ -44,6 +44,8 @@ export interface IBPackage {
   accruedInterest: number;
   createdAt: string;
   updatedAt: string;
+  startDate: string;
+  endDate: string;
 }
 
 export interface InterestRateOption {
