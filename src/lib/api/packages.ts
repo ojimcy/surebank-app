@@ -112,6 +112,22 @@ const packagesApi = {
     return response.data;
   },
 
+  // Get Interest-Based package by ID
+  getIBPackageById: async (id: string): Promise<IBPackage> => {
+    const response = await api.get<IBPackage>(
+      `/interest-savings/package/${id}`
+    );
+    return response.data;
+  },
+
+  // Get Interest-Based package by payment reference
+  getIBPackageByReference: async (reference: string): Promise<IBPackage> => {
+    const response = await api.get<IBPackage>(
+      `/interest-savings/package/reference?reference=${reference}`
+    );
+    return response.data;
+  },
+
   // Get all package types for a user
   getAllPackages: async (
     userId: string

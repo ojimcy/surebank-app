@@ -1,15 +1,13 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/lib/toast-provider';
 import { useLoader } from '@/lib/loader-provider';
-import packagesApi, {
-  CreateIBSPackageParams,
-  IBPackage,
-} from '@/lib/api/packages';
+import packagesApi, { IBPackage } from '@/lib/api/packages';
 import { CheckCircle, AlertCircle } from 'lucide-react';
 
 function IBSPackageSuccess() {
   const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
   const { showLoader, hideLoader } = useLoader();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>(
@@ -19,59 +17,67 @@ function IBSPackageSuccess() {
   const [errorMessage, setErrorMessage] = useState<string>('');
 
   useEffect(() => {
-    const createPackage = async () => {
+    const fetchPackage = async () => {
       try {
         showLoader();
 
-        // Retrieve package data from localStorage
-        const storedData = localStorage.getItem('ibsPackageData');
-        if (!storedData) {
-          throw new Error('No package data found');
+        // Get the reference from URL query params
+        const searchParams = new URLSearchParams(location.search);
+        const reference = searchParams.get('reference');
+
+        if (reference) {
+          // Fetch package by reference if we have a reference
+          const packageData = await packagesApi.getIBPackageByReference(
+            reference
+          );
+          setPackage(packageData);
+          setStatus('success');
+          toast.success({ title: 'Package fetched successfully' });
+        } else {
+          // Fallback to most recent package if no reference found
+          const packages = await packagesApi.getIBPackages();
+
+          if (packages.length === 0) {
+            throw new Error('No packages found');
+          }
+
+          // Sort packages by creation date (newest first)
+          const sortedPackages = packages.sort(
+            (a, b) =>
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+
+          // Get the most recently created package
+          setPackage(sortedPackages[0]);
+          setStatus('success');
+          toast.success({ title: 'Package fetched successfully' });
         }
 
-        const packageData = JSON.parse(storedData) as CreateIBSPackageParams;
-
-        // Add the redirect_url to package data during API call
-        const apiData = {
-          ...packageData,
-          // Default values for compounding frequency and early withdrawal penalty
-          compoundingFrequency: 'quarterly',
-          earlyWithdrawalPenalty: 50,
-        };
-
-        // Call API to create the package
-        const newPackage = await packagesApi.createIBSPackage(apiData);
-
-        // Clear stored data
+        // Clean up any leftover data
         localStorage.removeItem('ibsPackageData');
-
-        // Update state
-        setPackage(newPackage);
-        setStatus('success');
-        toast.success({ title: 'Package created successfully' });
       } catch (error) {
-        console.error('Failed to create package:', error);
+        console.error('Failed to fetch package:', error);
         setStatus('error');
         setErrorMessage(
           error instanceof Error ? error.message : 'Unknown error occurred'
         );
-        toast.error({ title: 'Failed to create package' });
+        toast.error({ title: 'Failed to fetch package details' });
       } finally {
         hideLoader();
       }
     };
 
-    createPackage();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchPackage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (status === 'loading') {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
         <div className="h-12 w-12 border-4 border-t-blue-500 rounded-full animate-spin"></div>
-        <h2 className="text-xl font-semibold">Creating your IBS package...</h2>
+        <h2 className="text-xl font-semibold">Loading your IBS package...</h2>
         <p className="text-gray-500">
-          Please wait while we process your payment
+          Please wait while we fetch your package details
         </p>
       </div>
     );
@@ -83,7 +89,7 @@ function IBSPackageSuccess() {
         <AlertCircle className="h-16 w-16 text-red-500" />
         <h2 className="text-xl font-semibold">Something went wrong</h2>
         <p className="text-gray-500">
-          {errorMessage || 'Could not create your package'}
+          {errorMessage || 'Could not fetch your package details'}
         </p>
         <div className="flex space-x-4">
           <button
