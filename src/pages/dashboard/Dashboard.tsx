@@ -75,7 +75,7 @@ function Dashboard() {
       minimumFractionDigits: 2,
     }).format(amount);
   }, []);
-
+  console.log('savingsPackages', savingsPackages);
   return (
     <div className="space-y-6">
       {/* User Welcome Card */}

@@ -24,11 +24,57 @@ export default function AccountDetail() {
 
   // Format date
   const formatDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleDateString('en-NG', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return 'Invalid date';
+      }
+
+      // Get day with ordinal suffix
+      const day = date.getDate();
+      let ordinalSuffix = 'th';
+      if (day > 3 && day < 21) {
+        ordinalSuffix = 'th';
+      } else {
+        switch (day % 10) {
+          case 1:
+            ordinalSuffix = 'st';
+            break;
+          case 2:
+            ordinalSuffix = 'nd';
+            break;
+          case 3:
+            ordinalSuffix = 'rd';
+            break;
+          default:
+            ordinalSuffix = 'th';
+            break;
+        }
+      }
+
+      // Format the date
+      const monthNames = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
+      const month = monthNames[date.getMonth()];
+      const year = date.getFullYear();
+
+      return `${day}${ordinalSuffix} ${month}, ${year}`;
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Invalid date';
+    }
   };
 
   useEffect(() => {

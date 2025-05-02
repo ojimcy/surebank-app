@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 interface PackageHeaderProps {
   title: string;
   type: string;
-  accountNumber: string;
   status: string;
   statusColor: string;
   color: string;
@@ -12,7 +11,6 @@ interface PackageHeaderProps {
 export function PackageHeader({
   title,
   type,
-  accountNumber,
   status,
   statusColor,
   color,
@@ -58,9 +56,6 @@ export function PackageHeader({
               }}
             >
               {type}
-            </span>
-            <span className="ml-2 text-sm text-gray-500">
-              Account: {accountNumber}
             </span>
           </div>
         </div>

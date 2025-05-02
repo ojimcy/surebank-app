@@ -87,7 +87,8 @@ export const SavingsPackages = memo(function SavingsPackages({
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {packages.map((pkg) => (
-          <div
+          <Link
+            to={`/packages/${pkg.id}`}
             key={pkg.title}
             className="min-w-[300px] max-w-[300px] flex-shrink-0 snap-center"
           >
@@ -202,7 +203,7 @@ export const SavingsPackages = memo(function SavingsPackages({
                 Deposit
               </button>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
 

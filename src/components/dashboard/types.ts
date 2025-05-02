@@ -7,7 +7,7 @@ export interface UserType {
 }
 
 export interface SavingsPackage {
-  id: number;
+  id: string;
   title: string;
   type: string;
   icon: string;

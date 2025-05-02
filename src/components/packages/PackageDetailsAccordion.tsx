@@ -4,7 +4,6 @@ import { ChevronDownIcon } from '@radix-ui/react-icons';
 interface PackageDetailsAccordionProps {
   type: string;
   status: string;
-  accountNumber: string;
   startDate: string;
   endDate?: string;
   lastContribution?: string;
@@ -15,7 +14,6 @@ interface PackageDetailsAccordionProps {
 export function PackageDetailsAccordion({
   type,
   status,
-  accountNumber,
   startDate,
   endDate,
   lastContribution,
@@ -63,10 +61,6 @@ export function PackageDetailsAccordion({
               <div>
                 <p className="font-medium text-gray-700">Status</p>
                 <p>{formatStatus(status)}</p>
-              </div>
-              <div>
-                <p className="font-medium text-gray-700">Account Number</p>
-                <p>{accountNumber}</p>
               </div>
               <div>
                 <p className="font-medium text-gray-700">Start Date</p>

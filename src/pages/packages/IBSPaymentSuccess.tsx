@@ -4,6 +4,7 @@ import { useToast } from '@/lib/toast-provider';
 import { useLoader } from '@/lib/loader-provider';
 import packagesApi, { IBPackage } from '@/lib/api/packages';
 import { CheckCircle, AlertCircle } from 'lucide-react';
+import { formatDate } from '@/lib/utils';
 
 function IBSPackageSuccess() {
   const navigate = useNavigate();
@@ -14,7 +15,6 @@ function IBSPackageSuccess() {
     'loading'
   );
   const [package_, setPackage] = useState<IBPackage | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string>('');
 
   useEffect(() => {
     const fetchPackage = async () => {
@@ -58,9 +58,6 @@ function IBSPackageSuccess() {
       } catch (error) {
         console.error('Failed to fetch package:', error);
         setStatus('error');
-        setErrorMessage(
-          error instanceof Error ? error.message : 'Unknown error occurred'
-        );
         toast.error({ title: 'Failed to fetch package details' });
       } finally {
         hideLoader();
@@ -70,7 +67,7 @@ function IBSPackageSuccess() {
     fetchPackage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
+  console.log('package_', package_);
   if (status === 'loading') {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
@@ -88,23 +85,33 @@ function IBSPackageSuccess() {
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
         <AlertCircle className="h-16 w-16 text-red-500" />
         <h2 className="text-xl font-semibold">Something went wrong</h2>
-        <p className="text-gray-500">
-          {errorMessage || 'Could not fetch your package details'}
+        <p className="text-gray-500 text-center max-w-md">
+          {'Could not fetch your package details'}. Click the button below to
+          try again.
         </p>
-        <div className="flex space-x-4">
+        <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 font-medium"
+          >
+            Try Again
+          </button>
           <button
             onClick={() => navigate('/packages')}
             className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
           >
             View My Packages
           </button>
-          <button
-            onClick={() => navigate('/packages/new/ibs')}
-            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-          >
-            Try Again
-          </button>
         </div>
+        <p className="text-sm text-gray-500 mt-2">
+          If the issue persists after retrying, please{' '}
+          <button
+            onClick={() => navigate('/settings/support')}
+            className="text-blue-500 underline hover:text-blue-700"
+          >
+            contact support
+          </button>
+        </p>
       </div>
     );
   }
@@ -143,7 +150,7 @@ function IBSPackageSuccess() {
             <div>
               <p className="text-sm text-gray-500">Maturity Date</p>
               <p className="font-medium">
-                {new Date(package_.maturityDate).toLocaleDateString()}
+                {formatDate(new Date(package_.maturityDate).getTime())}
               </p>
             </div>
           </div>

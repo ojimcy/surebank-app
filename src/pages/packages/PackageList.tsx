@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-import packagesApi from '@/lib/api/packages';
+import packagesApi, { IBPackage as APIIBPackage } from '@/lib/api/packages';
 
 // Unified package interface for the UI
 interface UIPackage {
@@ -26,6 +26,13 @@ interface UIPackage {
   startDate: string;
   endDate?: string;
   amountPerDay?: number;
+  estimatedEarnings?: number;
+  // Add IBS-specific fields
+  compoundingFrequency?: string;
+  lockPeriod?: number;
+  interestAccrued?: number;
+  earlyWithdrawalPenalty?: number;
+  currentBalance?: number;
 }
 
 // Available package types
@@ -255,6 +262,165 @@ const getRandomPackageImage = (
   );
 };
 
+// Unified date handling functions
+const isTimestamp = (value: string | number): boolean => {
+  const numberValue = typeof value === 'string' ? Number(value) : value;
+  return !isNaN(numberValue) && numberValue > 1000000000000; // Simple check for unix timestamp (in ms)
+};
+
+const parseDate = (
+  dateInput: string | number | Date | undefined
+): Date | null => {
+  if (!dateInput) return null;
+
+  try {
+    // Already a Date object
+    if (dateInput instanceof Date) return dateInput;
+
+    // Handle numeric timestamps (milliseconds since epoch)
+    if (isTimestamp(dateInput)) {
+      return new Date(Number(dateInput));
+    }
+
+    // Try to parse as ISO date string
+    const date = new Date(dateInput);
+    if (!isNaN(date.getTime())) {
+      return date;
+    }
+
+    // If it's a formatted date string (e.g., "1st May, 2026"),
+    // log warning and return null - we should avoid this case
+    if (
+      typeof dateInput === 'string' &&
+      (dateInput.includes('st ') ||
+        dateInput.includes('nd ') ||
+        dateInput.includes('rd ') ||
+        dateInput.includes('th '))
+    ) {
+      console.warn('Attempting to parse an already formatted date:', dateInput);
+      return null;
+    }
+
+    console.error('Failed to parse date:', dateInput);
+    return null;
+  } catch (error) {
+    console.error('Error parsing date:', error, dateInput);
+    return null;
+  }
+};
+
+const formatDate = (dateInput: string | number | Date | undefined): string => {
+  if (!dateInput) return 'N/A';
+
+  const date = parseDate(dateInput);
+  if (!date) return 'Invalid date';
+
+  try {
+    // Get day with ordinal suffix
+    const day = date.getDate();
+    let ordinalSuffix = 'th';
+    if (day > 3 && day < 21) {
+      ordinalSuffix = 'th';
+    } else {
+      switch (day % 10) {
+        case 1:
+          ordinalSuffix = 'st';
+          break;
+        case 2:
+          ordinalSuffix = 'nd';
+          break;
+        case 3:
+          ordinalSuffix = 'rd';
+          break;
+        default:
+          ordinalSuffix = 'th';
+          break;
+      }
+    }
+
+    // Format the date
+    const monthNames = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    const month = monthNames[date.getMonth()];
+    const year = date.getFullYear();
+
+    return `${day}${ordinalSuffix} ${month}, ${year}`;
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return 'Invalid date';
+  }
+};
+
+// Update the timestamp calculation for estimated earnings
+const calculateEstimatedEarnings = (
+  principal: number,
+  interestRate: number,
+  startDateTimestamp: number | string | Date,
+  maturityDateTimestamp: number | string | Date,
+  compoundingFrequency: string = 'annually'
+): number => {
+  try {
+    const startDate = parseDate(startDateTimestamp);
+    const maturityDate = parseDate(maturityDateTimestamp);
+
+    if (!startDate || !maturityDate) {
+      console.error('Invalid date parameters for earnings calculation');
+      return 0;
+    }
+
+    // Calculate duration in years
+    const durationMs = maturityDate.getTime() - startDate.getTime();
+    const durationYears = durationMs / (1000 * 60 * 60 * 24 * 365);
+
+    // Determine compounding periods per year
+    let periodsPerYear = 1; // Default to annual compounding
+
+    switch (compoundingFrequency?.toLowerCase()) {
+      case 'monthly':
+        periodsPerYear = 12;
+        break;
+      case 'quarterly':
+        periodsPerYear = 4;
+        break;
+      case 'semi-annually':
+      case 'biannually':
+        periodsPerYear = 2;
+        break;
+      case 'daily':
+        periodsPerYear = 365;
+        break;
+      case 'weekly':
+        periodsPerYear = 52;
+        break;
+      default:
+        periodsPerYear = 1; // Annual
+    }
+
+    // Compound interest formula: A = P(1 + r/n)^(nt)
+    const rate = interestRate / 100;
+    const n = periodsPerYear;
+    const t = durationYears;
+
+    const finalAmount = principal * Math.pow(1 + rate / n, n * t);
+    return finalAmount - principal;
+  } catch (error) {
+    console.error('Error calculating estimated earnings:', error);
+    return 0;
+  }
+};
+
 function PackageList() {
   const [showFabMenu, setShowFabMenu] = useState(false);
   const [activeTab, setActiveTab] = useState<'packages' | 'types'>('packages');
@@ -282,10 +448,11 @@ function PackageList() {
         // Fetch all package types using the API service
         const { dailySavings, sbPackages, ibPackages } =
           await packagesApi.getAllPackages(userId);
+        console.log(sbPackages);
 
         // Process DS packages
         const dsPackages = dailySavings.map((pkg) => ({
-          id: pkg.id,
+          id: pkg._id,
           title: pkg.target || 'Savings Goal',
           type: 'Daily Savings' as const,
           icon: 'home',
@@ -302,8 +469,8 @@ function PackageList() {
           lastContribution: formatDate(pkg.updatedAt),
           nextContribution: calculateNextContribution(pkg.amountPerDay),
           amountPerDay: pkg.amountPerDay,
-          startDate: pkg.startDate,
-          endDate: pkg.endDate,
+          startDate: formatDate(pkg.startDate),
+          endDate: formatDate(pkg.endDate),
           productImage: getRandomPackageImage('Daily Savings', pkg.target),
         }));
 
@@ -328,31 +495,71 @@ function PackageList() {
             getRandomPackageImage('SB Package', pkg.product?.name),
           lastContribution: 'Not available',
           nextContribution: 'Not available',
-          startDate: pkg.startDate,
-          endDate: pkg.endDate,
+          startDate: formatDate(pkg.startDate),
+          endDate: formatDate(pkg.endDate),
         }));
 
         // Process IB packages
-        const ibPackagesProcessed = ibPackages.map((pkg) => ({
-          id: pkg._id,
-          title: pkg.name || 'Interest Savings',
-          type: 'Interest-Based' as const,
-          icon: 'trending-up',
-          progress: pkg.principalAmount > 0 ? 100 : 0, // Always 100% since principal is the target
-          current: pkg.principalAmount,
-          target: pkg.principalAmount,
-          color: '#28A745',
-          statusColor: getStatusColor(pkg.status),
-          status: formatStatus(pkg.status),
-          accountNumber: pkg.accountNumber,
-          interestRate: `${pkg.interestRate}% p.a.`,
-          maturityDate: formatDate(pkg.maturityDate),
-          lastContribution: 'Not available',
-          nextContribution: 'Not available',
-          startDate: pkg.startDate,
-          endDate: pkg.maturityDate,
-          productImage: getRandomPackageImage('Interest-Based'),
-        }));
+        const ibPackagesProcessed = ibPackages.map((pkg: APIIBPackage) => {
+          // Use our parse function to ensure proper date handling
+          const startDate = parseDate(pkg.startDate);
+          const maturityDate = parseDate(pkg.maturityDate);
+          const currentDate = new Date();
+
+          // Calculate time-based progress for IBP
+          let timeProgress = 0;
+
+          if (startDate && maturityDate) {
+            // Calculate progress as percentage of time elapsed
+            const totalDuration = maturityDate.getTime() - startDate.getTime();
+            const elapsedDuration = currentDate.getTime() - startDate.getTime();
+            timeProgress =
+              totalDuration > 0
+                ? Math.min(
+                    100,
+                    Math.floor((elapsedDuration / totalDuration) * 100)
+                  )
+                : 0;
+          }
+
+          return {
+            id: pkg._id,
+            title: pkg.name || 'Interest Savings',
+            type: 'Interest-Based' as const,
+            icon: 'trending-up',
+            progress: timeProgress, // Time-based progress instead of amount-based
+            current: pkg.principalAmount,
+            target: pkg.principalAmount,
+            color: '#28A745',
+            statusColor: getStatusColor(pkg.status),
+            status: formatStatus(pkg.status),
+            accountNumber: pkg.accountNumber,
+            interestRate: `${pkg.interestRate}% p.a.`,
+            maturityDate: formatDate(pkg.maturityDate),
+            lastContribution: 'Not available',
+            nextContribution: 'Not available',
+            startDate: formatDate(pkg.startDate),
+            endDate: formatDate(pkg.maturityDate),
+            productImage: getRandomPackageImage('Interest-Based'),
+            // Add additional fields from the actual data structure
+            compoundingFrequency: pkg.compoundingFrequency || 'N/A',
+            lockPeriod: pkg.lockPeriod || undefined,
+            interestAccrued: pkg.accruedInterest || 0, // Note: API uses accruedInterest
+            earlyWithdrawalPenalty: pkg.earlyWithdrawalPenalty || undefined,
+            currentBalance: pkg.principalAmount, // Use principal as current balance
+            // Calculate estimated earnings if interest hasn't accrued yet
+            estimatedEarnings:
+              pkg.accruedInterest > 0
+                ? pkg.accruedInterest
+                : calculateEstimatedEarnings(
+                    pkg.principalAmount,
+                    pkg.interestRate,
+                    pkg.startDate,
+                    pkg.maturityDate,
+                    pkg.compoundingFrequency
+                  ),
+          };
+        });
 
         // Combine all packages
         setPackages([
@@ -374,7 +581,6 @@ function PackageList() {
   const toggleFabMenu = () => {
     setShowFabMenu(!showFabMenu);
   };
-
   // Helper functions
   const getStatusColor = (status: string): string => {
     switch (status.toLowerCase()) {
@@ -399,38 +605,6 @@ function PackageList() {
         return 'Pending';
       default:
         return status;
-    }
-  };
-
-  const formatDate = (dateString: string): string => {
-    if (!dateString) return 'N/A';
-
-    try {
-      // Handle numeric timestamps (milliseconds since epoch)
-      const timestamp = parseInt(dateString);
-      if (!isNaN(timestamp)) {
-        const date = new Date(timestamp);
-        return date.toLocaleDateString('en-NG', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-        });
-      }
-
-      // Handle string dates
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) {
-        return 'Invalid date';
-      }
-
-      return date.toLocaleDateString('en-NG', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      });
-    } catch (error) {
-      console.error('Error formatting date:', error);
-      return 'Invalid date';
     }
   };
 
@@ -469,6 +643,7 @@ function PackageList() {
           if (filteredType === 'sb') return pkg.type === 'SB Package';
           return true;
         });
+console.log(packages);
 
   return (
     <div className="space-y-6 pb-20 relative">
@@ -777,52 +952,109 @@ function PackageList() {
                       </div>
                     </div>
 
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 text-sm">Amount:</span>
-                      <span className="font-medium">
-                        ₦{pkg.target?.toLocaleString() || '0'}
-                      </span>
-                    </div>
-                    {pkg.type === 'Daily Savings' && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 text-sm">
-                          Daily Amount:
-                        </span>
-                        <span className="font-medium">
-                          ₦{pkg.current?.toLocaleString() || '0'}
-                        </span>
+                    {/* Show these sections only for non-IB packages */}
+                    {pkg.type !== 'Interest-Based' && (
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 text-sm">Amount:</span>
+                          <span className="font-medium">
+                            ₦{pkg.target?.toLocaleString() || '0'}
+                          </span>
+                        </div>
+                        {pkg.type === 'Daily Savings' && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 text-sm">
+                              Daily Amount:
+                            </span>
+                            <span className="font-medium">
+                              ₦{pkg.current?.toLocaleString() || '0'}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 text-sm">
+                            Start Date:
+                          </span>
+                          <span className="font-medium">{pkg.startDate}</span>
+                        </div>
+                        {pkg.type === 'Daily Savings' &&
+                          pkg.nextContribution && (
+                            <div className="flex justify-between">
+                              <span className="text-gray-600 text-sm">
+                                Next Contribution:
+                              </span>
+                              <span className="font-medium text-primary">
+                                {pkg.nextContribution}
+                              </span>
+                            </div>
+                          )}
                       </div>
                     )}
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 text-sm">Start Date:</span>
-                      <span className="font-medium">
-                        {formatDate(pkg.startDate)}
-                      </span>
-                    </div>
-                    {pkg.type === 'SB Package' && pkg.endDate && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 text-sm">End Date:</span>
-                        <span className="font-medium">
-                          {formatDate(pkg.endDate)}
-                        </span>
-                      </div>
-                    )}
-                    {pkg.type === 'Daily Savings' && pkg.nextContribution && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 text-sm">
-                          Next Contribution:
-                        </span>
-                        <span className="font-medium text-primary">
-                          {pkg.nextContribution}
-                        </span>
-                      </div>
-                    )}
-                    {pkg.type === 'Interest-Based' && pkg.interestRate && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 text-sm">
-                          Interest Rate:
-                        </span>
-                        <span className="font-medium">{pkg.interestRate}</span>
+
+                    {/* Show these sections only for IB packages */}
+                    {pkg.type === 'Interest-Based' && (
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 text-sm">
+                            Principal Amount:
+                          </span>
+                          <span className="font-medium">
+                            ₦{pkg.current?.toLocaleString() || '0'}
+                          </span>
+                        </div>
+                        {pkg.interestRate && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 text-sm">
+                              Interest Rate:
+                            </span>
+                            <span className="font-medium">
+                              {pkg.interestRate}
+                            </span>
+                          </div>
+                        )}
+                        {pkg.lockPeriod && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 text-sm">
+                              Lock Period:
+                            </span>
+                            <span className="font-medium">
+                              {pkg.lockPeriod}{' '}
+                              {pkg.lockPeriod === 1 ? 'month' : 'months'}
+                            </span>
+                          </div>
+                        )}
+                        {((pkg.interestAccrued !== undefined &&
+                          pkg.interestAccrued > 0) ||
+                          (pkg.estimatedEarnings !== undefined &&
+                            pkg.estimatedEarnings > 0)) && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 text-sm">
+                              Interest Earned:
+                            </span>
+                            <span className="font-medium text-green-600">
+                              ₦{' '}
+                              {pkg.interestAccrued?.toLocaleString(undefined, {
+                                maximumFractionDigits: 0,
+                              })}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 text-sm">
+                            Maturity:
+                          </span>
+                          <span className="font-medium">
+                            {pkg.maturityDate}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 text-sm">
+                            Progress:
+                          </span>
+                          <span className="font-medium">
+                            {pkg.progress}% to maturity
+                          </span>
+                        </div>
                       </div>
                     )}
                   </div>

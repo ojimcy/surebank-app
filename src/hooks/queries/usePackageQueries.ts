@@ -58,7 +58,7 @@ export const usePackageQueries = () => {
     // Transform Daily Savings packages
     const dsPackages: SavingsPackage[] = dailySavings.map(
       (pkg: DailySavingsPackage) => ({
-        id: Number(pkg.id),
+        id: pkg._id,
         title: pkg.target || 'Savings Goal',
         type: 'Daily Savings',
         icon: 'home',
@@ -77,7 +77,7 @@ export const usePackageQueries = () => {
     // Transform SB packages
     const sbMappedPackages: SavingsPackage[] = sbPackages.map(
       (pkg: SBPackage) => ({
-        id: Number(pkg._id),
+        id: pkg._id,
         title: pkg.product?.name || 'Product Goal',
         type: 'SB Package',
         icon: 'laptop',
@@ -95,18 +95,20 @@ export const usePackageQueries = () => {
 
     // For now, no IB packages, but we can prepare for them
     const ibMappedPackages: SavingsPackage[] = ibPackages.map(
-      (pkg: IBPackage) => ({
-        id: Number(pkg._id || '0'),
-        title: pkg.name || 'Interest Savings',
-        type: 'Interest-Based',
-        icon: 'book-open',
-        progress: 0, 
-        current: pkg.principalAmount,
-        target: pkg.principalAmount, 
-        color: getPackageColor('Interest-Based'),
-        amountPerDay: 0, // IB packages don't have amountPerDay
-        totalContribution: pkg.principalAmount,
-      })
+      (pkg: IBPackage) => {
+        return {
+          id: pkg._id,
+          title: pkg.name || 'Interest Savings',
+          type: 'Interest-Based',
+          icon: 'book-open',
+          progress: 0,
+          current: pkg.principalAmount,
+          target: pkg.principalAmount,
+          color: getPackageColor('Interest-Based'),
+          amountPerDay: 0, // IB packages don't have amountPerDay
+          totalContribution: pkg.principalAmount,
+        };
+      }
     );
 
     // Combine all package types

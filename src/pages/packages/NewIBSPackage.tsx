@@ -6,7 +6,7 @@ import packagesApi, {
   InitiateIBSPackageParams,
   InterestRateOption,
 } from '@/lib/api/packages';
-import { Button } from '@/components/ui/button';
+import { StyledButton } from '@/components/ui/styled-button';
 import { getUserAccountByType, createAccount } from '@/lib/api/accounts';
 import { useQuery } from '@tanstack/react-query';
 
@@ -188,7 +188,6 @@ function NewIBSPackage() {
           paymentReference: response.reference,
         })
       );
-      console.log('response', response);
       // Redirect to payment gateway - using window.location.replace for a more forceful redirect
       window.location.href = response.authorizationUrl;
     } catch (error) {
@@ -215,7 +214,9 @@ function NewIBSPackage() {
         <p className="text-gray-500 mb-4">
           You need an Interest-Based Savings account to create packages
         </p>
-        <Button
+        <StyledButton
+          text="Create IBS Account"
+          variant="primary"
           onClick={async () => {
             try {
               loader.showLoader('Creating account...');
@@ -229,10 +230,7 @@ function NewIBSPackage() {
               loader.hideLoader();
             }
           }}
-          className="w-full"
-        >
-          Create IBS Account
-        </Button>
+        />
       </div>
     );
   }
@@ -358,12 +356,11 @@ function NewIBSPackage() {
             </p>
           </div>
 
-          <Button
+          <StyledButton
+            text="Proceed to Payment"
+            variant="secondary"
             type="submit"
-            className="w-full bg-secondary hover:bg-secondary/90"
-          >
-            Proceed to Payment
-          </Button>
+          />
         </form>
       </div>
     </div>

@@ -14,6 +14,11 @@ interface PackageOverviewProps {
   type: string;
   formatCurrency: (amount: number) => string;
   formatDate: (date: string) => string;
+  compoundingFrequency?: string;
+  lockPeriod?: number;
+  interestAccrued?: number;
+  earlyWithdrawalPenalty?: number;
+  estimatedEarnings?: number;
 }
 
 export function PackageOverview({
@@ -32,7 +37,11 @@ export function PackageOverview({
   type,
   formatCurrency,
   formatDate,
+  lockPeriod,
+  interestAccrued,
+  estimatedEarnings,
 }: PackageOverviewProps) {
+  const isInterestBased = type === 'Interest-Based';
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden mb-6">
       <div className="md:flex">
@@ -52,7 +61,9 @@ export function PackageOverview({
         <div className="md:w-2/3 p-6">
           <div className="flex justify-between items-start mb-4">
             <div>
-              <h2 className="text-lg font-semibold mb-2">Package Progress</h2>
+              <h2 className="text-lg font-semibold mb-2">
+                {isInterestBased ? 'Investment Progress' : 'Package Progress'}
+              </h2>
               <div className="flex items-center">
                 <div className="w-20 h-20 relative mr-4">
                   <svg className="w-full h-full" viewBox="0 0 100 100">
@@ -91,21 +102,25 @@ export function PackageOverview({
                 </div>
                 <div>
                   <div className="mb-2">
-                    <div className="text-sm text-gray-500">Current Balance</div>
+                    <div className="text-sm text-gray-500">
+                      Principal Amount
+                    </div>
                     <div className="font-bold text-xl">
-                      {type !== 'Interest-Based'
-                        ? formatCurrency(totalContribution)
-                        : formatCurrency(current)}
+                      {formatCurrency(current)}
                     </div>
                   </div>
                   <div>
                     <div className="text-sm text-gray-500">
-                      {type === 'Daily Savings'
+                      {isInterestBased
+                        ? 'Maturity Progress'
+                        : type === 'Daily Savings'
                         ? 'Amount Per Day'
                         : 'Target Balance'}
                     </div>
                     <div className="font-bold text-xl">
-                      {type === 'Daily Savings'
+                      {isInterestBased
+                        ? `${progress}% complete`
+                        : type === 'Daily Savings'
                         ? formatCurrency(amountPerDay)
                         : formatCurrency(target)}
                     </div>
@@ -114,27 +129,94 @@ export function PackageOverview({
               </div>
             </div>
           </div>
+
+          {/* Interest-Based specific display */}
+          {isInterestBased && (
+            <div className="mb-4 border-t pt-4">
+              <h3 className="text-md font-semibold mb-2">Investment Details</h3>
+              <div className="grid grid-cols-2 gap-4">
+                {interestRate && (
+                  <div>
+                    <div className="text-sm text-gray-500">Interest Rate</div>
+                    <div className="font-medium">{interestRate}</div>
+                  </div>
+                )}
+                {lockPeriod && (
+                  <div>
+                    <div className="text-sm text-gray-500">Lock Period</div>
+                    <div className="font-medium">
+                      {lockPeriod} {lockPeriod === 1 ? 'month' : 'months'}
+                    </div>
+                  </div>
+                )}
+                {interestAccrued !== undefined && interestAccrued > 0 && (
+                  <div>
+                    <div className="text-sm text-gray-500">Interest Earned</div>
+                    <div className="font-medium text-green-600">
+                      {formatCurrency(interestAccrued)}
+                    </div>
+                  </div>
+                )}
+                {estimatedEarnings !== undefined &&
+                  estimatedEarnings > 0 &&
+                  interestAccrued === 0 && (
+                    <div>
+                      <div className="text-sm text-gray-500">
+                        Est. Earnings at Maturity
+                      </div>
+                      <div className="font-medium text-green-600">
+                        {formatCurrency(estimatedEarnings)}
+                      </div>
+                    </div>
+                  )}
+                {maturityDate && (
+                  <div>
+                    <div className="text-sm text-gray-500">Maturity Date</div>
+                    <div className="font-medium">{maturityDate}</div>
+                  </div>
+                )}
+                {totalContribution && (
+                  <div>
+                    <div className="text-sm text-gray-500">
+                      Total Contribution
+                    </div>
+                    <div className="font-medium">
+                      {formatCurrency(totalContribution)}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Standard package details */}
           <div className="grid grid-cols-2 gap-4 border-t pt-4">
             <div>
               <div className="text-sm text-gray-500">Start Date</div>
               <div className="font-medium">{formatDate(startDate)}</div>
             </div>
-            {endDate && (
+            {endDate && !isInterestBased && (
               <div>
                 <div className="text-sm text-gray-500">End Date</div>
                 <div className="font-medium">{formatDate(endDate)}</div>
               </div>
             )}
-            {interestRate && (
+            {!isInterestBased && interestRate && (
               <div>
                 <div className="text-sm text-gray-500">Interest Rate</div>
                 <div className="font-medium">{interestRate}</div>
               </div>
             )}
-            {maturityDate && (
+            {!isInterestBased && maturityDate && (
               <div>
                 <div className="text-sm text-gray-500">Maturity Date</div>
                 <div className="font-medium">{formatDate(maturityDate)}</div>
+              </div>
+            )}
+            {totalContribution && (
+              <div>
+                <div className="text-sm text-gray-500">Total Contribution</div>
+                <div className="font-medium">{formatCurrency(totalContribution)}</div>
               </div>
             )}
             {nextContribution && nextContribution !== 'Not available' && (

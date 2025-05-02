@@ -32,6 +32,12 @@ interface UIPackage {
   amountPerDay: number;
   startDate: string;
   endDate?: string;
+  // Add IBS-specific fields
+  compoundingFrequency?: string;
+  lockPeriod?: number;
+  interestAccrued?: number;
+  earlyWithdrawalPenalty?: number;
+  estimatedEarnings?: number;
 }
 
 // Contribution interface
@@ -97,28 +103,61 @@ function PackageDetail() {
     if (!dateString) return 'N/A';
 
     try {
+      let date: Date;
+
       // Handle numeric timestamps (milliseconds since epoch)
       const timestamp = parseInt(dateString);
       if (!isNaN(timestamp)) {
-        const date = new Date(timestamp);
-        return date.toLocaleDateString('en-NG', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-        });
+        date = new Date(timestamp);
+      } else {
+        // Handle string dates
+        date = new Date(dateString);
+        if (isNaN(date.getTime())) {
+          return 'Invalid date';
+        }
       }
 
-      // Handle string dates
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) {
-        return 'Invalid date';
+      // Get day with ordinal suffix
+      const day = date.getDate();
+      let ordinalSuffix = 'th';
+      if (day > 3 && day < 21) {
+        ordinalSuffix = 'th';
+      } else {
+        switch (day % 10) {
+          case 1:
+            ordinalSuffix = 'st';
+            break;
+          case 2:
+            ordinalSuffix = 'nd';
+            break;
+          case 3:
+            ordinalSuffix = 'rd';
+            break;
+          default:
+            ordinalSuffix = 'th';
+            break;
+        }
       }
 
-      return date.toLocaleDateString('en-NG', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      });
+      // Format the date
+      const monthNames = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
+      const month = monthNames[date.getMonth()];
+      const year = date.getFullYear();
+
+      return `${day}${ordinalSuffix} ${month}, ${year}`;
     } catch (error) {
       console.error('Error formatting date:', error);
       return 'Invalid date';
@@ -172,10 +211,10 @@ function PackageDetail() {
           await packagesApi.getAllPackages(user.id);
 
         // Check in daily savings
-        const dsPackage = dailySavings.find((pkg) => pkg.id === id);
+        const dsPackage = dailySavings.find((pkg) => pkg._id === id);
         if (dsPackage) {
           setPackageData({
-            id: dsPackage.id,
+            id: dsPackage._id,
             title: dsPackage.target || 'Savings Goal',
             type: 'Daily Savings',
             icon: 'home',
@@ -249,15 +288,37 @@ function PackageDetail() {
         // Check in IB packages
         const ibPackage = ibPackages.find((pkg) => pkg._id === id);
         if (ibPackage) {
+          // Calculate time-based progress for IBP
+          const startDate = new Date(ibPackage.startDate).getTime();
+          const maturityDate = new Date(ibPackage.maturityDate).getTime();
+          const currentDate = new Date().getTime();
+
+          // Calculate progress as percentage of time elapsed
+          const totalDuration = maturityDate - startDate;
+          const elapsedDuration = currentDate - startDate;
+          const timeProgress =
+            totalDuration > 0
+              ? Math.min(
+                  100,
+                  Math.floor((elapsedDuration / totalDuration) * 100)
+                )
+              : 0;
+
+          // Calculate estimated earnings
+          const estimatedEarnings = calculateEstimatedEarnings(
+            ibPackage.principalAmount,
+            ibPackage.interestRate,
+            startDate,
+            maturityDate,
+            ibPackage.compoundingFrequency
+          );
+
           setPackageData({
             id: ibPackage._id,
             title: ibPackage.name || 'Interest Savings',
             type: 'Interest-Based',
             icon: 'trending-up',
-            progress:
-              ibPackage.principalAmount > 0
-                ? 100 // Always 100% since principal is the target
-                : 0,
+            progress: timeProgress, // Time-based progress to maturity
             current: ibPackage.principalAmount,
             target: ibPackage.principalAmount,
             color: '#28A745',
@@ -268,19 +329,35 @@ function PackageDetail() {
             maturityDate: formatDate(ibPackage.maturityDate),
             lastContribution: 'Not available',
             nextContribution: 'Not available',
-            startDate: ibPackage.createdAt,
+            startDate: ibPackage.startDate || ibPackage.createdAt,
             endDate: ibPackage.maturityDate,
-            totalContribution: ibPackage.principalAmount,
+            totalContribution: ibPackage.totalContribution,
             amountPerDay: 0,
             productImage: getRandomPackageImage('Interest-Based'),
+            // Add IBS-specific fields
+            compoundingFrequency: ibPackage.compoundingFrequency,
+            lockPeriod: ibPackage.lockPeriod,
+            interestAccrued: ibPackage.accruedInterest || 0,
+            earlyWithdrawalPenalty: ibPackage.earlyWithdrawalPenalty,
+            estimatedEarnings:
+              ibPackage.accruedInterest > 0
+                ? ibPackage.accruedInterest
+                : estimatedEarnings,
           });
 
-          // Mock contributions data for demo
-          generateMockContributions(ibPackage.principalAmount);
+          // For IBS packages, use a single contribution entry for the principal amount
+          const contribution: Contribution = {
+            id: `contrib-principal`,
+            amount: ibPackage.principalAmount,
+            date: ibPackage.startDate || ibPackage.createdAt,
+            status: 'completed',
+          };
+
+          setContributions([contribution]);
           setLoading(false);
           return;
         }
-
+        console.log('packageData', ibPackage);
         // If we get here, package wasn't found
         setError('Package not found');
         setLoading(false);
@@ -290,7 +367,7 @@ function PackageDetail() {
         setLoading(false);
       }
     };
-
+    // TODO: Remove this mock contributions
     // Function to generate mock contributions for demo purposes
     const generateMockContributions = (totalAmount: number) => {
       // Generate between 3 and 8 contributions
@@ -430,7 +507,6 @@ function PackageDetail() {
       <PackageHeader
         title={packageData.title}
         type={packageData.type}
-        accountNumber={packageData.accountNumber}
         status={packageData.status}
         statusColor={packageData.statusColor}
         color={packageData.color}
@@ -453,6 +529,12 @@ function PackageDetail() {
         amountPerDay={packageData.amountPerDay}
         formatCurrency={formatCurrency}
         formatDate={formatDate}
+        // Pass IBS-specific fields
+        compoundingFrequency={packageData.compoundingFrequency}
+        lockPeriod={packageData.lockPeriod}
+        interestAccrued={packageData.interestAccrued}
+        earlyWithdrawalPenalty={packageData.earlyWithdrawalPenalty}
+        estimatedEarnings={packageData.estimatedEarnings}
       />
 
       {/* Action Buttons */}
@@ -483,7 +565,6 @@ function PackageDetail() {
       <PackageDetailsAccordion
         type={packageData.type}
         status={packageData.status}
-        accountNumber={packageData.accountNumber}
         startDate={packageData.startDate}
         endDate={packageData.endDate}
         lastContribution={packageData.lastContribution}
@@ -558,5 +639,55 @@ function PackageDetail() {
     </div>
   );
 }
+
+// Add helper function for calculating estimated earnings
+const calculateEstimatedEarnings = (
+  principal: number,
+  interestRate: number,
+  startDateTimestamp: number,
+  maturityDateTimestamp: number,
+  compoundingFrequency: string = 'annually'
+): number => {
+  try {
+    // Calculate duration in years
+    const durationMs = maturityDateTimestamp - startDateTimestamp;
+    const durationYears = durationMs / (1000 * 60 * 60 * 24 * 365);
+
+    // Determine compounding periods per year
+    let periodsPerYear = 1; // Default to annual compounding
+
+    switch (compoundingFrequency?.toLowerCase()) {
+      case 'monthly':
+        periodsPerYear = 12;
+        break;
+      case 'quarterly':
+        periodsPerYear = 4;
+        break;
+      case 'semi-annually':
+      case 'biannually':
+        periodsPerYear = 2;
+        break;
+      case 'daily':
+        periodsPerYear = 365;
+        break;
+      case 'weekly':
+        periodsPerYear = 52;
+        break;
+      default:
+        periodsPerYear = 1; // Annual
+    }
+
+    // Compound interest formula: A = P(1 + r/n)^(nt)
+    const rate = interestRate / 100;
+    const n = periodsPerYear;
+    const t = durationYears;
+
+    const finalAmount = principal * Math.pow(1 + rate / n, n * t);
+    return finalAmount - principal;
+  } catch (error) {
+    console.error('Error calculating estimated earnings:', error);
+    return 0;
+  }
+};
 
 export default PackageDetail;

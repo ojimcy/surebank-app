@@ -105,7 +105,7 @@ const authApi = {
   // Verify account with code
   verifyAccount: async (payload: VerifyPayload): Promise<User> => {
     const response = await api.post<{ user: User; tokens: TokenResponse }>(
-      '/auth/verify',
+      '/auth/verify-email',
       payload
     );
 
