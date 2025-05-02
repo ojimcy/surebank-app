@@ -58,7 +58,7 @@ export const usePackageQueries = () => {
     // Transform Daily Savings packages
     const dsPackages: SavingsPackage[] = dailySavings.map(
       (pkg: DailySavingsPackage) => ({
-        id: pkg._id,
+        id: pkg.id,
         title: pkg.target || 'Savings Goal',
         type: 'Daily Savings',
         icon: 'home',
@@ -71,6 +71,7 @@ export const usePackageQueries = () => {
         color: getPackageColor('Daily Savings'),
         amountPerDay: pkg.amountPerDay,
         totalContribution: pkg.totalContribution,
+        startDate: pkg.startDate,
       })
     );
 

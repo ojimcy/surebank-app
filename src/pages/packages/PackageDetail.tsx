@@ -2,13 +2,45 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/lib/toast-provider';
-import packagesApi from '@/lib/api/packages';
+import packagesApi, {
+  DailySavingsPackage,
+  SBPackage,
+  IBPackage,
+} from '@/lib/api/packages';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { PackageHeader } from '@/components/packages/PackageHeader';
 import { PackageOverview } from '@/components/packages/PackageOverview';
 import { PackageActions } from '@/components/packages/PackageActions';
 import { ContributionTimeline } from '@/components/packages/ContributionTimeline';
 import { PackageDetailsAccordion } from '@/components/packages/PackageDetailsAccordion';
+
+// Extended API interfaces with additional fields
+interface ExtendedDailySavingsPackage extends DailySavingsPackage {
+  withdrawalRequests?: WithdrawalRequest[];
+  paymentTransactions?: PaymentTransaction[];
+  deductionCount?: number;
+  totalCount?: number;
+  hasBeenCharged?: boolean;
+  totalCharge?: number;
+}
+
+interface ExtendedSBPackage extends SBPackage {
+  withdrawalRequests?: WithdrawalRequest[];
+  paymentTransactions?: PaymentTransaction[];
+  product?: {
+    name: string;
+    images?: string[];
+    description?: string;
+    costPrice?: number;
+    sellingPrice?: number;
+    discount?: number;
+    quantity?: number;
+  };
+}
+
+interface ExtendedIBPackage extends IBPackage {
+  currentBalance?: number;
+}
 
 // Unified package interface for the UI
 interface UIPackage {
@@ -29,7 +61,7 @@ interface UIPackage {
   maturityDate?: string;
   productImage?: string;
   totalContribution: number;
-  amountPerDay: number;
+  amountPerDay?: number;
   startDate: string;
   endDate?: string;
   // Add IBS-specific fields
@@ -38,6 +70,23 @@ interface UIPackage {
   interestAccrued?: number;
   earlyWithdrawalPenalty?: number;
   estimatedEarnings?: number;
+  currentBalance?: number;
+  withdrawalRequests?: WithdrawalRequest[];
+  paymentTransactions?: PaymentTransaction[];
+  // Add SB Package specific fields
+  productDetails?: {
+    name: string;
+    description: string;
+    costPrice: number;
+    sellingPrice: number;
+    discount: number;
+    quantity: number;
+  };
+  // Add Daily Savings specific fields
+  deductionCount?: number;
+  totalCount?: number;
+  hasBeenCharged?: boolean;
+  totalCharge?: number;
 }
 
 // Contribution interface
@@ -46,6 +95,23 @@ interface Contribution {
   amount: number;
   date: string;
   status: string;
+}
+
+// Withdrawal request interface
+interface WithdrawalRequest {
+  id: string;
+  amount: number;
+  status: string;
+  date: string;
+}
+
+// Payment transaction interface
+interface PaymentTransaction {
+  id: string;
+  amount: number;
+  type: string;
+  status: string;
+  date: string;
 }
 
 // Get random image based on package type
@@ -68,6 +134,38 @@ const getRandomPackageImage = (
     fallbackImages[packageType as keyof typeof fallbackImages] ||
     fallbackImages['Daily Savings']
   );
+};
+
+// Function to generate mock contributions for demo purposes
+const generateMockContributions = (totalAmount: number): Contribution[] => {
+  // Generate between 3 and 8 contributions
+  const numContributions = Math.floor(Math.random() * 6) + 3;
+  const mockContributions: Contribution[] = [];
+
+  // Calculate a reasonable average contribution
+  const avgContribution = totalAmount / numContributions;
+
+  // Generate contributions with some variance
+  for (let i = 0; i < numContributions; i++) {
+    // Create a date between 6 months ago and now
+    const date = new Date();
+    date.setMonth(date.getMonth() - Math.floor(Math.random() * 6));
+
+    // Create the contribution with some variance in amount
+    mockContributions.push({
+      id: `contrib-${i}`,
+      amount: Math.round(avgContribution * (0.75 + Math.random() * 0.5)),
+      date: date.toISOString(),
+      status: Math.random() > 0.1 ? 'completed' : 'pending',
+    });
+  }
+
+  // Sort by date (newest first)
+  mockContributions.sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+
+  return mockContributions;
 };
 
 function PackageDetail() {
@@ -198,25 +296,29 @@ function PackageDetail() {
 
   useEffect(() => {
     if (!id || !user?.id) {
-      setError('Invalid package or user not authenticated');
-      setLoading(false);
       return;
     }
 
     const fetchPackageDetail = async () => {
       setLoading(true);
+      setError(null);
       try {
-        // Fetch all packages and find the specific one by ID
+        // Fetch all package types to find the matching one
         const { dailySavings, sbPackages, ibPackages } =
           await packagesApi.getAllPackages(user.id);
 
-        // Check in daily savings
-        const dsPackage = dailySavings.find((pkg) => pkg._id === id);
+        // Find the package in each type
+        let foundPackage = null;
+
+        // Check Daily Savings
+        const dsPackage = dailySavings.find(
+          (pkg) => pkg.id === id
+        ) as ExtendedDailySavingsPackage;
         if (dsPackage) {
-          setPackageData({
-            id: dsPackage._id,
+          foundPackage = {
+            id: dsPackage.id,
             title: dsPackage.target || 'Savings Goal',
-            type: 'Daily Savings',
+            type: 'Daily Savings' as const,
             icon: 'home',
             progress:
               dsPackage.targetAmount > 0
@@ -228,33 +330,38 @@ function PackageDetail() {
             target: dsPackage.targetAmount,
             color: '#0066A1',
             statusColor: getStatusColor(dsPackage.status),
-            status: formatStatus(dsPackage.status),
+            status: dsPackage.status,
             accountNumber: dsPackage.accountNumber,
             lastContribution: formatDate(dsPackage.updatedAt),
-            nextContribution: 'Not available',
-            startDate: dsPackage.startDate,
-            endDate: dsPackage.endDate,
-            totalContribution: dsPackage.totalContribution,
+            nextContribution: calculateNextContribution(dsPackage.amountPerDay),
             amountPerDay: dsPackage.amountPerDay,
+            startDate: formatDate(dsPackage.startDate || dsPackage.createdAt),
+            endDate: dsPackage.endDate
+              ? formatDate(dsPackage.endDate)
+              : undefined,
+            totalContribution: dsPackage.totalContribution,
             productImage: getRandomPackageImage(
               'Daily Savings',
               dsPackage.target
             ),
-          });
-
-          // Mock contributions data for demo
-          generateMockContributions(dsPackage.totalContribution);
-          setLoading(false);
-          return;
+            withdrawalRequests: dsPackage.withdrawalRequests || [],
+            paymentTransactions: dsPackage.paymentTransactions || [],
+            deductionCount: dsPackage.deductionCount || 0,
+            totalCount: dsPackage.totalCount || 0,
+            hasBeenCharged: dsPackage.hasBeenCharged || false,
+            totalCharge: dsPackage.totalCharge || 0,
+          };
         }
 
-        // Check in SB packages
-        const sbPackage = sbPackages.find((pkg) => pkg._id === id);
+        // Check SB Packages
+        const sbPackage = sbPackages.find(
+          (pkg) => pkg._id === id
+        ) as ExtendedSBPackage;
         if (sbPackage) {
-          setPackageData({
+          foundPackage = {
             id: sbPackage._id,
             title: sbPackage.product?.name || 'Product Package',
-            type: 'SB Package',
+            type: 'SB Package' as const,
             icon: 'laptop',
             progress:
               sbPackage.targetAmount > 0
@@ -266,142 +373,137 @@ function PackageDetail() {
             target: sbPackage.targetAmount,
             color: '#7952B3',
             statusColor: getStatusColor(sbPackage.status),
-            status: formatStatus(sbPackage.status),
+            status: sbPackage.status,
             accountNumber: sbPackage.accountNumber,
-            lastContribution: 'Not available',
-            nextContribution: 'Not available',
-            startDate: sbPackage.startDate,
-            endDate: sbPackage.endDate,
-            totalContribution: sbPackage.totalContribution,
-            amountPerDay: 0,
             productImage:
               sbPackage.product?.images?.[0] ||
               getRandomPackageImage('SB Package', sbPackage.product?.name),
-          });
-
-          // Mock contributions data for demo
-          generateMockContributions(sbPackage.totalContribution);
-          setLoading(false);
-          return;
+            lastContribution: 'Not available',
+            nextContribution: 'Not available',
+            startDate: formatDate(sbPackage.startDate),
+            totalContribution: sbPackage.totalContribution,
+            withdrawalRequests: sbPackage.withdrawalRequests || [],
+            paymentTransactions: sbPackage.paymentTransactions || [],
+            productDetails: {
+              name: sbPackage.product?.name || '',
+              description: sbPackage.product?.description || '',
+              costPrice: sbPackage.product?.costPrice || 0,
+              sellingPrice: sbPackage.product?.sellingPrice || 0,
+              discount: sbPackage.product?.discount || 0,
+              quantity: sbPackage.product?.quantity || 0,
+            },
+          };
         }
 
-        // Check in IB packages
-        const ibPackage = ibPackages.find((pkg) => pkg._id === id);
+        // Check Interest-Based Packages
+        const ibPackage = ibPackages.find(
+          (pkg) => pkg._id === id
+        ) as ExtendedIBPackage;
         if (ibPackage) {
-          // Calculate time-based progress for IBP
-          const startDate = new Date(ibPackage.startDate).getTime();
-          const maturityDate = new Date(ibPackage.maturityDate).getTime();
-          const currentDate = new Date().getTime();
-
-          // Calculate progress as percentage of time elapsed
-          const totalDuration = maturityDate - startDate;
-          const elapsedDuration = currentDate - startDate;
-          const timeProgress =
-            totalDuration > 0
-              ? Math.min(
-                  100,
-                  Math.floor((elapsedDuration / totalDuration) * 100)
-                )
-              : 0;
-
-          // Calculate estimated earnings
-          const estimatedEarnings = calculateEstimatedEarnings(
-            ibPackage.principalAmount,
-            ibPackage.interestRate,
-            startDate,
-            maturityDate,
-            ibPackage.compoundingFrequency
+          const timeProgress = calculateTimeProgress(
+            ibPackage.startDate,
+            ibPackage.maturityDate
           );
-
-          setPackageData({
+          foundPackage = {
             id: ibPackage._id,
             title: ibPackage.name || 'Interest Savings',
-            type: 'Interest-Based',
+            type: 'Interest-Based' as const,
             icon: 'trending-up',
-            progress: timeProgress, // Time-based progress to maturity
+            progress: timeProgress,
             current: ibPackage.principalAmount,
             target: ibPackage.principalAmount,
             color: '#28A745',
             statusColor: getStatusColor(ibPackage.status),
-            status: formatStatus(ibPackage.status),
+            status: ibPackage.status,
             accountNumber: ibPackage.accountNumber,
             interestRate: `${ibPackage.interestRate}% p.a.`,
             maturityDate: formatDate(ibPackage.maturityDate),
             lastContribution: 'Not available',
             nextContribution: 'Not available',
-            startDate: ibPackage.startDate || ibPackage.createdAt,
-            endDate: ibPackage.maturityDate,
-            totalContribution: ibPackage.totalContribution,
-            amountPerDay: 0,
+            startDate: formatDate(ibPackage.startDate),
+            endDate: formatDate(ibPackage.endDate),
             productImage: getRandomPackageImage('Interest-Based'),
-            // Add IBS-specific fields
+            totalContribution: ibPackage.principalAmount,
             compoundingFrequency: ibPackage.compoundingFrequency,
-            lockPeriod: ibPackage.lockPeriod,
-            interestAccrued: ibPackage.accruedInterest || 0,
-            earlyWithdrawalPenalty: ibPackage.earlyWithdrawalPenalty,
+            lockPeriod: ibPackage.lockPeriod || 0,
+            interestAccrued: ibPackage.accruedInterest,
+            earlyWithdrawalPenalty: ibPackage.earlyWithdrawalPenalty || 0,
+            currentBalance:
+              ibPackage.currentBalance || ibPackage.principalAmount,
             estimatedEarnings:
               ibPackage.accruedInterest > 0
                 ? ibPackage.accruedInterest
-                : estimatedEarnings,
-          });
-
-          // For IBS packages, use a single contribution entry for the principal amount
-          const contribution: Contribution = {
-            id: `contrib-principal`,
-            amount: ibPackage.principalAmount,
-            date: ibPackage.startDate || ibPackage.createdAt,
-            status: 'completed',
+                : calculateEstimatedEarnings(
+                    ibPackage.principalAmount || 0,
+                    ibPackage.interestRate || 0,
+                    new Date(ibPackage.startDate).getTime(),
+                    new Date(ibPackage.maturityDate).getTime(),
+                    ibPackage.compoundingFrequency || 'annually'
+                  ),
           };
-
-          setContributions([contribution]);
-          setLoading(false);
-          return;
         }
-        console.log('packageData', ibPackage);
-        // If we get here, package wasn't found
-        setError('Package not found');
-        setLoading(false);
+
+        if (!foundPackage) {
+          throw new Error('Package not found');
+        }
+
+        setPackageData(foundPackage);
+
+        // Generate mock contributions for now
+        // TODO: Replace with actual contribution data when available
+        const mockContributions = generateMockContributions(
+          foundPackage.current
+        );
+        setContributions(mockContributions);
       } catch (err) {
         console.error('Error fetching package details:', err);
         setError('Failed to load package details. Please try again later.');
+      } finally {
         setLoading(false);
       }
     };
-    // TODO: Remove this mock contributions
-    // Function to generate mock contributions for demo purposes
-    const generateMockContributions = (totalAmount: number) => {
-      // Generate between 3 and 8 contributions
-      const numContributions = Math.floor(Math.random() * 6) + 3;
-      const mockContributions: Contribution[] = [];
-
-      // Calculate a reasonable average contribution
-      const avgContribution = totalAmount / numContributions;
-
-      // Generate contributions with some variance
-      for (let i = 0; i < numContributions; i++) {
-        // Create a date between 6 months ago and now
-        const date = new Date();
-        date.setMonth(date.getMonth() - Math.floor(Math.random() * 6));
-
-        // Create the contribution with some variance in amount
-        mockContributions.push({
-          id: `contrib-${i}`,
-          amount: Math.round(avgContribution * (0.75 + Math.random() * 0.5)),
-          date: date.toISOString(),
-          status: Math.random() > 0.1 ? 'completed' : 'pending',
-        });
-      }
-
-      // Sort by date (newest first)
-      mockContributions.sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-      );
-
-      setContributions(mockContributions);
-    };
 
     fetchPackageDetail();
-  }, [id, user]);
+  }, [id, user?.id]);
+
+  // Helper function to calculate time-based progress for IB packages
+  const calculateTimeProgress = (
+    startDate: string | number,
+    maturityDate: string | number
+  ): number => {
+    try {
+      const start = new Date(startDate).getTime();
+      const end = new Date(maturityDate).getTime();
+      const now = Date.now();
+
+      if (now < start) return 0;
+      if (now > end) return 100;
+
+      const totalDuration = end - start;
+      const elapsed = now - start;
+      return Math.min(100, Math.floor((elapsed / totalDuration) * 100));
+    } catch (error) {
+      console.error('Error calculating time progress:', error);
+      return 0;
+    }
+  };
+
+  // Calculate next contribution date
+  const calculateNextContribution = (amountPerDay: number): string => {
+    if (!amountPerDay || amountPerDay <= 0) {
+      return 'Not scheduled';
+    }
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return `₦${amountPerDay.toLocaleString()} due on ${tomorrow.toLocaleDateString(
+      'en-NG',
+      {
+        month: 'short',
+        day: 'numeric',
+      }
+    )}`;
+  };
 
   // Handle adding a contribution
   const handleAddContribution = () => {
@@ -526,7 +628,7 @@ function PackageDetail() {
         productImage={packageData.productImage}
         type={packageData.type}
         totalContribution={packageData.totalContribution}
-        amountPerDay={packageData.amountPerDay}
+        amountPerDay={packageData.amountPerDay || 0}
         formatCurrency={formatCurrency}
         formatDate={formatDate}
         // Pass IBS-specific fields

@@ -9,6 +9,23 @@ interface PackageDetailsAccordionProps {
   lastContribution?: string;
   formatDate: (date: string) => string;
   formatStatus: (status: string) => string;
+  // Additional fields for different package types
+  amountPerDay?: number;
+  interestRate?: string;
+  compoundingFrequency?: string;
+  lockPeriod?: number;
+  interestAccrued?: number;
+  earlyWithdrawalPenalty?: number;
+  currentBalance?: number;
+  estimatedEarnings?: number;
+  productDetails?: {
+    name: string;
+    description: string;
+    costPrice: number;
+    sellingPrice: number;
+    discount: number;
+    quantity: number;
+  };
 }
 
 export function PackageDetailsAccordion({
@@ -19,7 +36,25 @@ export function PackageDetailsAccordion({
   lastContribution,
   formatDate,
   formatStatus,
+  amountPerDay,
+  interestRate,
+  compoundingFrequency,
+  lockPeriod,
+  interestAccrued,
+  earlyWithdrawalPenalty,
+  currentBalance,
+  estimatedEarnings,
+  productDetails,
 }: PackageDetailsAccordionProps) {
+  // Format currency helper
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat('en-NG', {
+      style: 'currency',
+      currency: 'NGN',
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
+
   return (
     <Accordion.Root type="single" collapsible className="mb-8">
       <Accordion.Item
@@ -34,10 +69,34 @@ export function PackageDetailsAccordion({
           <div className="text-sm text-gray-600 space-y-2">
             <p>This package is subject to the following terms:</p>
             <ul className="list-disc pl-5 space-y-1">
-              <li>Early withdrawal penalties may apply.</li>
-              <li>Contributions are processed within 24 hours.</li>
-              <li>Target dates are flexible and can be extended.</li>
-              <li>Changes to the package terms require approval.</li>
+              {type === 'Interest-Based' && (
+                <>
+                  <li>Lock period: {lockPeriod} days</li>
+                  <li>Early withdrawal penalty: {earlyWithdrawalPenalty}%</li>
+                  <li>Interest is compounded {compoundingFrequency}</li>
+                </>
+              )}
+              {type === 'Daily Savings' && (
+                <>
+                  <li>
+                    Daily contribution amount:{' '}
+                    {formatCurrency(amountPerDay || 0)}
+                  </li>
+                  <li>Contributions are processed within 24 hours</li>
+                  <li>Missed contributions may affect your savings goal</li>
+                </>
+              )}
+              {type === 'SB Package' && (
+                <>
+                  <li>
+                    Product price:{' '}
+                    {formatCurrency(productDetails?.sellingPrice || 0)}
+                  </li>
+                  <li>Flexible contribution schedule</li>
+                  <li>Product availability subject to stock</li>
+                </>
+              )}
+              <li>Changes to the package terms require approval</li>
             </ul>
           </div>
         </Accordion.Content>
@@ -77,6 +136,72 @@ export function PackageDetailsAccordion({
                   <p className="font-medium text-gray-700">Last Contribution</p>
                   <p>{lastContribution}</p>
                 </div>
+              )}
+
+              {/* Interest-Based Package specific details */}
+              {type === 'Interest-Based' && (
+                <>
+                  <div>
+                    <p className="font-medium text-gray-700">Interest Rate</p>
+                    <p>{interestRate}</p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-700">Compounding</p>
+                    <p className="capitalize">{compoundingFrequency}</p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-700">Current Balance</p>
+                    <p>{formatCurrency(currentBalance || 0)}</p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-700">Interest Earned</p>
+                    <p className="text-green-600">
+                      {formatCurrency(interestAccrued || 0)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-700">
+                      Est. Total Earnings
+                    </p>
+                    <p className="text-green-600">
+                      {formatCurrency(estimatedEarnings || 0)}
+                    </p>
+                  </div>
+                </>
+              )}
+
+              {/* Daily Savings specific details */}
+              {type === 'Daily Savings' && amountPerDay && (
+                <div>
+                  <p className="font-medium text-gray-700">Daily Amount</p>
+                  <p>{formatCurrency(amountPerDay)}</p>
+                </div>
+              )}
+
+              {/* SB Package specific details */}
+              {type === 'SB Package' && productDetails && (
+                <>
+                  <div>
+                    <p className="font-medium text-gray-700">Product Name</p>
+                    <p>{productDetails.name}</p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-700">Description</p>
+                    <p>{productDetails.description}</p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-700">Price</p>
+                    <p>{formatCurrency(productDetails.sellingPrice)}</p>
+                  </div>
+                  {productDetails.discount > 0 && (
+                    <div>
+                      <p className="font-medium text-gray-700">Discount</p>
+                      <p className="text-green-600">
+                        {formatCurrency(productDetails.discount)}
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>

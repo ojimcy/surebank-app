@@ -2,7 +2,7 @@ import api from './axios';
 
 // API package types and response interfaces
 export interface DailySavingsPackage {
-  _id: string;
+  id: string;
   accountNumber: string;
   amountPerDay: number;
   target: string;

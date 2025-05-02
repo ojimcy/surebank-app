@@ -452,7 +452,7 @@ function PackageList() {
 
         // Process DS packages
         const dsPackages = dailySavings.map((pkg) => ({
-          id: pkg._id,
+          id: pkg.id,
           title: pkg.target || 'Savings Goal',
           type: 'Daily Savings' as const,
           icon: 'home',
@@ -643,7 +643,6 @@ function PackageList() {
           if (filteredType === 'sb') return pkg.type === 'SB Package';
           return true;
         });
-console.log(packages);
 
   return (
     <div className="space-y-6 pb-20 relative">
