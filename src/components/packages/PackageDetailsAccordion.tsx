@@ -1,3 +1,4 @@
+import { formatDateTime } from '@/lib/utils';
 import * as Accordion from '@radix-ui/react-accordion';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
 
@@ -5,19 +6,11 @@ interface PackageDetailsAccordionProps {
   type: string;
   status: string;
   startDate: string;
-  endDate?: string;
-  lastContribution?: string;
-  formatDate: (date: string) => string;
   formatStatus: (status: string) => string;
   // Additional fields for different package types
-  amountPerDay?: number;
-  interestRate?: string;
-  compoundingFrequency?: string;
-  lockPeriod?: number;
-  interestAccrued?: number;
-  earlyWithdrawalPenalty?: number;
-  currentBalance?: number;
-  estimatedEarnings?: number;
+  totalCount?: number;
+  targetAmount?: number;
+  // SB Package specific fields
   productDetails?: {
     name: string;
     description: string;
@@ -26,25 +19,34 @@ interface PackageDetailsAccordionProps {
     discount: number;
     quantity: number;
   };
+  totalContribution?: number;
+  remainingBalance?: number;
+  // IBS specific fields
+  name?: string;
+  principalAmount?: number;
+  currentBalance?: number;
+  maturityDate?: string;
+  lockPeriod?: number;
+  interestRate?: string;
+  interestAccrued?: number;
 }
 
 export function PackageDetailsAccordion({
   type,
   status,
   startDate,
-  endDate,
-  lastContribution,
-  formatDate,
   formatStatus,
-  amountPerDay,
-  interestRate,
-  compoundingFrequency,
-  lockPeriod,
-  interestAccrued,
-  earlyWithdrawalPenalty,
-  currentBalance,
-  estimatedEarnings,
+  totalCount,
+  targetAmount,
   productDetails,
+  totalContribution,
+  remainingBalance,
+  name,
+  principalAmount,
+  currentBalance,
+  maturityDate,
+  lockPeriod,
+  interestRate,
 }: PackageDetailsAccordionProps) {
   // Format currency helper
   const formatCurrency = (amount: number): string => {
@@ -58,51 +60,6 @@ export function PackageDetailsAccordion({
   return (
     <Accordion.Root type="single" collapsible className="mb-8">
       <Accordion.Item
-        value="terms"
-        className="mb-2 border rounded-lg overflow-hidden"
-      >
-        <Accordion.Trigger className="flex w-full justify-between items-center p-4 text-left font-medium text-gray-900 hover:bg-gray-50">
-          <span>Terms and Conditions</span>
-          <ChevronDownIcon className="h-5 w-5 text-gray-500 transition-transform duration-200 ease-out group-data-[state=open]:rotate-180" />
-        </Accordion.Trigger>
-        <Accordion.Content className="bg-white px-4 pb-4 pt-0 data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
-          <div className="text-sm text-gray-600 space-y-2">
-            <p>This package is subject to the following terms:</p>
-            <ul className="list-disc pl-5 space-y-1">
-              {type === 'Interest-Based' && (
-                <>
-                  <li>Lock period: {lockPeriod} days</li>
-                  <li>Early withdrawal penalty: {earlyWithdrawalPenalty}%</li>
-                  <li>Interest is compounded {compoundingFrequency}</li>
-                </>
-              )}
-              {type === 'Daily Savings' && (
-                <>
-                  <li>
-                    Daily contribution amount:{' '}
-                    {formatCurrency(amountPerDay || 0)}
-                  </li>
-                  <li>Contributions are processed within 24 hours</li>
-                  <li>Missed contributions may affect your savings goal</li>
-                </>
-              )}
-              {type === 'SB Package' && (
-                <>
-                  <li>
-                    Product price:{' '}
-                    {formatCurrency(productDetails?.sellingPrice || 0)}
-                  </li>
-                  <li>Flexible contribution schedule</li>
-                  <li>Product availability subject to stock</li>
-                </>
-              )}
-              <li>Changes to the package terms require approval</li>
-            </ul>
-          </div>
-        </Accordion.Content>
-      </Accordion.Item>
-
-      <Accordion.Item
         value="details"
         className="border rounded-lg overflow-hidden"
       >
@@ -111,99 +68,102 @@ export function PackageDetailsAccordion({
           <ChevronDownIcon className="h-5 w-5 text-gray-500 transition-transform duration-200 ease-out group-data-[state=open]:rotate-180" />
         </Accordion.Trigger>
         <Accordion.Content className="bg-white px-4 pb-4 pt-0 data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
-          <div className="text-sm text-gray-600 space-y-2">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="font-medium text-gray-700">Package Type</p>
-                <p>{type}</p>
-              </div>
-              <div>
-                <p className="font-medium text-gray-700">Status</p>
-                <p>{formatStatus(status)}</p>
-              </div>
-              <div>
-                <p className="font-medium text-gray-700">Start Date</p>
-                <p>{formatDate(startDate)}</p>
-              </div>
-              {endDate && (
+          <div className="text-sm text-gray-600 space-y-4">
+            {/* Daily Savings Package Details */}
+            {type === 'Daily Savings' && (
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="font-medium text-gray-700">End Date</p>
-                  <p>{formatDate(endDate)}</p>
+                  <p className="font-medium text-gray-700">Total Count</p>
+                  <p>{totalCount || 0}</p>
                 </div>
-              )}
-              {lastContribution && lastContribution !== 'Not available' && (
                 <div>
-                  <p className="font-medium text-gray-700">Last Contribution</p>
-                  <p>{lastContribution}</p>
+                  <p className="font-medium text-gray-700">Amount Per Day</p>
+                  <p>{formatCurrency(targetAmount || 0)}</p>
                 </div>
-              )}
-
-              {/* Interest-Based Package specific details */}
-              {type === 'Interest-Based' && (
-                <>
-                  <div>
-                    <p className="font-medium text-gray-700">Interest Rate</p>
-                    <p>{interestRate}</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-700">Compounding</p>
-                    <p className="capitalize">{compoundingFrequency}</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-700">Current Balance</p>
-                    <p>{formatCurrency(currentBalance || 0)}</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-700">Interest Earned</p>
-                    <p className="text-green-600">
-                      {formatCurrency(interestAccrued || 0)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-700">
-                      Est. Total Earnings
-                    </p>
-                    <p className="text-green-600">
-                      {formatCurrency(estimatedEarnings || 0)}
-                    </p>
-                  </div>
-                </>
-              )}
-
-              {/* Daily Savings specific details */}
-              {type === 'Daily Savings' && amountPerDay && (
                 <div>
-                  <p className="font-medium text-gray-700">Daily Amount</p>
-                  <p>{formatCurrency(amountPerDay)}</p>
+                  <p className="font-medium text-gray-700">Start Date</p>
+                  <p>{formatDateTime(startDate)}</p>
                 </div>
-              )}
+                <div>
+                  <p className="font-medium text-gray-700">Status</p>
+                  <p>{formatStatus(status)}</p>
+                </div>
+              </div>
+            )}
 
-              {/* SB Package specific details */}
-              {type === 'SB Package' && productDetails && (
-                <>
-                  <div>
-                    <p className="font-medium text-gray-700">Product Name</p>
-                    <p>{productDetails.name}</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-700">Description</p>
-                    <p>{productDetails.description}</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-700">Price</p>
-                    <p>{formatCurrency(productDetails.sellingPrice)}</p>
-                  </div>
-                  {productDetails.discount > 0 && (
-                    <div>
-                      <p className="font-medium text-gray-700">Discount</p>
-                      <p className="text-green-600">
-                        {formatCurrency(productDetails.discount)}
-                      </p>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
+            {/* SB Package Details */}
+            {type === 'SB Package' && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="font-medium text-gray-700">Product Name</p>
+                  <p>{productDetails?.name || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-700">Price</p>
+                  <p>{formatCurrency(productDetails?.sellingPrice || 0)}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-700">
+                    Total Contribution
+                  </p>
+                  <p>{formatCurrency(totalContribution || 0)}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-700">Remaining Balance</p>
+                  <p>{formatCurrency(remainingBalance || 0)}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-700">Start Date</p>
+                  <p>{formatDateTime(startDate)}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Interest-Based Package Details */}
+            {type === 'Interest-Based' && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="font-medium text-gray-700">Name</p>
+                  <p>{name || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-700">Principal Amount</p>
+                  <p>{formatCurrency(principalAmount || 0)}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-700">Current Balance</p>
+                  <p>{formatCurrency(currentBalance || 0)}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-700">Lock Period</p>
+                  <p>{lockPeriod} days</p>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-700">Start Date</p>
+                  <p>{formatDateTime(startDate)}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-700">Maturity Date</p>
+                  <p>{formatDateTime(maturityDate || '')}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-700">Interest Rate</p>
+                  <p>{interestRate}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-700">Interest Accrued</p>
+                  <p className="text-green-600">
+                    {formatCurrency(
+                      (currentBalance || 0) - (principalAmount || 0)
+                    )}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-700">Status</p>
+                  <p>{formatStatus(status)}</p>
+                </div>
+              </div>
+            )}
           </div>
         </Accordion.Content>
       </Accordion.Item>

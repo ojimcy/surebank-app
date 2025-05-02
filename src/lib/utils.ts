@@ -73,3 +73,36 @@ function getOrdinalSuffix(day: number): string {
       return 'th';
   }
 }
+
+// Format datetime
+export function formatDateTime(dateString: string | undefined | null): string {
+  if (!dateString) return 'N/A';
+  try {
+    let date: Date;
+
+    // If it's a numeric string (timestamp), convert to number first
+    if (!isNaN(Number(dateString))) {
+      date = new Date(Number(dateString));
+    } else {
+      date = new Date(dateString);
+    }
+
+    // Validate if the date is valid
+    if (isNaN(date.getTime())) {
+      return 'Invalid date';
+    }
+
+    const formatted = date.toLocaleString('en-NG', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    return formatted;
+  } catch (error) {
+    console.error('Error formatting datetime:', error);
+    return 'Invalid date';
+  }
+}

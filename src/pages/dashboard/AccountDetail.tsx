@@ -107,6 +107,7 @@ export default function AccountDetail() {
     };
 
     fetchAccount();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountType, showError]);
 
   if (loading) {

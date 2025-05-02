@@ -94,20 +94,45 @@ export const usePackageQueries = () => {
       })
     );
 
-    // For now, no IB packages, but we can prepare for them
+    // For Interest-Based packages
     const ibMappedPackages: SavingsPackage[] = ibPackages.map(
       (pkg: IBPackage) => {
+        // Calculate time-based progress
+        const start = new Date(pkg.startDate).getTime();
+        const end = new Date(pkg.maturityDate).getTime();
+        const now = Date.now();
+
+        let timeProgress = 0;
+        if (now >= start && now <= end) {
+          const totalDuration = end - start;
+          const elapsed = now - start;
+          timeProgress = Math.min(
+            100,
+            Math.floor((elapsed / totalDuration) * 100)
+          );
+        } else if (now > end) {
+          timeProgress = 100;
+        }
+
         return {
           id: pkg._id,
           title: pkg.name || 'Interest Savings',
           type: 'Interest-Based',
-          icon: 'book-open',
-          progress: 0,
-          current: pkg.principalAmount,
-          target: pkg.principalAmount,
+          icon: 'trending-up',
+          progress: timeProgress,
+          current: pkg.currentBalance,
+          target: 0, // no applicable
           color: getPackageColor('Interest-Based'),
           amountPerDay: 0, // IB packages don't have amountPerDay
-          totalContribution: pkg.principalAmount,
+          totalContribution: 0, // no applicable
+          startDate: pkg.startDate,
+          endDate: pkg.maturityDate,
+          maturityDate: pkg.maturityDate,
+          interestRate: `${pkg.interestRate}% p.a.`,
+          lockPeriod: pkg.lockPeriod,
+          interestAccrued: pkg.accruedInterest,
+          status: pkg.status,
+          currentBalance: pkg.currentBalance,
         };
       }
     );

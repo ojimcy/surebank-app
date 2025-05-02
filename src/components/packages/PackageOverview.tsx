@@ -1,8 +1,11 @@
+import { formatDateTime } from '@/lib/utils';
+
 interface PackageOverviewProps {
   current: number;
   totalContribution: number;
   amountPerDay: number;
   target: number;
+  principalAmount: number;
   progress: number;
   color: string;
   startDate: string;
@@ -13,7 +16,6 @@ interface PackageOverviewProps {
   productImage?: string;
   type: string;
   formatCurrency: (amount: number) => string;
-  formatDate: (date: string) => string;
   compoundingFrequency?: string;
   lockPeriod?: number;
   interestAccrued?: number;
@@ -23,7 +25,6 @@ interface PackageOverviewProps {
 
 export function PackageOverview({
   current,
-  totalContribution,
   amountPerDay,
   target,
   progress,
@@ -36,7 +37,6 @@ export function PackageOverview({
   productImage,
   type,
   formatCurrency,
-  formatDate,
   lockPeriod,
   interestAccrued,
   estimatedEarnings,
@@ -103,7 +103,9 @@ export function PackageOverview({
                 <div>
                   <div className="mb-2">
                     <div className="text-sm text-gray-500">
-                      Principal Amount
+                      {isInterestBased
+                        ? 'Current Balance'
+                        : 'Total Contribution'}
                     </div>
                     <div className="font-bold text-xl">
                       {formatCurrency(current)}
@@ -172,16 +174,8 @@ export function PackageOverview({
                 {maturityDate && (
                   <div>
                     <div className="text-sm text-gray-500">Maturity Date</div>
-                    <div className="font-medium">{maturityDate}</div>
-                  </div>
-                )}
-                {totalContribution && (
-                  <div>
-                    <div className="text-sm text-gray-500">
-                      Total Contribution
-                    </div>
                     <div className="font-medium">
-                      {formatCurrency(totalContribution)}
+                      {formatDateTime(maturityDate)}
                     </div>
                   </div>
                 )}
@@ -193,30 +187,12 @@ export function PackageOverview({
           <div className="grid grid-cols-2 gap-4 border-t pt-4">
             <div>
               <div className="text-sm text-gray-500">Start Date</div>
-              <div className="font-medium">{formatDate(startDate)}</div>
+              <div className="font-medium">{formatDateTime(startDate)}</div>
             </div>
             {endDate && !isInterestBased && (
               <div>
                 <div className="text-sm text-gray-500">End Date</div>
-                <div className="font-medium">{formatDate(endDate)}</div>
-              </div>
-            )}
-            {!isInterestBased && interestRate && (
-              <div>
-                <div className="text-sm text-gray-500">Interest Rate</div>
-                <div className="font-medium">{interestRate}</div>
-              </div>
-            )}
-            {!isInterestBased && maturityDate && (
-              <div>
-                <div className="text-sm text-gray-500">Maturity Date</div>
-                <div className="font-medium">{formatDate(maturityDate)}</div>
-              </div>
-            )}
-            {totalContribution && (
-              <div>
-                <div className="text-sm text-gray-500">Total Contribution</div>
-                <div className="font-medium">{formatCurrency(totalContribution)}</div>
+                <div className="font-medium">{formatDateTime(endDate)}</div>
               </div>
             )}
             {nextContribution && nextContribution !== 'Not available' && (

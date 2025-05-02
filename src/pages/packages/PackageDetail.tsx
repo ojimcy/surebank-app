@@ -13,6 +13,7 @@ import { PackageOverview } from '@/components/packages/PackageOverview';
 import { PackageActions } from '@/components/packages/PackageActions';
 import { ContributionTimeline } from '@/components/packages/ContributionTimeline';
 import { PackageDetailsAccordion } from '@/components/packages/PackageDetailsAccordion';
+import { formatDateTime } from '@/lib/utils';
 
 // Extended API interfaces with additional fields
 interface ExtendedDailySavingsPackage extends DailySavingsPackage {
@@ -38,7 +39,7 @@ interface ExtendedSBPackage extends SBPackage {
   };
 }
 
-interface ExtendedIBPackage extends IBPackage {
+interface ExtendedIBPackage extends Omit<IBPackage, 'currentBalance'> {
   currentBalance?: number;
 }
 
@@ -51,6 +52,7 @@ interface UIPackage {
   progress: number;
   current: number;
   target: number;
+  principalAmount: number;
   color: string;
   statusColor: string;
   status: string;
@@ -196,72 +198,6 @@ function PackageDetail() {
     }).format(amount);
   };
 
-  // Format date
-  const formatDate = (dateString: string): string => {
-    if (!dateString) return 'N/A';
-
-    try {
-      let date: Date;
-
-      // Handle numeric timestamps (milliseconds since epoch)
-      const timestamp = parseInt(dateString);
-      if (!isNaN(timestamp)) {
-        date = new Date(timestamp);
-      } else {
-        // Handle string dates
-        date = new Date(dateString);
-        if (isNaN(date.getTime())) {
-          return 'Invalid date';
-        }
-      }
-
-      // Get day with ordinal suffix
-      const day = date.getDate();
-      let ordinalSuffix = 'th';
-      if (day > 3 && day < 21) {
-        ordinalSuffix = 'th';
-      } else {
-        switch (day % 10) {
-          case 1:
-            ordinalSuffix = 'st';
-            break;
-          case 2:
-            ordinalSuffix = 'nd';
-            break;
-          case 3:
-            ordinalSuffix = 'rd';
-            break;
-          default:
-            ordinalSuffix = 'th';
-            break;
-        }
-      }
-
-      // Format the date
-      const monthNames = [
-        'Jan',
-        'Feb',
-        'Mar',
-        'Apr',
-        'May',
-        'Jun',
-        'Jul',
-        'Aug',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dec',
-      ];
-      const month = monthNames[date.getMonth()];
-      const year = date.getFullYear();
-
-      return `${day}${ordinalSuffix} ${month}, ${year}`;
-    } catch (error) {
-      console.error('Error formatting date:', error);
-      return 'Invalid date';
-    }
-  };
-
   // Get status color
   const getStatusColor = (status: string): string => {
     switch (status.toLowerCase()) {
@@ -332,13 +268,11 @@ function PackageDetail() {
             statusColor: getStatusColor(dsPackage.status),
             status: dsPackage.status,
             accountNumber: dsPackage.accountNumber,
-            lastContribution: formatDate(dsPackage.updatedAt),
+            lastContribution: dsPackage.updatedAt,
             nextContribution: calculateNextContribution(dsPackage.amountPerDay),
             amountPerDay: dsPackage.amountPerDay,
-            startDate: formatDate(dsPackage.startDate || dsPackage.createdAt),
-            endDate: dsPackage.endDate
-              ? formatDate(dsPackage.endDate)
-              : undefined,
+            startDate: dsPackage.startDate || dsPackage.createdAt,
+            endDate: dsPackage.endDate ? dsPackage.endDate : undefined,
             totalContribution: dsPackage.totalContribution,
             productImage: getRandomPackageImage(
               'Daily Savings',
@@ -380,7 +314,7 @@ function PackageDetail() {
               getRandomPackageImage('SB Package', sbPackage.product?.name),
             lastContribution: 'Not available',
             nextContribution: 'Not available',
-            startDate: formatDate(sbPackage.startDate),
+            startDate: sbPackage.startDate,
             totalContribution: sbPackage.totalContribution,
             withdrawalRequests: sbPackage.withdrawalRequests || [],
             paymentTransactions: sbPackage.paymentTransactions || [],
@@ -410,18 +344,19 @@ function PackageDetail() {
             type: 'Interest-Based' as const,
             icon: 'trending-up',
             progress: timeProgress,
-            current: ibPackage.principalAmount,
+            current: ibPackage.currentBalance,
+            principalAmount: ibPackage.principalAmount,
             target: ibPackage.principalAmount,
             color: '#28A745',
             statusColor: getStatusColor(ibPackage.status),
             status: ibPackage.status,
             accountNumber: ibPackage.accountNumber,
             interestRate: `${ibPackage.interestRate}% p.a.`,
-            maturityDate: formatDate(ibPackage.maturityDate),
+            maturityDate: ibPackage.maturityDate,
             lastContribution: 'Not available',
             nextContribution: 'Not available',
-            startDate: formatDate(ibPackage.startDate),
-            endDate: formatDate(ibPackage.endDate),
+            startDate: ibPackage.startDate,
+            endDate: ibPackage.endDate,
             productImage: getRandomPackageImage('Interest-Based'),
             totalContribution: ibPackage.principalAmount,
             compoundingFrequency: ibPackage.compoundingFrequency,
@@ -447,12 +382,12 @@ function PackageDetail() {
           throw new Error('Package not found');
         }
 
-        setPackageData(foundPackage);
+        setPackageData(foundPackage as UIPackage);
 
         // Generate mock contributions for now
         // TODO: Replace with actual contribution data when available
         const mockContributions = generateMockContributions(
-          foundPackage.current
+          foundPackage.current || 0
         );
         setContributions(mockContributions);
       } catch (err) {
@@ -472,16 +407,37 @@ function PackageDetail() {
     maturityDate: string | number
   ): number => {
     try {
-      const start = new Date(startDate).getTime();
-      const end = new Date(maturityDate).getTime();
+      // Convert to numbers if they're strings
+      const start =
+        typeof startDate === 'string' ? parseInt(startDate) : startDate;
+      const end =
+        typeof maturityDate === 'string'
+          ? parseInt(maturityDate)
+          : maturityDate;
       const now = Date.now();
+
+      // Validate timestamps
+      if (isNaN(start) || isNaN(end)) {
+        console.error('Invalid timestamps:', { start, end });
+        return 0;
+      }
 
       if (now < start) return 0;
       if (now > end) return 100;
 
       const totalDuration = end - start;
+      if (totalDuration <= 0) {
+        console.error('Invalid duration:', { start, end, totalDuration });
+        return 0;
+      }
+
       const elapsed = now - start;
-      return Math.min(100, Math.floor((elapsed / totalDuration) * 100));
+      const progress = Math.min(
+        100,
+        Math.floor((elapsed / totalDuration) * 100)
+      );
+
+      return progress;
     } catch (error) {
       console.error('Error calculating time progress:', error);
       return 0;
@@ -618,6 +574,7 @@ function PackageDetail() {
       <PackageOverview
         current={packageData.current}
         target={packageData.target}
+        principalAmount={packageData.principalAmount}
         progress={packageData.progress}
         color={packageData.color}
         startDate={packageData.startDate}
@@ -630,7 +587,6 @@ function PackageDetail() {
         totalContribution={packageData.totalContribution}
         amountPerDay={packageData.amountPerDay || 0}
         formatCurrency={formatCurrency}
-        formatDate={formatDate}
         // Pass IBS-specific fields
         compoundingFrequency={packageData.compoundingFrequency}
         lockPeriod={packageData.lockPeriod}
@@ -658,7 +614,7 @@ function PackageDetail() {
         <ContributionTimeline
           contributions={contributions}
           formatCurrency={formatCurrency}
-          formatDate={formatDate}
+          formatDate={formatDateTime}
           formatStatus={formatStatus}
         />
       </div>
@@ -668,10 +624,66 @@ function PackageDetail() {
         type={packageData.type}
         status={packageData.status}
         startDate={packageData.startDate}
-        endDate={packageData.endDate}
-        lastContribution={packageData.lastContribution}
-        formatDate={formatDate}
         formatStatus={formatStatus}
+        // Daily Savings specific props
+        totalCount={
+          packageData.type === 'Daily Savings'
+            ? packageData.totalCount
+            : undefined
+        }
+        targetAmount={
+          packageData.type === 'Daily Savings' ? packageData.target : undefined
+        }
+        // SB Package specific props
+        productDetails={
+          packageData.type === 'SB Package'
+            ? packageData.productDetails
+            : undefined
+        }
+        totalContribution={
+          packageData.type === 'SB Package'
+            ? packageData.totalContribution
+            : undefined
+        }
+        remainingBalance={
+          packageData.type === 'SB Package'
+            ? packageData.target - packageData.totalContribution
+            : undefined
+        }
+        // IBS specific props
+        name={
+          packageData.type === 'Interest-Based' ? packageData.title : undefined
+        }
+        principalAmount={
+          packageData.type === 'Interest-Based'
+            ? packageData.principalAmount
+            : undefined
+        }
+        currentBalance={
+          packageData.type === 'Interest-Based'
+            ? packageData.currentBalance
+            : undefined
+        }
+        maturityDate={
+          packageData.type === 'Interest-Based'
+            ? packageData.maturityDate
+            : undefined
+        }
+        lockPeriod={
+          packageData.type === 'Interest-Based'
+            ? packageData.lockPeriod
+            : undefined
+        }
+        interestRate={
+          packageData.type === 'Interest-Based'
+            ? packageData.interestRate
+            : undefined
+        }
+        interestAccrued={
+          packageData.type === 'Interest-Based'
+            ? packageData.interestAccrued
+            : undefined
+        }
       />
 
       {/* Dialogs */}

@@ -47,6 +47,7 @@ export interface IBPackage {
   startDate: string;
   endDate: string;
   totalContribution: number;
+  currentBalance: number;
 }
 
 export interface InterestRateOption {

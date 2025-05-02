@@ -4,7 +4,7 @@ import { useToast } from '@/lib/toast-provider';
 import { useLoader } from '@/lib/loader-provider';
 import packagesApi, { IBPackage } from '@/lib/api/packages';
 import { CheckCircle, AlertCircle } from 'lucide-react';
-import { formatDate } from '@/lib/utils';
+import { formatDateTime } from '@/lib/utils';
 
 function IBSPackageSuccess() {
   const navigate = useNavigate();
@@ -67,7 +67,6 @@ function IBSPackageSuccess() {
     fetchPackage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  console.log('package_', package_);
   if (status === 'loading') {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
@@ -150,7 +149,7 @@ function IBSPackageSuccess() {
             <div>
               <p className="text-sm text-gray-500">Maturity Date</p>
               <p className="font-medium">
-                {formatDate(new Date(package_.maturityDate).getTime())}
+                {formatDateTime(package_.maturityDate)}
               </p>
             </div>
           </div>

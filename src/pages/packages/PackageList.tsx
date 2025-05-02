@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import packagesApi, { IBPackage as APIIBPackage } from '@/lib/api/packages';
+import { formatDateTime } from '@/lib/utils';
 
 // Unified package interface for the UI
 interface UIPackage {
@@ -309,60 +310,6 @@ const parseDate = (
   }
 };
 
-const formatDate = (dateInput: string | number | Date | undefined): string => {
-  if (!dateInput) return 'N/A';
-
-  const date = parseDate(dateInput);
-  if (!date) return 'Invalid date';
-
-  try {
-    // Get day with ordinal suffix
-    const day = date.getDate();
-    let ordinalSuffix = 'th';
-    if (day > 3 && day < 21) {
-      ordinalSuffix = 'th';
-    } else {
-      switch (day % 10) {
-        case 1:
-          ordinalSuffix = 'st';
-          break;
-        case 2:
-          ordinalSuffix = 'nd';
-          break;
-        case 3:
-          ordinalSuffix = 'rd';
-          break;
-        default:
-          ordinalSuffix = 'th';
-          break;
-      }
-    }
-
-    // Format the date
-    const monthNames = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    const month = monthNames[date.getMonth()];
-    const year = date.getFullYear();
-
-    return `${day}${ordinalSuffix} ${month}, ${year}`;
-  } catch (error) {
-    console.error('Error formatting date:', error);
-    return 'Invalid date';
-  }
-};
-
 // Update the timestamp calculation for estimated earnings
 const calculateEstimatedEarnings = (
   principal: number,
@@ -448,7 +395,6 @@ function PackageList() {
         // Fetch all package types using the API service
         const { dailySavings, sbPackages, ibPackages } =
           await packagesApi.getAllPackages(userId);
-        console.log(sbPackages);
 
         // Process DS packages
         const dsPackages = dailySavings.map((pkg) => ({
@@ -466,11 +412,11 @@ function PackageList() {
           statusColor: getStatusColor(pkg.status),
           status: formatStatus(pkg.status),
           accountNumber: pkg.accountNumber,
-          lastContribution: formatDate(pkg.updatedAt),
+          lastContribution: pkg.updatedAt,
           nextContribution: calculateNextContribution(pkg.amountPerDay),
           amountPerDay: pkg.amountPerDay,
-          startDate: formatDate(pkg.startDate),
-          endDate: formatDate(pkg.endDate),
+          startDate: pkg.startDate,
+          endDate: pkg.endDate,
           productImage: getRandomPackageImage('Daily Savings', pkg.target),
         }));
 
@@ -495,8 +441,8 @@ function PackageList() {
             getRandomPackageImage('SB Package', pkg.product?.name),
           lastContribution: 'Not available',
           nextContribution: 'Not available',
-          startDate: formatDate(pkg.startDate),
-          endDate: formatDate(pkg.endDate),
+          startDate: pkg.startDate,
+          endDate: pkg.endDate,
         }));
 
         // Process IB packages
@@ -535,11 +481,11 @@ function PackageList() {
             status: formatStatus(pkg.status),
             accountNumber: pkg.accountNumber,
             interestRate: `${pkg.interestRate}% p.a.`,
-            maturityDate: formatDate(pkg.maturityDate),
+            maturityDate: pkg.maturityDate,
             lastContribution: 'Not available',
             nextContribution: 'Not available',
-            startDate: formatDate(pkg.startDate),
-            endDate: formatDate(pkg.maturityDate),
+            startDate: pkg.startDate,
+            endDate: pkg.maturityDate,
             productImage: getRandomPackageImage('Interest-Based'),
             // Add additional fields from the actual data structure
             compoundingFrequency: pkg.compoundingFrequency || 'N/A',
@@ -974,7 +920,9 @@ function PackageList() {
                           <span className="text-gray-600 text-sm">
                             Start Date:
                           </span>
-                          <span className="font-medium">{pkg.startDate}</span>
+                          <span className="font-medium">
+                            {formatDateTime(pkg.startDate)}
+                          </span>
                         </div>
                         {pkg.type === 'Daily Savings' &&
                           pkg.nextContribution && (
@@ -1018,7 +966,7 @@ function PackageList() {
                             </span>
                             <span className="font-medium">
                               {pkg.lockPeriod}{' '}
-                              {pkg.lockPeriod === 1 ? 'month' : 'months'}
+                              {pkg.lockPeriod === 1 ? 'Day' : 'Days'}
                             </span>
                           </div>
                         )}
@@ -1043,7 +991,7 @@ function PackageList() {
                             Maturity:
                           </span>
                           <span className="font-medium">
-                            {pkg.maturityDate}
+                            {formatDateTime(pkg.maturityDate || '')}
                           </span>
                         </div>
                         <div className="flex justify-between">
