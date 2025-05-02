@@ -1,5 +1,5 @@
 import { useAuth } from '@/hooks/useAuth';
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import { WelcomeCard } from '@/components/dashboard/WelcomeCard';
 import { BalanceCard } from '@/components/dashboard/BalanceCard';
 import { QuickActions } from '@/components/dashboard/QuickActions';
@@ -10,6 +10,7 @@ import { PackageType } from '@/components/dashboard/types';
 import { useAccountQueries } from '@/hooks/queries/useAccountQueries';
 import { usePackageQueries } from '@/hooks/queries/usePackageQueries';
 import { memo } from 'react';
+import { formatCurrency } from '@/lib/utils';
 
 function Dashboard() {
   const { user } = useAuth();
@@ -67,15 +68,7 @@ function Dashboard() {
     []
   );
 
-  // Format currency - memoized to avoid recreation on each render
-  const formatCurrency = useCallback((amount: number) => {
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
-      minimumFractionDigits: 2,
-    }).format(amount);
-  }, []);
-  console.log('savingsPackages', savingsPackages);
+  
   return (
     <div className="space-y-6">
       {/* User Welcome Card */}

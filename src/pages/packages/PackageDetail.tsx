@@ -13,7 +13,7 @@ import { PackageOverview } from '@/components/packages/PackageOverview';
 import { PackageActions } from '@/components/packages/PackageActions';
 import { ContributionTimeline } from '@/components/packages/ContributionTimeline';
 import { PackageDetailsAccordion } from '@/components/packages/PackageDetailsAccordion';
-import { formatDateTime } from '@/lib/utils';
+import { formatCurrency, formatDateTime } from '@/lib/utils';
 
 // Extended API interfaces with additional fields
 interface ExtendedDailySavingsPackage extends DailySavingsPackage {
@@ -188,15 +188,6 @@ function PackageDetail() {
     useState<boolean>(false);
   const [showBuyDialog, setShowBuyDialog] = useState<boolean>(false);
   const [showWithdrawDialog, setShowWithdrawDialog] = useState<boolean>(false);
-
-  // Format currency
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
 
   // Get status color
   const getStatusColor = (status: string): string => {

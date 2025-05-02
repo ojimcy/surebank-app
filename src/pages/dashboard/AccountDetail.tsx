@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAccountQueries } from '@/hooks/queries/useAccountQueries';
 import { Account } from '@/lib/api/accounts';
 import { useToast } from '@/lib/toast-provider';
+import { formatCurrency } from '@/lib/utils';
 
 export default function AccountDetail() {
   const { accountType } = useParams<{ accountType: 'ds' | 'sb' | 'ibs' }>();
@@ -12,15 +13,6 @@ export default function AccountDetail() {
 
   const [loading, setLoading] = useState(true);
   const [account, setAccount] = useState<Account | null>(null);
-
-  // Format currency
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
 
   // Format date
   const formatDate = (dateString: string): string => {
@@ -107,7 +99,7 @@ export default function AccountDetail() {
     };
 
     fetchAccount();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountType, showError]);
 
   if (loading) {

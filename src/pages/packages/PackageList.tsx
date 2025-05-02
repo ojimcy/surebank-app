@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import packagesApi, { IBPackage as APIIBPackage } from '@/lib/api/packages';
-import { formatDateTime } from '@/lib/utils';
+import { formatCurrency, formatDateTime } from '@/lib/utils';
 
 // Unified package interface for the UI
 interface UIPackage {
@@ -970,22 +970,16 @@ function PackageList() {
                             </span>
                           </div>
                         )}
-                        {((pkg.interestAccrued !== undefined &&
-                          pkg.interestAccrued > 0) ||
-                          (pkg.estimatedEarnings !== undefined &&
-                            pkg.estimatedEarnings > 0)) && (
+                        {
                           <div className="flex justify-between">
                             <span className="text-gray-600 text-sm">
                               Interest Earned:
                             </span>
                             <span className="font-medium text-green-600">
-                              ₦{' '}
-                              {pkg.interestAccrued?.toLocaleString(undefined, {
-                                maximumFractionDigits: 0,
-                              })}
+                              {formatCurrency(pkg.interestAccrued || 0)}
                             </span>
                           </div>
-                        )}
+                        }
                         <div className="flex justify-between">
                           <span className="text-gray-600 text-sm">
                             Maturity:

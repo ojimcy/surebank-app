@@ -106,3 +106,12 @@ export function formatDateTime(dateString: string | undefined | null): string {
     return 'Invalid date';
   }
 }
+
+// Format currency
+export function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('en-NG', {
+    style: 'currency',
+    currency: 'NGN',
+    minimumFractionDigits: 0,
+  }).format(amount);
+}
