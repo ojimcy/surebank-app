@@ -701,7 +701,7 @@ function PackageList() {
             You haven't created any savings packages yet.
           </p>
           <button
-            onClick={() => setShowFabMenu(true)}
+            onClick={() => navigate('/packages/new')}
             className="bg-[#0066A1] text-white px-4 py-2 rounded-md"
           >
             Create your first package
