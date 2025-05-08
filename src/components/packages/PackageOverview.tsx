@@ -151,14 +151,6 @@ export function PackageOverview({
                     </div>
                   </div>
                 )}
-                {interestAccrued !== undefined && interestAccrued > 0 && (
-                  <div>
-                    <div className="text-sm text-gray-500">Interest Earned</div>
-                    <div className="font-medium text-green-600">
-                      {formatCurrency(interestAccrued)}
-                    </div>
-                  </div>
-                )}
                 {estimatedEarnings !== undefined &&
                   estimatedEarnings > 0 &&
                   interestAccrued === 0 && (

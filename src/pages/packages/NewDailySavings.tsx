@@ -275,7 +275,7 @@ function NewDailySavings() {
               required
             />
             <p className="text-xs text-[#6c757d] mt-1">
-              Minimum amount: ₦100 per day
+              Minimum amount: ₦1000 per day
             </p>
           </div>
 
