@@ -92,6 +92,14 @@ export interface InitiatePaymentResponse {
   lockPeriod: number;
 }
 
+// Interface for initializing a contribution through Paystack
+export interface InitiateContributionParams {
+  packageId: string;
+  amount: number;
+  packageType: 'ds' | 'sb';
+  redirect_url: string;
+}
+
 // Packages API functions
 const packagesApi = {
   // Get daily savings packages for a user
@@ -214,6 +222,30 @@ const packagesApi = {
   getInterestRateOptions: async (): Promise<InterestRateOption[]> => {
     const response = await api.get<InterestRateOption[]>(
       '/interest-savings/rate-options'
+    );
+    return response.data;
+  },
+
+  // Initialize a contribution payment
+  initializeContribution: async (
+    data: InitiateContributionParams
+  ): Promise<InitiatePaymentResponse> => {
+    // Determine endpoint based on package type
+    const endpoint =
+      data.packageType === 'ds'
+        ? '/daily-savings/init-contribution'
+        : '/daily-savings/sb/init-contribution';
+
+    // Create payload without packageType field
+    const payloadData = {
+      packageId: data.packageId,
+      amount: data.amount,
+      redirect_url: data.redirect_url,
+    };
+
+    const response = await api.post<InitiatePaymentResponse>(
+      endpoint,
+      payloadData
     );
     return response.data;
   },

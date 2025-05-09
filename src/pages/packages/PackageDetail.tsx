@@ -356,16 +356,7 @@ function PackageDetail() {
             earlyWithdrawalPenalty: ibPackage.earlyWithdrawalPenalty || 0,
             currentBalance:
               ibPackage.currentBalance || ibPackage.principalAmount,
-            estimatedEarnings:
-              ibPackage.accruedInterest > 0
-                ? ibPackage.accruedInterest
-                : calculateEstimatedEarnings(
-                    ibPackage.principalAmount || 0,
-                    ibPackage.interestRate || 0,
-                    new Date(ibPackage.startDate).getTime(),
-                    new Date(ibPackage.maturityDate).getTime(),
-                    ibPackage.compoundingFrequency || 'annually'
-                  ),
+            estimatedEarnings: ibPackage.accruedInterest,
           };
         }
 
@@ -590,7 +581,6 @@ function PackageDetail() {
       <PackageActions
         type={packageData.type}
         color={packageData.color}
-        onAddContribution={() => setShowAddDialog(true)}
         onEditPackage={() => setShowEditDialog(true)}
         onClosePackage={() => setShowCloseDialog(true)}
         onBuyProduct={() => setShowBuyDialog(true)}
@@ -744,55 +734,5 @@ function PackageDetail() {
     </div>
   );
 }
-
-// Add helper function for calculating estimated earnings
-const calculateEstimatedEarnings = (
-  principal: number,
-  interestRate: number,
-  startDateTimestamp: number,
-  maturityDateTimestamp: number,
-  compoundingFrequency: string = 'annually'
-): number => {
-  try {
-    // Calculate duration in years
-    const durationMs = maturityDateTimestamp - startDateTimestamp;
-    const durationYears = durationMs / (1000 * 60 * 60 * 24 * 365);
-
-    // Determine compounding periods per year
-    let periodsPerYear = 1; // Default to annual compounding
-
-    switch (compoundingFrequency?.toLowerCase()) {
-      case 'monthly':
-        periodsPerYear = 12;
-        break;
-      case 'quarterly':
-        periodsPerYear = 4;
-        break;
-      case 'semi-annually':
-      case 'biannually':
-        periodsPerYear = 2;
-        break;
-      case 'daily':
-        periodsPerYear = 365;
-        break;
-      case 'weekly':
-        periodsPerYear = 52;
-        break;
-      default:
-        periodsPerYear = 1; // Annual
-    }
-
-    // Compound interest formula: A = P(1 + r/n)^(nt)
-    const rate = interestRate / 100;
-    const n = periodsPerYear;
-    const t = durationYears;
-
-    const finalAmount = principal * Math.pow(1 + rate / n, n * t);
-    return finalAmount - principal;
-  } catch (error) {
-    console.error('Error calculating estimated earnings:', error);
-    return 0;
-  }
-};
 
 export default PackageDetail;

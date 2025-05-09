@@ -9,14 +9,14 @@ import NewDailySavings from '@/pages/packages/NewDailySavings';
 import NewSBPackage from '@/pages/packages/NewSBPackage';
 import NewIBSPackage from '@/pages/packages/NewIBSPackage';
 import PackageSuccess from '@/pages/packages/PackageSuccess';
-import IBSPackageSuccess from '@/pages/packages/IBSPaymentSuccess';
-import IBSPaymentErrorPage from '@/pages/packages/IBSPaymentErrorPage';
 import ProductCatalog from '@/pages/products/ProductCatalog';
 import Settings from '@/pages/settings/Settings';
 import Login from '@/pages/auth/Login';
 import Register from '@/pages/auth/Register';
 import Verify from '@/pages/auth/Verify';
-import Deposit from '@/pages/payments/Deposit';
+import Deposit from '@/pages/payments/Contribution';
+import PaymentSuccess from '@/pages/payments/PaymentSuccess';
+import PaymentError from '@/pages/payments/PaymentError';
 import ForgotPassword from '@/pages/auth/ForgotPassword';
 import VerifyResetCode from '@/pages/auth/VerifyResetCode';
 import ResetPassword from '@/pages/auth/ResetPassword';
@@ -72,14 +72,7 @@ function AppRoutes() {
             <Route path="/packages/new/sb" element={<NewSBPackage />} />
             <Route path="/packages/new/ibs" element={<NewIBSPackage />} />
             <Route path="/packages/new/success" element={<PackageSuccess />} />
-            <Route
-              path="/packages/new/ibs-success"
-              element={<IBSPackageSuccess />}
-            />
-            <Route
-              path="/packages/new/ibs-error"
-              element={<IBSPaymentErrorPage />}
-            />
+            <Route path="/packages/new/ibs-error" element={<PaymentError />} />
             <Route path="/packages/:id" element={<PackageDetail />} />
             <Route path="/products" element={<ProductCatalog />} />
             <Route path="/accounts/:accountType" element={<AccountDetail />} />
@@ -87,6 +80,8 @@ function AppRoutes() {
             <Route path="/settings/setup-pin" element={<SetupPin />} />
             <Route path="/settings/pin-settings" element={<PinSettings />} />
             <Route path="/payments/deposit" element={<Deposit />} />
+            <Route path="/payments/success" element={<PaymentSuccess />} />
+            <Route path="/payments/error" element={<PaymentError />} />
             <Route path="/pin-lock" element={<PinLock />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

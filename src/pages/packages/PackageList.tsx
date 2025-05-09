@@ -310,64 +310,6 @@ const parseDate = (
   }
 };
 
-// Update the timestamp calculation for estimated earnings
-const calculateEstimatedEarnings = (
-  principal: number,
-  interestRate: number,
-  startDateTimestamp: number | string | Date,
-  maturityDateTimestamp: number | string | Date,
-  compoundingFrequency: string = 'annually'
-): number => {
-  try {
-    const startDate = parseDate(startDateTimestamp);
-    const maturityDate = parseDate(maturityDateTimestamp);
-
-    if (!startDate || !maturityDate) {
-      console.error('Invalid date parameters for earnings calculation');
-      return 0;
-    }
-
-    // Calculate duration in years
-    const durationMs = maturityDate.getTime() - startDate.getTime();
-    const durationYears = durationMs / (1000 * 60 * 60 * 24 * 365);
-
-    // Determine compounding periods per year
-    let periodsPerYear = 1; // Default to annual compounding
-
-    switch (compoundingFrequency?.toLowerCase()) {
-      case 'monthly':
-        periodsPerYear = 12;
-        break;
-      case 'quarterly':
-        periodsPerYear = 4;
-        break;
-      case 'semi-annually':
-      case 'biannually':
-        periodsPerYear = 2;
-        break;
-      case 'daily':
-        periodsPerYear = 365;
-        break;
-      case 'weekly':
-        periodsPerYear = 52;
-        break;
-      default:
-        periodsPerYear = 1; // Annual
-    }
-
-    // Compound interest formula: A = P(1 + r/n)^(nt)
-    const rate = interestRate / 100;
-    const n = periodsPerYear;
-    const t = durationYears;
-
-    const finalAmount = principal * Math.pow(1 + rate / n, n * t);
-    return finalAmount - principal;
-  } catch (error) {
-    console.error('Error calculating estimated earnings:', error);
-    return 0;
-  }
-};
-
 function PackageList() {
   const [showFabMenu, setShowFabMenu] = useState(false);
   const [activeTab, setActiveTab] = useState<'packages' | 'types'>('packages');
@@ -494,16 +436,7 @@ function PackageList() {
             earlyWithdrawalPenalty: pkg.earlyWithdrawalPenalty || undefined,
             currentBalance: pkg.principalAmount, // Use principal as current balance
             // Calculate estimated earnings if interest hasn't accrued yet
-            estimatedEarnings:
-              pkg.accruedInterest > 0
-                ? pkg.accruedInterest
-                : calculateEstimatedEarnings(
-                    pkg.principalAmount,
-                    pkg.interestRate,
-                    pkg.startDate,
-                    pkg.maturityDate,
-                    pkg.compoundingFrequency
-                  ),
+            estimatedEarnings: pkg.accruedInterest,
           };
         });
 

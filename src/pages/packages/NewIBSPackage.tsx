@@ -174,7 +174,7 @@ function NewIBSPackage() {
         name: formData.name,
         principalAmount: formData.principalAmount,
         lockPeriod: formData.lockPeriod,
-        redirect_url: `${window.location.origin}/packages/new/ibs-payment-success`,
+        redirect_url: `${window.location.origin}/payments/success`,
       };
 
       // Initiate payment

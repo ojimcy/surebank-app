@@ -1,9 +1,8 @@
 import { Button } from '@/components/ui/button';
-
+import { useNavigate } from 'react-router-dom';
 interface PackageActionsProps {
   type: 'Daily Savings' | 'Interest-Based' | 'SB Package';
   color: string;
-  onAddContribution: () => void;
   onEditPackage: () => void;
   onClosePackage: () => void;
   onBuyProduct: () => void;
@@ -15,7 +14,6 @@ interface PackageActionsProps {
 export function PackageActions({
   type,
   color,
-  onAddContribution,
   onEditPackage,
   onClosePackage,
   onBuyProduct,
@@ -23,6 +21,7 @@ export function PackageActions({
   onMerge,
   onChangeProduct,
 }: PackageActionsProps) {
+  const navigate = useNavigate();
   return (
     <div className="mb-6">
       {type === 'SB Package' ? (
@@ -141,9 +140,11 @@ export function PackageActions({
         // Daily Savings package actions
         <div className="grid grid-cols-2 gap-3">
           <Button
-            className="flex items-center justify-center"
+            className="flex items-center justify-center cursor-pointer"
             style={{ backgroundColor: color }}
-            onClick={onAddContribution}
+            onClick={() => {
+              navigate('/payments/deposit');
+            }}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -157,7 +158,7 @@ export function PackageActions({
                 clipRule="evenodd"
               />
             </svg>
-            Add Contribution
+            Make Contribution
           </Button>
           <Button
             className="flex items-center justify-center"
