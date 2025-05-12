@@ -584,6 +584,10 @@ function PackageDetail() {
         onWithdraw={() => setShowWithdrawDialog(true)}
         onMerge={() => setShowMergeDialog(true)}
         onChangeProduct={() => setShowChangeProductDialog(true)}
+        hasMetTarget={
+          packageData.type === 'SB Package' &&
+          packageData.totalContribution >= packageData.target
+        }
       />
 
       {/* Contribution History */}
