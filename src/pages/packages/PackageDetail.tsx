@@ -247,12 +247,9 @@ function PackageDetail() {
             title: dsPackage.target || 'Savings Goal',
             type: 'Daily Savings' as const,
             icon: 'home',
-            progress:
-              dsPackage.targetAmount > 0
-                ? Math.floor(
-                    (dsPackage.totalContribution / dsPackage.targetAmount) * 100
-                  )
-                : 0,
+            progress: dsPackage.totalCount
+              ? Math.floor((dsPackage.totalCount / 30) * 100)
+              : 0,
             current: dsPackage.totalContribution,
             target: dsPackage.targetAmount,
             color: '#0066A1',
@@ -612,8 +609,10 @@ function PackageDetail() {
             ? packageData.totalCount
             : undefined
         }
-        targetAmount={
-          packageData.type === 'Daily Savings' ? packageData.target : undefined
+        amountPerDay={
+          packageData.type === 'Daily Savings'
+            ? packageData.amountPerDay
+            : undefined
         }
         // SB Package specific props
         productDetails={

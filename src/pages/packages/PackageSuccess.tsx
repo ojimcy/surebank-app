@@ -92,7 +92,7 @@ function PackageSuccess() {
 
         <div className="space-y-3">
           <Link
-            to="/deposit"
+            to="/payments/deposit"
             className="block w-full bg-[#0066A1] text-white py-3 px-4 rounded-lg hover:bg-[#005085] transition-colors"
           >
             Make First Contribution

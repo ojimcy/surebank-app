@@ -326,7 +326,7 @@ function Contribution() {
         {(() => {
           // If no package is selected, use default preset amounts
           if (!selectedPackage) {
-            return [5000, 10000, 20000].map((presetAmount) => (
+            return [1000, 5000, 10000].map((presetAmount) => (
               <button
                 key={presetAmount}
                 type="button"
@@ -369,7 +369,7 @@ function Contribution() {
           }
 
           // For other package types, use default preset amounts
-          return [5000, 10000, 20000].map((presetAmount) => (
+          return [1000, 5000, 10000].map((presetAmount) => (
             <button
               key={presetAmount}
               type="button"

@@ -8,6 +8,7 @@ export interface DailySavingsPackage {
   target: string;
   targetAmount: number;
   totalContribution: number;
+  totalCount?: number;
   status: string;
   startDate: string;
   createdAt: string;

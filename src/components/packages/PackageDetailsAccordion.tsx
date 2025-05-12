@@ -9,7 +9,7 @@ interface PackageDetailsAccordionProps {
   formatStatus: (status: string) => string;
   // Additional fields for different package types
   totalCount?: number;
-  targetAmount?: number;
+  amountPerDay?: number;
   // SB Package specific fields
   productDetails?: {
     name: string;
@@ -37,7 +37,7 @@ export function PackageDetailsAccordion({
   startDate,
   formatStatus,
   totalCount,
-  targetAmount,
+  amountPerDay,
   productDetails,
   totalContribution,
   remainingBalance,
@@ -78,7 +78,7 @@ export function PackageDetailsAccordion({
                 </div>
                 <div>
                   <p className="font-medium text-gray-700">Amount Per Day</p>
-                  <p>{formatCurrency(targetAmount || 0)}</p>
+                  <p>{formatCurrency(amountPerDay || 0)}</p>
                 </div>
                 <div>
                   <p className="font-medium text-gray-700">Start Date</p>

@@ -28,12 +28,15 @@ interface UIPackage {
   endDate?: string;
   amountPerDay?: number;
   estimatedEarnings?: number;
+  totalCount?: number;
+  totalContribution?: number;
   // Add IBS-specific fields
   compoundingFrequency?: string;
   lockPeriod?: number;
   interestAccrued?: number;
   earlyWithdrawalPenalty?: number;
   currentBalance?: number;
+  principalAmount?: number;
 }
 
 // Available package types
@@ -345,11 +348,12 @@ function PackageList() {
           type: 'Daily Savings' as const,
           icon: 'home',
           progress:
-            pkg.targetAmount > 0
-              ? Math.floor((pkg.totalContribution / pkg.targetAmount) * 100)
-              : 0,
-          current: pkg.totalContribution,
+          pkg.totalCount
+            ? Math.floor((pkg.totalCount / 30) * 100)
+            : 0,
+          current: pkg.amountPerDay,
           target: pkg.targetAmount,
+          totalContribution: pkg.totalContribution,
           color: '#0066A1',
           statusColor: getStatusColor(pkg.status),
           status: formatStatus(pkg.status),
@@ -374,6 +378,7 @@ function PackageList() {
               : 0,
           current: pkg.totalContribution,
           target: pkg.targetAmount,
+          totalContribution: pkg.totalContribution,
           color: '#7952B3',
           statusColor: getStatusColor(pkg.status),
           status: formatStatus(pkg.status),
@@ -416,8 +421,9 @@ function PackageList() {
             type: 'Interest-Based' as const,
             icon: 'trending-up',
             progress: timeProgress, // Time-based progress instead of amount-based
-            current: pkg.principalAmount,
+            current: pkg.currentBalance,
             target: pkg.principalAmount,
+            totalContribution: pkg.totalContribution,
             color: '#28A745',
             statusColor: getStatusColor(pkg.status),
             status: formatStatus(pkg.status),
@@ -434,7 +440,7 @@ function PackageList() {
             lockPeriod: pkg.lockPeriod || undefined,
             interestAccrued: pkg.accruedInterest || 0, // Note: API uses accruedInterest
             earlyWithdrawalPenalty: pkg.earlyWithdrawalPenalty || undefined,
-            currentBalance: pkg.principalAmount, // Use principal as current balance
+            currentBalance: pkg.currentBalance, // Use principal as current balance
             // Calculate estimated earnings if interest hasn't accrued yet
             estimatedEarnings: pkg.accruedInterest,
           };
@@ -794,12 +800,7 @@ function PackageList() {
                         <h3 className="font-semibold text-base">{pkg.title}</h3>
                         <p className="text-sm text-gray-600">
                           {pkg.type}
-                          {pkg.type === 'Daily Savings' &&
-                            pkg.nextContribution && (
-                              <span className="ml-1">
-                                ({pkg.nextContribution})
-                              </span>
-                            )}
+                          {pkg.type === 'Daily Savings' }
                         </p>
                       </div>
                     </div>
@@ -833,12 +834,16 @@ function PackageList() {
                     {/* Show these sections only for non-IB packages */}
                     {pkg.type !== 'Interest-Based' && (
                       <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600 text-sm">Amount:</span>
-                          <span className="font-medium">
-                            ₦{pkg.target?.toLocaleString() || '0'}
-                          </span>
-                        </div>
+                        {pkg.type === 'SB Package' && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 text-sm">
+                              Target Amount:
+                            </span>
+                            <span className="font-medium">
+                              ₦{pkg.target?.toLocaleString() || '0'}
+                            </span>
+                          </div>
+                        )}
                         {pkg.type === 'Daily Savings' && (
                           <div className="flex justify-between">
                             <span className="text-gray-600 text-sm">
@@ -851,23 +856,20 @@ function PackageList() {
                         )}
                         <div className="flex justify-between">
                           <span className="text-gray-600 text-sm">
+                            Total Contribution:
+                          </span>
+                          <span className="font-medium">
+                            ₦{pkg.totalContribution?.toLocaleString() || '0'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 text-sm">
                             Start Date:
                           </span>
                           <span className="font-medium">
                             {formatDateTime(pkg.startDate)}
                           </span>
                         </div>
-                        {pkg.type === 'Daily Savings' &&
-                          pkg.nextContribution && (
-                            <div className="flex justify-between">
-                              <span className="text-gray-600 text-sm">
-                                Next Contribution:
-                              </span>
-                              <span className="font-medium text-primary">
-                                {pkg.nextContribution}
-                              </span>
-                            </div>
-                          )}
                       </div>
                     )}
 
@@ -879,7 +881,7 @@ function PackageList() {
                             Principal Amount:
                           </span>
                           <span className="font-medium">
-                            ₦{pkg.current?.toLocaleString() || '0'}
+                            ₦{pkg.target?.toLocaleString() || '0'}
                           </span>
                         </div>
                         {pkg.interestRate && (
@@ -892,14 +894,13 @@ function PackageList() {
                             </span>
                           </div>
                         )}
-                        {pkg.lockPeriod && (
+                        {pkg.currentBalance && (
                           <div className="flex justify-between">
                             <span className="text-gray-600 text-sm">
-                              Lock Period:
+                              Current Balance:
                             </span>
                             <span className="font-medium">
-                              {pkg.lockPeriod}{' '}
-                              {pkg.lockPeriod === 1 ? 'Day' : 'Days'}
+                              ₦{pkg.currentBalance?.toLocaleString() || '0'}
                             </span>
                           </div>
                         )}
@@ -909,14 +910,6 @@ function PackageList() {
                           </span>
                           <span className="font-medium">
                             {formatDateTime(pkg.maturityDate || '')}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600 text-sm">
-                            Progress:
-                          </span>
-                          <span className="font-medium">
-                            {pkg.progress}% to maturity
                           </span>
                         </div>
                       </div>
