@@ -248,7 +248,7 @@ function PackageDetail() {
             type: 'Daily Savings' as const,
             icon: 'home',
             progress: dsPackage.totalCount
-              ? Math.floor((dsPackage.totalCount / 30) * 100)
+              ? Math.floor((dsPackage.totalCount / 31) * 100)
               : 0,
             current: dsPackage.totalContribution,
             target: dsPackage.targetAmount,

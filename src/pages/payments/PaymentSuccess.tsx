@@ -115,14 +115,6 @@ function PaymentSuccess() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
-      minimumFractionDigits: 2,
-    }).format(amount);
-  };
-
   const handleViewPackage = () => {
     if (paymentData?.type === 'contribution' && paymentData.packageId) {
       navigate(`/packages/${paymentData.packageId}`);
@@ -212,26 +204,6 @@ function PaymentSuccess() {
                   <span className="text-gray-500">Maturity Date</span>
                   <span className="font-medium text-gray-900">
                     {formatDateTime(paymentData.packageDetails.maturityDate)}
-                  </span>
-                </div>
-              </>
-            )}
-
-            {/* Contribution Details */}
-            {paymentData?.type === 'contribution' && (
-              <>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Package</span>
-                  <span className="font-medium text-gray-900">
-                    {paymentData.packageName}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Amount</span>
-                  <span className="font-medium text-gray-900">
-                    {paymentData.amount
-                      ? formatCurrency(paymentData.amount)
-                      : 'N/A'}
                   </span>
                 </div>
               </>
