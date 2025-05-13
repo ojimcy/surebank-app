@@ -6,7 +6,6 @@ interface PackageActionsProps {
   onEditPackage: () => void;
   onClosePackage: () => void;
   onBuyProduct: () => void;
-  onWithdraw: () => void;
   onMerge: () => void;
   onChangeProduct: () => void;
   hasMetTarget?: boolean;
@@ -18,7 +17,6 @@ export function PackageActions({
   onEditPackage,
   onClosePackage,
   onBuyProduct,
-  onWithdraw,
   onMerge,
   onChangeProduct,
   hasMetTarget = false,
@@ -64,7 +62,7 @@ export function PackageActions({
           <Button
             className="flex items-center justify-center"
             variant="outline"
-            onClick={onWithdraw}
+            onClick={() => navigate('/packages/withdraw')}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -119,7 +117,7 @@ export function PackageActions({
           <Button
             className="flex items-center justify-center"
             style={{ backgroundColor: color }}
-            onClick={onWithdraw}
+            onClick={() => navigate('/payments/withdraw')}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -138,7 +136,8 @@ export function PackageActions({
           <Button
             className="flex items-center justify-center"
             variant="outline"
-            onClick={onWithdraw}
+            // TODO: Implement early withdrawal functionality
+            onClick={() => navigate('/payments/withdraw')}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -182,7 +181,7 @@ export function PackageActions({
           <Button
             className="flex items-center justify-center"
             variant="outline"
-            onClick={onWithdraw}
+            onClick={() => navigate('/packages/withdraw')}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

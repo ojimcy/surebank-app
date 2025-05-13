@@ -25,6 +25,7 @@ export interface SBPackage {
   startDate: string;
   endDate?: string;
   product?: {
+    id: string;
     name: string;
     images?: string[];
   };
@@ -99,6 +100,15 @@ export interface InitiateContributionParams {
   amount: number;
   packageType: 'ds' | 'sb';
   redirect_url: string;
+}
+
+// Interface for withdrawal request
+export interface WithdrawalParams {
+  packageId: string;
+  amount: number;
+  target?: string;
+  accountNumber?: string;
+  product?: string;
 }
 
 // Packages API functions
@@ -248,6 +258,33 @@ const packagesApi = {
       endpoint,
       payloadData
     );
+    return response.data;
+  },
+
+  // Process a withdrawal from a package
+  withdrawFromPackage: async (data: WithdrawalParams, packageType: 'ds' | 'sb'): Promise<{ success: boolean; message: string }> => {
+    let endpoint = '';
+    let payload = {};
+    
+    if (packageType === 'ds') {
+      // Daily Savings withdrawal
+      endpoint = `/daily-savings/withdraw/?packageId=${data.packageId}`;
+      payload = {
+        target: data.target,
+        accountNumber: data.accountNumber,
+        amount: data.amount
+      };
+    } else {
+      // SB Package withdrawal
+      endpoint = `/daily-savings/sb/withdraw/?packageId=${data.packageId}`;
+      payload = {
+        product: data.target, // Using target as product ID
+        accountNumber: data.accountNumber,
+        amount: data.amount
+      };
+    }
+    console.log('payload', payload);
+    const response = await api.post(endpoint, payload);
     return response.data;
   },
 };

@@ -29,6 +29,7 @@ interface ExtendedSBPackage extends SBPackage {
   withdrawalRequests?: WithdrawalRequest[];
   paymentTransactions?: PaymentTransaction[];
   product?: {
+    id: string;
     name: string;
     images?: string[];
     description?: string;
@@ -581,7 +582,6 @@ function PackageDetail() {
         onEditPackage={() => setShowEditDialog(true)}
         onClosePackage={() => setShowCloseDialog(true)}
         onBuyProduct={() => setShowBuyDialog(true)}
-        onWithdraw={() => setShowWithdrawDialog(true)}
         onMerge={() => setShowMergeDialog(true)}
         onChangeProduct={() => setShowChangeProductDialog(true)}
         hasMetTarget={
