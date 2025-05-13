@@ -111,6 +111,23 @@ export interface WithdrawalParams {
   product?: string;
 }
 
+// Interface for package contributions
+export interface PackageContribution {
+  paymentMethod: string;
+  amount: number;
+  accountNumber: string;
+  packageId: string;
+  count: number;
+  totalCount: number;
+  date: number;
+  narration: string;
+  paystackReference: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  id: string;
+}
+
 // Packages API functions
 const packagesApi = {
   // Get daily savings packages for a user
@@ -285,6 +302,14 @@ const packagesApi = {
     }
     console.log('payload', payload);
     const response = await api.post(endpoint, payload);
+    return response.data;
+  },
+
+  // Get contributions for a package
+  getPackageContributions: async (packageId: string, limit?: number): Promise<PackageContribution[]> => {
+    const endpoint = `/payments/packages/${packageId}/contributions`;
+    const params = limit ? `?limit=${limit}` : '';
+    const response = await api.get<PackageContribution[]>(`${endpoint}${params}`);
     return response.data;
   },
 };

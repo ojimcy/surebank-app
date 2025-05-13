@@ -6,6 +6,7 @@ import packagesApi, {
   DailySavingsPackage,
   SBPackage,
   IBPackage,
+  PackageContribution,
 } from '@/lib/api/packages';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { PackageHeader } from '@/components/packages/PackageHeader';
@@ -139,56 +140,34 @@ const getRandomPackageImage = (
   );
 };
 
-// Function to generate mock contributions for demo purposes
-const generateMockContributions = (totalAmount: number): Contribution[] => {
-  // Generate between 3 and 8 contributions
-  const numContributions = Math.floor(Math.random() * 6) + 3;
-  const mockContributions: Contribution[] = [];
-
-  // Calculate a reasonable average contribution
-  const avgContribution = totalAmount / numContributions;
-
-  // Generate contributions with some variance
-  for (let i = 0; i < numContributions; i++) {
-    // Create a date between 6 months ago and now
-    const date = new Date();
-    date.setMonth(date.getMonth() - Math.floor(Math.random() * 6));
-
-    // Create the contribution with some variance in amount
-    mockContributions.push({
-      id: `contrib-${i}`,
-      amount: Math.round(avgContribution * (0.75 + Math.random() * 0.5)),
-      date: date.toISOString(),
-      status: Math.random() > 0.1 ? 'completed' : 'pending',
-    });
-  }
-
-  // Sort by date (newest first)
-  mockContributions.sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
-
-  return mockContributions;
+// Convert API contribution data to UI contribution format
+const mapApiContributionsToUi = (apiContributions: PackageContribution[]): Contribution[] => {
+  return apiContributions.map(contribution => ({
+    id: contribution.id,
+    amount: contribution.amount,
+    date: new Date(contribution.date).toISOString(),
+    status: 'completed', // Assuming all API contributions are completed
+  }));
 };
 
 function PackageDetail() {
-  const { id } = useParams<{ id: string }>();
+  const { id, type } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { addToast } = useToast();
-
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [packageData, setPackageData] = useState<UIPackage | null>(null);
   const [contributions, setContributions] = useState<Contribution[]>([]);
-  const [showAddDialog, setShowAddDialog] = useState<boolean>(false);
-  const [showEditDialog, setShowEditDialog] = useState<boolean>(false);
-  const [showCloseDialog, setShowCloseDialog] = useState<boolean>(false);
-  const [showMergeDialog, setShowMergeDialog] = useState<boolean>(false);
-  const [showChangeProductDialog, setShowChangeProductDialog] =
-    useState<boolean>(false);
-  const [showBuyDialog, setShowBuyDialog] = useState<boolean>(false);
-  const [showWithdrawDialog, setShowWithdrawDialog] = useState<boolean>(false);
+  const [allContributions, setAllContributions] = useState<Contribution[]>([]);
+  const [contributionsLoading, setContributionsLoading] = useState(false);
+  const [showAllContributions, setShowAllContributions] = useState(false);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showCloseDialog, setShowCloseDialog] = useState(false);
+  const [showMergeDialog, setShowMergeDialog] = useState(false);
+  const [showChangeProductDialog, setShowChangeProductDialog] = useState(false);
+  const [showBuyDialog, setShowBuyDialog] = useState(false);
+  const [showWithdrawDialog, setShowWithdrawDialog] = useState(false);
 
   // Get status color
   const getStatusColor = (status: string): string => {
@@ -222,35 +201,71 @@ function PackageDetail() {
     }
   };
 
-  useEffect(() => {
-    if (!id || !user?.id) {
-      return;
-    }
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    return formatDateTime(dateString);
+  };
 
-    const fetchPackageDetail = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        // Fetch all package types to find the matching one
-        const { dailySavings, sbPackages, ibPackages } =
-          await packagesApi.getAllPackages(user.id);
+  // Handle view all contributions
+  const handleViewAllContributions = async () => {
+    if (!id) return;
+
+    if (!showAllContributions) {
+      // Fetch all contributions if we don't have them yet
+      if (allContributions.length === 0) {
+        await fetchContributions(id);
+      }
+      setShowAllContributions(true);
+    } else {
+      setShowAllContributions(false);
+    }
+  };
+
+  // Fetch contributions for a package
+  const fetchContributions = async (packageId: string, limit?: number) => {
+    try {
+      setContributionsLoading(true);
+      const contributionsData = await packagesApi.getPackageContributions(packageId, limit);
+      const mappedContributions = mapApiContributionsToUi(contributionsData);
+
+      if (limit) {
+        setContributions(mappedContributions);
+      } else {
+        setAllContributions(mappedContributions);
+      }
+    } catch (error) {
+      console.error('Error fetching contributions:', error);
+      addToast({
+        title: 'Error',
+        description: 'Failed to load contributions',
+        variant: 'destructive',
+      });
+    } finally {
+      setContributionsLoading(false);
+    }
+  };
+
+  // Fetch package details and contributions
+  const fetchPackageDetail = async () => {
+    if (!id || !user?.id) return;
+    
+    setLoading(true);
+    try {
+      // Fetch all package types to find the matching one
+      const { dailySavings, sbPackages, ibPackages } = await packagesApi.getAllPackages(user.id);
 
         // Find the package in each type
         let foundPackage = null;
 
         // Check Daily Savings
-        const dsPackage = dailySavings.find(
-          (pkg) => pkg.id === id
-        ) as ExtendedDailySavingsPackage;
+        const dsPackage = dailySavings.find((pkg) => pkg.id === id) as ExtendedDailySavingsPackage;
         if (dsPackage) {
           foundPackage = {
             id: dsPackage.id,
             title: dsPackage.target || 'Savings Goal',
             type: 'Daily Savings' as const,
             icon: 'home',
-            progress: dsPackage.totalCount
-              ? Math.floor((dsPackage.totalCount / 31) * 100)
-              : 0,
+            progress: dsPackage.totalCount ? Math.floor((dsPackage.totalCount / 31) * 100) : 0,
             current: dsPackage.totalContribution,
             target: dsPackage.targetAmount,
             color: '#0066A1',
@@ -263,10 +278,7 @@ function PackageDetail() {
             startDate: dsPackage.startDate || dsPackage.createdAt,
             endDate: dsPackage.endDate ? dsPackage.endDate : undefined,
             totalContribution: dsPackage.totalContribution,
-            productImage: getRandomPackageImage(
-              'Daily Savings',
-              dsPackage.target
-            ),
+            productImage: getRandomPackageImage('Daily Savings', dsPackage.target),
             withdrawalRequests: dsPackage.withdrawalRequests || [],
             paymentTransactions: dsPackage.paymentTransactions || [],
             deductionCount: dsPackage.deductionCount || 0,
@@ -277,9 +289,7 @@ function PackageDetail() {
         }
 
         // Check SB Packages
-        const sbPackage = sbPackages.find(
-          (pkg) => pkg._id === id
-        ) as ExtendedSBPackage;
+        const sbPackage = sbPackages.find((pkg) => pkg._id === id) as ExtendedSBPackage;
         if (sbPackage) {
           foundPackage = {
             id: sbPackage._id,
@@ -288,9 +298,7 @@ function PackageDetail() {
             icon: 'laptop',
             progress:
               sbPackage.targetAmount > 0
-                ? Math.floor(
-                    (sbPackage.totalContribution / sbPackage.targetAmount) * 100
-                  )
+                ? Math.floor((sbPackage.totalContribution / sbPackage.targetAmount) * 100)
                 : 0,
             current: sbPackage.totalContribution,
             target: sbPackage.targetAmount,
@@ -319,14 +327,9 @@ function PackageDetail() {
         }
 
         // Check Interest-Based Packages
-        const ibPackage = ibPackages.find(
-          (pkg) => pkg._id === id
-        ) as ExtendedIBPackage;
+        const ibPackage = ibPackages.find((pkg) => pkg._id === id) as ExtendedIBPackage;
         if (ibPackage) {
-          const timeProgress = calculateTimeProgress(
-            ibPackage.startDate,
-            ibPackage.maturityDate
-          );
+          const timeProgress = calculateTimeProgress(ibPackage.startDate, ibPackage.maturityDate);
           foundPackage = {
             id: ibPackage._id,
             title: ibPackage.name || 'Interest Savings',
@@ -364,22 +367,37 @@ function PackageDetail() {
 
         setPackageData(foundPackage as UIPackage);
 
-        // Generate mock contributions for now
-        // TODO: Replace with actual contribution data when available
-        const mockContributions = generateMockContributions(
-          foundPackage.current || 0
-        );
-        setContributions(mockContributions);
-      } catch (err) {
-        console.error('Error fetching package details:', err);
-        setError('Failed to load package details. Please try again later.');
+        // Fetch real contribution data
+        await fetchContributions(id, 7); // Fetch latest 7 contributions
+      } catch (error) {
+        console.error('Error fetching package details:', error);
+        addToast({
+          title: 'Error',
+          description: 'Failed to load package details',
+          variant: 'destructive',
+        });
+        navigate('/packages');
       } finally {
         setLoading(false);
       }
     };
+  
+  useEffect(() => {
+    // if (!id || !type || !user?.id) {
+    //   addToast({
+    //     title: 'Error',
+    //     description: 'Missing required parameters',
+    //     variant: 'destructive',
+    //   });
+    //   navigate('/packages');
+    //   return;
+    // }
 
+    // Fetch package details when component mounts
     fetchPackageDetail();
-  }, [id, user?.id]);
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, type, user?.id, navigate, addToast]);
 
   // Helper function to calculate time-based progress for IB packages
   const calculateTimeProgress = (
@@ -523,11 +541,11 @@ function PackageDetail() {
     );
   }
 
-  if (error || !packageData) {
+  if (!packageData) {
     return (
       <div className="p-4">
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mt-4">
-          <p>{error || 'Package not found'}</p>
+          <p>Package not found</p>
           <button
             className="mt-2 text-sm font-medium underline"
             onClick={() => navigate('/packages')}
@@ -590,15 +608,28 @@ function PackageDetail() {
         }
       />
 
-      {/* Contribution History */}
-      <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-        <h2 className="text-lg font-semibold mb-4">Contribution History</h2>
-        <ContributionTimeline
-          contributions={contributions}
-          formatCurrency={formatCurrency}
-          formatDate={formatDateTime}
-          formatStatus={formatStatus}
-        />
+      {/* Contributions Timeline */}
+      <div className="bg-white rounded-lg shadow-sm p-6 mt-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">Contribution History</h3>
+          <button
+            onClick={handleViewAllContributions}
+            className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+            disabled={contributionsLoading}
+          >
+            {contributionsLoading ? 'Loading...' : showAllContributions ? 'Show Recent' : 'View All'}
+          </button>
+        </div>
+        {contributionsLoading ? (
+          <div className="text-center py-6 text-gray-500">Loading contributions...</div>
+        ) : (
+          <ContributionTimeline
+            contributions={showAllContributions ? allContributions : contributions}
+            formatCurrency={formatCurrency}
+            formatDate={formatDate}
+            formatStatus={formatStatus}
+          />
+        )}
       </div>
 
       {/* Package Details Accordion */}

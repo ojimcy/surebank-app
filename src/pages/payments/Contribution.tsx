@@ -20,6 +20,7 @@ interface PackageOption {
   balance: number;
   target?: number;
   amountPerDay?: number;
+  status?: string;
 }
 
 function Contribution() {
@@ -54,30 +55,37 @@ function Contribution() {
       setSelectedPackage(null);
       try {
         let dsPackages, sbPackages;
+        let activeDS, activeSB;
 
         switch (selectedType) {
           case 'ds':
             dsPackages = await packagesApi.getDailySavings(user.id);
+            // Filter out closed packages
+            activeDS = dsPackages.filter(pkg => pkg.status !== 'closed');
             setPackages(
-              dsPackages.map((pkg: DailySavingsPackage) => ({
+              activeDS.map((pkg: DailySavingsPackage) => ({
                 id: pkg.id,
                 name: pkg.target || 'Daily Savings',
                 type: 'Daily Savings',
                 balance: pkg.totalContribution,
                 target: pkg.targetAmount,
                 amountPerDay: pkg.amountPerDay,
+                status: pkg.status
               }))
             );
             break;
           case 'sb':
             sbPackages = await packagesApi.getSBPackages(user.id);
+            // Filter out closed packages
+            activeSB = sbPackages.filter(pkg => pkg.status !== 'closed');
             setPackages(
-              sbPackages.map((pkg: SBPackage) => ({
+              activeSB.map((pkg: SBPackage) => ({
                 id: pkg._id,
                 name: pkg.product?.name || 'SureBank Package',
                 type: 'SB Package',
                 balance: pkg.totalContribution,
                 target: pkg.targetAmount,
+                status: pkg.status
               }))
             );
             break;

@@ -8,7 +8,7 @@ import packagesApi, {
 import { Button } from "@/components/ui/button";
 import { toast } from "react-hot-toast";
 import { cn } from "@/lib/utils";
-import { Check, Circle, Loader2, Package, Wallet } from "lucide-react";
+import { Check, Circle, Loader2, Package, Wallet, AlertTriangle, ArrowRight, CheckCircle2 } from "lucide-react";
 
 // Define package type options
 type PackageType = "ds" | "sb";
@@ -22,6 +22,7 @@ interface PackageOption {
   amountPerDay?: number;
   accountNumber: string;
   product?: string;
+  totalCount?: number;
 }
 
 function Withdrawal() {
@@ -33,6 +34,10 @@ function Withdrawal() {
   const [fetchingPackages, setFetchingPackages] = useState(false);
   const [selectedPackageData, setSelectedPackageData] =
     useState<PackageOption | null>(null);
+  const [showCloseWarning, setShowCloseWarning] = useState(false);
+  const [withdrawalSuccess, setWithdrawalSuccess] = useState(false);
+  const [withdrawnAmount, setWithdrawnAmount] = useState<string>("");
+  const [withdrawnPackageName, setWithdrawnPackageName] = useState<string>("");
 
   const { user } = useAuth();
 
@@ -46,60 +51,65 @@ function Withdrawal() {
   };
 
   // Fetch packages based on selected type
+  const fetchUserPackages = async () => {
+    if (!user?.id) return;
+    
+    setFetchingPackages(true);
+    try {
+      let dsPackages, sbPackages;
+
+      switch (selectedType) {
+        case "ds":
+          dsPackages = await packagesApi.getDailySavings(user.id);
+          setPackages(
+            dsPackages
+              .filter((pkg: DailySavingsPackage) => pkg.totalContribution > 0)
+              .map((pkg: DailySavingsPackage) => ({
+                id: pkg.id,
+                name: pkg.target || "Daily Savings",
+                type: "Daily Savings",
+                balance: pkg.totalContribution,
+                target: typeof pkg.target === 'string' ? (isNaN(parseFloat(pkg.target)) ? 0 : parseFloat(pkg.target)) : (pkg.target || 0),
+                amountPerDay: pkg.amountPerDay,
+                accountNumber: pkg.accountNumber,
+                totalCount: pkg.totalCount,
+              }))
+          );
+          break;
+        case "sb":
+          sbPackages = await packagesApi.getSBPackages(user.id);
+          setPackages(
+            sbPackages
+              .filter((pkg: SBPackage) => pkg.totalContribution > 0)
+              .map((pkg: SBPackage) => ({
+                id: pkg._id,
+                name: pkg.product?.name || "SureBank Package",
+                type: "SB Package",
+                balance: pkg.totalContribution,
+                target: pkg.targetAmount,
+                accountNumber: pkg.accountNumber,
+                product: pkg.product?.id,
+              }))
+          );
+          break;
+      }
+    } catch (error) {
+      console.error("Error fetching packages:", error);
+      toast.error("Failed to fetch packages. Please try again.");
+    } finally {
+      setFetchingPackages(false);
+    }
+  };
+
+  // Fetch packages based on selected type
   useEffect(() => {
     if (!user?.id) return;
-
-    const fetchUserPackages = async () => {
-      setFetchingPackages(true);
-      setSelectedPackage(null);
-      setSelectedPackageData(null);
-      try {
-        let dsPackages, sbPackages;
-
-        switch (selectedType) {
-          case "ds":
-            dsPackages = await packagesApi.getDailySavings(user.id);
-            setPackages(
-              dsPackages
-                .filter((pkg: DailySavingsPackage) => pkg.totalContribution > 0)
-                .map((pkg: DailySavingsPackage) => ({
-                  id: pkg.id,
-                  name: pkg.target || "Daily Savings",
-                  type: "Daily Savings",
-                  balance: pkg.totalContribution,
-                  target: typeof pkg.target === 'string' ? (isNaN(parseFloat(pkg.target)) ? 0 : parseFloat(pkg.target)) : (pkg.target || 0),
-                  amountPerDay: pkg.amountPerDay,
-                  accountNumber: pkg.accountNumber,
-                }))
-            );
-            break;
-          case "sb":
-            sbPackages = await packagesApi.getSBPackages(user.id);
-            setPackages(
-              sbPackages
-                .filter((pkg: SBPackage) => pkg.totalContribution > 0)
-                .map((pkg: SBPackage) => ({
-                  id: pkg._id,
-                  name: pkg.product?.name || "SureBank Package",
-                  type: "SB Package",
-                  balance: pkg.totalContribution,
-                  target: pkg.targetAmount,
-                  accountNumber: pkg.accountNumber,
-                  product: pkg.product?.id,
-                }))
-            );
-            break;
-        }
-      } catch (error) {
-        console.error("Error fetching packages:", error);
-        toast.error("Failed to fetch packages. Please try again.");
-      } finally {
-        setFetchingPackages(false);
-      }
-    };
-
+    setSelectedPackage(null);
+    setSelectedPackageData(null);
+    setWithdrawalSuccess(false);
     fetchUserPackages();
   }, [selectedType, user?.id]);
+
   // Update selected package data when a package is selected
   useEffect(() => {
     if (selectedPackage) {
@@ -109,6 +119,96 @@ function Withdrawal() {
       setSelectedPackageData(null);
     }
   }, [selectedPackage, packages]);
+
+  const checkEarlyWithdrawal = (): boolean => {
+    if (!selectedPackageData) return false;
+    
+    // Only apply to Daily Savings packages
+    if (selectedPackageData.type !== "Daily Savings") return false;
+    
+    // Check if totalCount is less than 31
+    return selectedPackageData.totalCount !== undefined && selectedPackageData.totalCount < 31;
+  };
+
+  const resetForm = () => {
+    setAmount("");
+    setSelectedPackage(null);
+    setShowCloseWarning(false);
+  };
+
+  const startNewWithdrawal = () => {
+    setWithdrawalSuccess(false);
+    setWithdrawnAmount("");
+    setWithdrawnPackageName("");
+  };
+
+  const showSuccessScreen = (amount: string, packageName: string) => {
+    // First set all the withdrawal success data
+    setWithdrawnAmount(amount);
+    setWithdrawnPackageName(packageName);
+    
+    // Then set withdrawal success to true to trigger the UI change
+    setTimeout(() => {
+      setWithdrawalSuccess(true);
+    }, 100);
+  };
+
+  const processWithdrawal = async () => {
+    if (!selectedPackage) return;
+    if (!amount || parseFloat(amount) <= 0) return;
+    if (!selectedPackageData) return;
+
+    setLoading(true);
+    try {
+      // Save withdrawal details before processing
+      const withdrawalAmount = parseFloat(amount);
+      const packageName = selectedPackageData.name;
+      
+      // Process withdrawal based on package type
+      const isDS = selectedPackageData.type === "Daily Savings";
+      const packageType = isDS ? "ds" : "sb";
+      // Create withdrawal data
+      const withdrawalData: WithdrawalParams = {
+        packageId: selectedPackage,
+        amount: withdrawalAmount,
+        target: packageName,
+        accountNumber: selectedPackageData.accountNumber,
+        product: selectedPackageData.product,
+      };
+      
+      // Use the updated API function with the package type
+      await packagesApi.withdrawFromPackage(withdrawalData, packageType);
+
+      // Show persistent success toast
+      toast.success(
+        "Withdrawal successful! Amount has been added to your available balance.",
+        {
+          duration: 5000, // Show for 5 seconds
+          position: "top-center",
+          icon: "🎉",
+        }
+      );
+
+      // Reload packages to reflect the update
+      await fetchUserPackages();
+      
+      // Reset form and show success screen
+      resetForm();
+      
+      // Show success screen with the withdrawal amount and package name
+      showSuccessScreen(withdrawalAmount.toLocaleString(), packageName);
+      
+    } catch (error) {
+      console.error("Withdrawal error:", error);
+      toast.error("Failed to process withdrawal. Please try again.", {
+        duration: 4000,
+        position: "top-center",
+      });
+      setWithdrawalSuccess(false);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!selectedPackage) {
@@ -135,35 +235,12 @@ function Withdrawal() {
       return;
     }
 
-    setLoading(true);
-    try {
-      // Process withdrawal based on package type
-      const isDS = selectedPackageData.type === "Daily Savings";
-      const packageType = isDS ? "ds" : "sb";
-      // Create withdrawal data
-      const withdrawalData: WithdrawalParams = {
-        packageId: selectedPackage,
-        amount: withdrawalAmount,
-        target: selectedPackageData.name,
-        accountNumber: selectedPackageData.accountNumber,
-        product: selectedPackageData.product,
-      };
-      
-      // Use the updated API function with the package type
-      await packagesApi.withdrawFromPackage(withdrawalData, packageType);
-
-      toast.success(
-        "Withdrawal successful! Amount has been added to your available balance."
-      );
-
-      // Reset form
-      setAmount("");
-      setSelectedPackage(null);
-    } catch (error) {
-      console.error("Withdrawal error:", error);
-      toast.error("Failed to process withdrawal. Please try again.");
-    } finally {
-      setLoading(false);
+    // Check for early withdrawal warning
+    if (checkEarlyWithdrawal()) {
+      setShowCloseWarning(true);
+    } else {
+      // Proceed with withdrawal immediately if no warning needed
+      await processWithdrawal();
     }
   };
 
@@ -179,7 +256,42 @@ function Withdrawal() {
     }
   };
 
-  // Helper function removed as it's not being used
+  // If withdrawal was successful, show success message
+  if (withdrawalSuccess) {
+    return (
+      <div className="max-w-md mx-auto py-6 px-4 sm:px-6 lg:px-8 space-y-6">
+        <div className="bg-white rounded-xl shadow-sm p-6 text-center">
+          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle2 className="h-10 w-10 text-green-600" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Withdrawal Successful!</h1>
+          <div className="py-1 px-3 bg-green-100 text-green-800 rounded-full inline-block mb-6">
+            Amount added to your balance
+          </div>
+          
+          <div className="bg-gray-50 rounded-lg p-4 mb-6 border border-gray-200">
+            <p className="text-sm text-gray-500 mb-2">Withdrawal Details</p>
+            <div className="flex justify-between mb-2">
+              <span className="text-gray-600">Amount</span>
+              <span className="font-medium">₦{withdrawnAmount}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">From</span>
+              <span className="font-medium">{withdrawnPackageName}</span>
+            </div>
+          </div>
+          
+          <Button 
+            onClick={startNewWithdrawal}
+            className="w-full bg-[#0066A1] text-white rounded-md py-4 font-semibold hover:bg-[#007DB8] transition-colors h-auto"
+          >
+            Make Another Withdrawal
+            <ArrowRight className="ml-2 h-5 w-5" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-md mx-auto py-6 px-4 sm:px-6 lg:px-8 space-y-6">
@@ -375,11 +487,44 @@ function Withdrawal() {
         </div>
       )}
 
+      {/* Early Withdrawal Warning */}
+      {showCloseWarning && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl shadow-sm p-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-6 w-6 text-amber-500 mt-0.5 flex-shrink-0" />
+            <div>
+              <h4 className="font-medium text-amber-800">Package Closure Warning</h4>
+              <p className="text-amber-700 text-sm mt-1">
+                This package has less than 31 contributions. Withdrawing now will close the package. 
+                Are you sure you want to continue?
+              </p>
+              <div className="flex gap-3 mt-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowCloseWarning(false)}
+                  className="flex-1 bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  onClick={processWithdrawal}
+                  className="flex-1 bg-amber-600 text-white hover:bg-amber-700"
+                >
+                  Proceed Anyway
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Proceed Button */}
       <Button
         type="button"
         disabled={
-          !selectedPackage || !amount || loading || parseFloat(amount) <= 0
+          !selectedPackage || !amount || loading || parseFloat(amount) <= 0 || showCloseWarning
         }
         onClick={handleSubmit}
         className="w-full bg-[#0066A1] text-white rounded-md py-4 font-semibold hover:bg-[#007DB8] transition-colors h-auto"
