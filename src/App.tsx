@@ -21,6 +21,7 @@ import Login from '@/pages/auth/Login';
 import Register from '@/pages/auth/Register';
 import Verify from '@/pages/auth/Verify';
 import Deposit from '@/pages/payments/Contribution';
+import Withdraw from '@/pages/payments/Withdraw';
 import WithdrawFromPackage from '@/pages/packages/WithdrawFromPackage';
 import MergePackages from '@/pages/packages/MergePackages';
 import ChangeProduct from '@/pages/packages/ChangeProduct';
@@ -98,6 +99,7 @@ function AppRoutes() {
             <Route path="/settings/kyc/id" element={<KycIdVerification />} />
             <Route path="/settings/kyc/success" element={<KycSuccess />} />
             <Route path="/payments/deposit" element={<Deposit />} />
+            <Route path="/payments/withdraw" element={<Withdraw />} />
             <Route path="/payments/success" element={<PaymentSuccess />} />
             <Route path="/payments/error" element={<PaymentError />} />
             <Route path="/pin-lock" element={<PinLock />} />
