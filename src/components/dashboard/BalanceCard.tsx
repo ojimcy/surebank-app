@@ -63,7 +63,7 @@ export function BalanceCard({
         <div>
           <div className="flex items-center gap-2 mb-1">
             <h2 className="text-sm uppercase tracking-wider font-semibold text-blue-50">
-              My Savings
+             Available Balance
             </h2>
             {hasAccounts && (
               <button

@@ -14,6 +14,7 @@ import { PackageOverview } from '@/components/packages/PackageOverview';
 import { PackageActions } from '@/components/packages/PackageActions';
 import { ContributionTimeline } from '@/components/packages/ContributionTimeline';
 import { PackageDetailsAccordion } from '@/components/packages/PackageDetailsAccordion';
+// import { ChangeProductModal } from '@/components/packages/ChangeProductModal';
 import { formatCurrency, formatDateTime } from '@/lib/utils';
 
 // Extended API interfaces with additional fields
@@ -79,6 +80,7 @@ interface UIPackage {
   paymentTransactions?: PaymentTransaction[];
   // Add SB Package specific fields
   productDetails?: {
+    id?: string;
     name: string;
     description: string;
     costPrice: number;
@@ -164,8 +166,7 @@ function PackageDetail() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showCloseDialog, setShowCloseDialog] = useState(false);
-  const [showMergeDialog, setShowMergeDialog] = useState(false);
-  const [showChangeProductDialog, setShowChangeProductDialog] = useState(false);
+  // const [showChangeProductDialog, setShowChangeProductDialog] = useState(false);
   const [showBuyDialog, setShowBuyDialog] = useState(false);
   const [showWithdrawDialog, setShowWithdrawDialog] = useState(false);
 
@@ -223,6 +224,7 @@ function PackageDetail() {
 
   // Fetch contributions for a package
   const fetchContributions = async (packageId: string, limit?: number) => {
+    if (packageData?.type === 'Interest-Based') return;
     try {
       setContributionsLoading(true);
       const contributionsData = await packagesApi.getPackageContributions(packageId, limit);
@@ -493,24 +495,14 @@ function PackageDetail() {
     navigate('/packages');
   };
 
-  // Handle merge package
-  const handleMergePackage = () => {
-    addToast({
-      title: 'Merge initiated',
-      description: 'Your package merge has been initiated.',
-      variant: 'success',
-    });
-    setShowMergeDialog(false);
-  };
-
-  // Handle change product
+  // Navigate to change product page
   const handleChangeProduct = () => {
-    addToast({
-      title: 'Product changed',
-      description: 'Your product has been successfully changed.',
-      variant: 'success',
+    navigate('/packages/change-product', {
+      state: {
+        packageId: packageData?.id,
+        currentProduct: packageData?.productDetails
+      }
     });
-    setShowChangeProductDialog(false);
   };
 
   // Handle buy product
@@ -556,7 +548,7 @@ function PackageDetail() {
       </div>
     );
   }
-
+  
   return (
     <div className="p-4 max-w-3xl mx-auto">
       {/* Package Header */}
@@ -600,19 +592,21 @@ function PackageDetail() {
         onEditPackage={() => setShowEditDialog(true)}
         onClosePackage={() => setShowCloseDialog(true)}
         onBuyProduct={() => setShowBuyDialog(true)}
-        onMerge={() => setShowMergeDialog(true)}
-        onChangeProduct={() => setShowChangeProductDialog(true)}
+        onChangeProduct={handleChangeProduct}
         hasMetTarget={
-          packageData.type === 'SB Package' &&
-          packageData.totalContribution >= packageData.target
+          packageData.type === 'SB Package'
+            && packageData.totalContribution >= packageData.target
         }
       />
 
+      {/* ... */}
       {/* Contributions Timeline */}
-      <div className="bg-white rounded-lg shadow-sm p-6 mt-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">Contribution History</h3>
-          <button
+      {
+        packageData.type !== 'Interest-Based' && (
+          <div className="bg-white rounded-lg shadow-sm p-6 mt-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Contribution History</h3>
+              <button
             onClick={handleViewAllContributions}
             className="text-sm text-blue-600 hover:text-blue-800 font-medium"
             disabled={contributionsLoading}
@@ -631,6 +625,8 @@ function PackageDetail() {
           />
         )}
       </div>
+    )
+      }
 
       {/* Package Details Accordion */}
       <PackageDetailsAccordion
@@ -730,23 +726,7 @@ function PackageDetail() {
         onConfirm={handleClosePackage}
       />
 
-      <ConfirmationDialog
-        open={showMergeDialog}
-        onOpenChange={setShowMergeDialog}
-        title="Merge Package"
-        description="Merge this package with another one. This will combine your contributions."
-        confirmText="Merge Packages"
-        onConfirm={handleMergePackage}
-      />
 
-      <ConfirmationDialog
-        open={showChangeProductDialog}
-        onOpenChange={setShowChangeProductDialog}
-        title="Change Product"
-        description="Change the product associated with this package."
-        confirmText="Change Product"
-        onConfirm={handleChangeProduct}
-      />
 
       <ConfirmationDialog
         open={showBuyDialog}

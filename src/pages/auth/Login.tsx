@@ -105,6 +105,7 @@ function Login() {
 
   // Test toast - will remove this later
   const testToast = () => {
+    console.log('Test toast called');
     addToast({
       title: 'Welcome to SureBank',
       description: 'Thank you for logging in to our application.',
@@ -114,6 +115,7 @@ function Login() {
 
   // Add test examples for all toast types
   const testToasts = () => {
+    console.log('Test all toasts called');
     // Success toast
     addToast({
       title: 'Success Message',

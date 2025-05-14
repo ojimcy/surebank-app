@@ -128,6 +128,11 @@ export interface PackageContribution {
   id: string;
 }
 
+// Package change product interface
+export interface ChangeProductParams {
+  newProductId: string;
+}
+
 // Packages API functions
 const packagesApi = {
   // Get daily savings packages for a user
@@ -310,6 +315,24 @@ const packagesApi = {
     const endpoint = `/payments/packages/${packageId}/contributions`;
     const params = limit ? `?limit=${limit}` : '';
     const response = await api.get<PackageContribution[]>(`${endpoint}${params}`);
+    return response.data;
+  },
+  
+  // Change product for an SB package
+  changeProduct: async (packageId: string, data: ChangeProductParams): Promise<SBPackage> => {
+    const response = await api.patch<SBPackage>(
+      `/daily-savings/sb/package/${packageId}`,
+      data
+    );
+    return response.data;
+  },
+
+  // Merge SB packages
+  mergePackages: async (packageFromId: string, packageToId: string): Promise<SBPackage> => {
+    const response = await api.post('/daily-savings/sb/package/merge', {
+      packageFromId,
+      packageToId,
+    });
     return response.data;
   },
 };

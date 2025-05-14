@@ -6,7 +6,6 @@ interface PackageActionsProps {
   onEditPackage: () => void;
   onClosePackage: () => void;
   onBuyProduct: () => void;
-  onMerge: () => void;
   onChangeProduct: () => void;
   hasMetTarget?: boolean;
 }
@@ -17,7 +16,6 @@ export function PackageActions({
   onEditPackage,
   onClosePackage,
   onBuyProduct,
-  onMerge,
   onChangeProduct,
   hasMetTarget = false,
 }: PackageActionsProps) {
@@ -81,7 +79,7 @@ export function PackageActions({
           <Button
             className="flex items-center justify-center"
             variant="outline"
-            onClick={onMerge}
+            onClick={() => navigate('/packages/merge')}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

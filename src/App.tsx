@@ -16,6 +16,8 @@ import Register from '@/pages/auth/Register';
 import Verify from '@/pages/auth/Verify';
 import Deposit from '@/pages/payments/Contribution';
 import WithdrawFromPackage from '@/pages/packages/WithdrawFromPackage';
+import MergePackages from '@/pages/packages/MergePackages';
+import ChangeProduct from '@/pages/packages/ChangeProduct';
 import PaymentSuccess from '@/pages/payments/PaymentSuccess';
 import PaymentError from '@/pages/payments/PaymentError';
 import ForgotPassword from '@/pages/auth/ForgotPassword';
@@ -76,6 +78,8 @@ function AppRoutes() {
             <Route path="/packages/new/ibs-error" element={<PaymentError />} />
             <Route path="/packages/:id" element={<PackageDetail />} />
             <Route path="/packages/withdraw" element={<WithdrawFromPackage />} />
+            <Route path="/packages/merge" element={<MergePackages />} />
+            <Route path="/packages/change-product" element={<ChangeProduct />} />
             <Route path="/products" element={<ProductCatalog />} />
             <Route path="/accounts/:accountType" element={<AccountDetail />} />
             <Route path="/settings" element={<Settings />} />

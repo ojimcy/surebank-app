@@ -187,7 +187,7 @@ function Footer() {
           </li>
           <li className="flex flex-col items-center">
             <NavLink
-              to="/products"
+              to="/packages/new/sb"
               className={({ isActive }) =>
                 `p-2 flex flex-col items-center transition-all duration-200 ${
                   isActive

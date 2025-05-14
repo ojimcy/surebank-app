@@ -47,7 +47,7 @@ export function QuickActions() {
             Packages
           </span>
         </Link>
-        <Link to="/products" className="flex flex-col items-center group">
+        <Link to="/packages/new/sb" className="flex flex-col items-center group">
           <div className="w-12 h-12 bg-[#E5E8ED] rounded-full flex items-center justify-center mb-2 group-hover:bg-[#0066A1] group-hover:scale-110 transition-all">
             <svg
               xmlns="http://www.w3.org/2000/svg"

@@ -13,6 +13,12 @@ export default defineConfig({
   },
   server: {
     port: 8081,
+    hmr: {
+      timeout: 120000
+    },
+    watch: {
+      usePolling: true
+    }
   },
   build: {
     outDir: 'dist',
@@ -27,4 +33,7 @@ export default defineConfig({
       },
     },
   },
+  optimizeDeps: {
+    force: true
+  }
 });
