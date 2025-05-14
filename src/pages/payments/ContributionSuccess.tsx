@@ -9,7 +9,6 @@ interface ContributionData {
   packageName: string;
   amount: number;
   packageType: 'ds' | 'sb';
-  paymentReference: string;
 }
 
 function ContributionSuccess() {
@@ -32,14 +31,6 @@ function ContributionSuccess() {
       toast.error('Failed to retrieve transaction details');
     }
   }, []);
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
-      minimumFractionDigits: 2,
-    }).format(amount);
-  };
 
   const handleViewPackage = () => {
     if (contributionData?.packageId) {
@@ -68,45 +59,7 @@ function ContributionSuccess() {
           Your contribution has been processed successfully.
         </p>
 
-        {contributionData && (
-          <div className="bg-white rounded-xl shadow-sm p-6 w-full mb-6">
-            <div className="space-y-4">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Package</span>
-                <span className="font-medium text-gray-900">
-                  {contributionData.packageName}
-                </span>
-              </div>
-
-              <div className="flex justify-between">
-                <span className="text-gray-500">Amount</span>
-                <span className="font-medium text-gray-900">
-                  {formatCurrency(contributionData.amount)}
-                </span>
-              </div>
-
-              <div className="flex justify-between">
-                <span className="text-gray-500">Reference</span>
-                <span className="font-medium text-gray-900">
-                  {contributionData.paymentReference.substring(0, 12)}...
-                </span>
-              </div>
-
-              <div className="flex justify-between">
-                <span className="text-gray-500">Date</span>
-                <span className="font-medium text-gray-900">
-                  {new Date().toLocaleDateString('en-NG', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                  })}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="grid grid-cols-2 gap-3 w-full">
+        <div className="grid grid-cols-2 gap-3 w-full mt-6">
           <Button
             onClick={handleViewPackage}
             className="flex items-center justify-center bg-[#0066A1]"

@@ -24,6 +24,7 @@ export function useAccountQueries() {
     queryKey: ['accounts'],
     queryFn: async () => {
       const fetchedAccounts = await getUserAccounts();
+      console.log('Fetched accounts:', fetchedAccounts);
       return fetchedAccounts;
     },
   });

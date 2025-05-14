@@ -2,16 +2,12 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import packagesApi, {
   DailySavingsPackage,
-  SBPackage,
   WithdrawalParams,
 } from "@/lib/api/packages";
 import { Button } from "@/components/ui/button";
 import { toast } from "react-hot-toast";
 import { cn } from "@/lib/utils";
-import { Check, Circle, Loader2, Package, Wallet, AlertTriangle, ArrowRight, CheckCircle2 } from "lucide-react";
-
-// Define package type options
-type PackageType = "ds" | "sb";
+import { Check, Loader2, Wallet, AlertTriangle, ArrowRight, CheckCircle2 } from "lucide-react";
 
 interface PackageOption {
   id: string;
@@ -21,12 +17,10 @@ interface PackageOption {
   target?: number;
   amountPerDay?: number;
   accountNumber: string;
-  product?: string;
   totalCount?: number;
 }
 
 function Withdrawal() {
-  const [selectedType, setSelectedType] = useState<PackageType>("ds");
   const [packages, setPackages] = useState<PackageOption[]>([]);
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
   const [amount, setAmount] = useState<string>("");
@@ -50,49 +44,27 @@ function Withdrawal() {
     return withdrawalAmount <= packageData.balance;
   };
 
-  // Fetch packages based on selected type
+  // Fetch Daily Savings packages
   const fetchUserPackages = async () => {
     if (!user?.id) return;
     
     setFetchingPackages(true);
     try {
-      let dsPackages, sbPackages;
-
-      switch (selectedType) {
-        case "ds":
-          dsPackages = await packagesApi.getDailySavings(user.id);
-          setPackages(
-            dsPackages
-              .filter((pkg: DailySavingsPackage) => pkg.totalContribution > 0)
-              .map((pkg: DailySavingsPackage) => ({
-                id: pkg.id,
-                name: pkg.target || "Daily Savings",
-                type: "Daily Savings",
-                balance: pkg.totalContribution,
-                target: typeof pkg.target === 'string' ? (isNaN(parseFloat(pkg.target)) ? 0 : parseFloat(pkg.target)) : (pkg.target || 0),
-                amountPerDay: pkg.amountPerDay,
-                accountNumber: pkg.accountNumber,
-                totalCount: pkg.totalCount,
-              }))
-          );
-          break;
-        case "sb":
-          sbPackages = await packagesApi.getSBPackages(user.id);
-          setPackages(
-            sbPackages
-              .filter((pkg: SBPackage) => pkg.totalContribution > 0)
-              .map((pkg: SBPackage) => ({
-                id: pkg._id,
-                name: pkg.product?.name || "SureBank Package",
-                type: "SB Package",
-                balance: pkg.totalContribution,
-                target: pkg.targetAmount,
-                accountNumber: pkg.accountNumber,
-                product: pkg.product?.id,
-              }))
-          );
-          break;
-      }
+      const dsPackages = await packagesApi.getDailySavings(user.id);
+      setPackages(
+        dsPackages
+          .filter((pkg: DailySavingsPackage) => pkg.totalContribution > 0)
+          .map((pkg: DailySavingsPackage) => ({
+            id: pkg.id,
+            name: pkg.target || "Daily Savings",
+            type: "Daily Savings",
+            balance: pkg.totalContribution,
+            target: typeof pkg.target === 'string' ? (isNaN(parseFloat(pkg.target)) ? 0 : parseFloat(pkg.target)) : (pkg.target || 0),
+            amountPerDay: pkg.amountPerDay,
+            accountNumber: pkg.accountNumber,
+            totalCount: pkg.totalCount,
+          }))
+      );
     } catch (error) {
       console.error("Error fetching packages:", error);
       toast.error("Failed to fetch packages. Please try again.");
@@ -101,14 +73,14 @@ function Withdrawal() {
     }
   };
 
-  // Fetch packages based on selected type
+  // Fetch packages when user changes
   useEffect(() => {
     if (!user?.id) return;
     setSelectedPackage(null);
     setSelectedPackageData(null);
     setWithdrawalSuccess(false);
     fetchUserPackages();
-  }, [selectedType, user?.id]);
+  }, [user?.id]);
 
   // Update selected package data when a package is selected
   useEffect(() => {
@@ -122,9 +94,6 @@ function Withdrawal() {
 
   const checkEarlyWithdrawal = (): boolean => {
     if (!selectedPackageData) return false;
-    
-    // Only apply to Daily Savings packages
-    if (selectedPackageData.type !== "Daily Savings") return false;
     
     // Check if totalCount is less than 31
     return selectedPackageData.totalCount !== undefined && selectedPackageData.totalCount < 31;
@@ -164,20 +133,16 @@ function Withdrawal() {
       const withdrawalAmount = parseFloat(amount);
       const packageName = selectedPackageData.name;
       
-      // Process withdrawal based on package type
-      const isDS = selectedPackageData.type === "Daily Savings";
-      const packageType = isDS ? "ds" : "sb";
       // Create withdrawal data
       const withdrawalData: WithdrawalParams = {
         packageId: selectedPackage,
         amount: withdrawalAmount,
         target: packageName,
         accountNumber: selectedPackageData.accountNumber,
-        product: selectedPackageData.product,
       };
       
-      // Use the updated API function with the package type
-      await packagesApi.withdrawFromPackage(withdrawalData, packageType);
+      // Use the API function with the package type "ds"
+      await packagesApi.withdrawFromPackage(withdrawalData, "ds");
 
       // Show persistent success toast
       toast.success(
@@ -244,18 +209,6 @@ function Withdrawal() {
     }
   };
 
-  // Helper function to get icon for package type
-  const getTypeIcon = (type: PackageType) => {
-    switch (type) {
-      case "ds":
-        return <Wallet className="h-5 w-5" />;
-      case "sb":
-        return <Package className="h-5 w-5" />;
-      default:
-        return <Circle className="h-5 w-5" />;
-    }
-  };
-
   // If withdrawal was successful, show success message
   if (withdrawalSuccess) {
     return (
@@ -297,41 +250,8 @@ function Withdrawal() {
     <div className="max-w-md mx-auto py-6 px-4 sm:px-6 lg:px-8 space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">Withdraw Funds</h1>
       <p className="text-gray-600">
-        Withdraw funds from your package to your available balance.
+        Withdraw funds from your Daily Savings package to your available balance.
       </p>
-
-      {/* Package Type Selection */}
-      <div className="bg-white rounded-xl shadow-sm p-4">
-        <h3 className="font-medium text-gray-900 mb-3">Select Package Type</h3>
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            onClick={() => setSelectedType("ds")}
-            className={cn(
-              "flex items-center justify-center p-3 rounded-lg border",
-              selectedType === "ds"
-                ? "bg-[#0066A1] text-white border-[#0066A1]"
-                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-            )}
-          >
-            <Wallet className="h-5 w-5 mr-2" />
-            <span>Daily Savings</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedType("sb")}
-            className={cn(
-              "flex items-center justify-center p-3 rounded-lg border",
-              selectedType === "sb"
-                ? "bg-[#0066A1] text-white border-[#0066A1]"
-                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-            )}
-          >
-            <Package className="h-5 w-5 mr-2" />
-            <span>SB Package</span>
-          </button>
-        </div>
-      </div>
 
       {/* Package Selection */}
       <div className="bg-white rounded-xl shadow-sm p-4">
@@ -342,7 +262,7 @@ function Withdrawal() {
           </div>
         ) : packages.length === 0 ? (
           <div className="text-center py-6 text-gray-500">
-            <p>No packages found. Create a package first.</p>
+            <p>No packages found. Create a Daily Savings package first.</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -359,7 +279,7 @@ function Withdrawal() {
                 )}
               >
                 <div className="flex items-center">
-                  {getTypeIcon(selectedType)}
+                  <Wallet className="h-5 w-5" />
                   <div className="ml-3 text-left">
                     <p
                       className={cn(

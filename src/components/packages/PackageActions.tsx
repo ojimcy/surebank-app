@@ -57,7 +57,7 @@ export function PackageActions({
             )}
             {hasMetTarget ? 'Buy Product' : 'Make Contribution'}
           </Button>
-          <Button
+          {/* <Button
             className="flex items-center justify-center"
             variant="outline"
             onClick={() => navigate('/packages/withdraw')}
@@ -75,7 +75,7 @@ export function PackageActions({
               />
             </svg>
             Withdraw
-          </Button>
+          </Button> */}
           <Button
             className="flex items-center justify-center"
             variant="outline"
