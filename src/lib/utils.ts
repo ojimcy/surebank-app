@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { format, formatDistanceToNow, isToday, isYesterday } from 'date-fns';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -114,4 +115,32 @@ export function formatCurrency(amount: number): string {
     currency: 'NGN',
     minimumFractionDigits: 0,
   }).format(amount);
+}
+
+// Format a date for notifications, using relative time for recent dates
+export function formatNotificationDate(dateString: string): string {
+  try {
+    const date = new Date(dateString);
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return dateString;
+    }
+    
+    // For today, show relative time (e.g., "2 hours ago")
+    if (isToday(date)) {
+      return formatDistanceToNow(date, { addSuffix: true });
+    }
+    
+    // For yesterday, show "Yesterday at HH:MM AM/PM"
+    if (isYesterday(date)) {
+      return `Yesterday at ${format(date, 'h:mm a')}`;
+    }
+    
+    // For older dates, show the date and time
+    return format(date, 'MMM d, yyyy • h:mm a');
+  } catch (err) {
+    console.error('Error formatting date:', err);
+    return dateString;
+  }
 }

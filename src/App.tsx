@@ -11,6 +11,7 @@ import NewIBSPackage from '@/pages/packages/NewIBSPackage';
 import PackageSuccess from '@/pages/packages/PackageSuccess';
 import ProductCatalog from '@/pages/products/ProductCatalog';
 import Settings from '@/pages/settings/Settings';
+import Notifications from '@/pages/settings/Notifications';
 import Login from '@/pages/auth/Login';
 import Register from '@/pages/auth/Register';
 import Verify from '@/pages/auth/Verify';
@@ -85,6 +86,7 @@ function AppRoutes() {
             <Route path="/settings" element={<Settings />} />
             <Route path="/settings/setup-pin" element={<SetupPin />} />
             <Route path="/settings/pin-settings" element={<PinSettings />} />
+            <Route path="/settings/notifications" element={<Notifications />} />
             <Route path="/payments/deposit" element={<Deposit />} />
             <Route path="/payments/success" element={<PaymentSuccess />} />
             <Route path="/payments/error" element={<PaymentError />} />
