@@ -25,22 +25,22 @@ export interface NotificationResponse {
 
 const notificationsApi = {
   // Get all notifications for the current user
-  getAllNotifications: async (page = 1, limit = 10): Promise<NotificationResponse> => {
+  getAllNotifications: async (page = 1, limit = 10, sortBy = 'createdAt:desc'): Promise<NotificationResponse> => {
     const response = await api.get<NotificationResponse>('/notifications/all', {
-      params: { page, limit }
+      params: { page, limit, sortBy }
     });
     return response.data;
   },
 
   // Mark a notification as read
   markAsRead: async (notificationId: string): Promise<{ success: boolean }> => {
-    const response = await api.patch<{ success: boolean }>(`/notifications/${notificationId}/mark-as-read`);
+    const response = await api.post<{ success: boolean }>(`/notifications/${notificationId}/mark-as-read`);
     return response.data;
   },
 
   // Mark all notifications as read
   markAllAsRead: async (): Promise<{ success: boolean }> => {
-    const response = await api.patch<{ success: boolean }>('/notifications/read-all');
+    const response = await api.post<{ success: boolean }>('/notifications/read-all');
     return response.data;
   },
 

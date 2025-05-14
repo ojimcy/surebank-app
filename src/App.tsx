@@ -12,6 +12,11 @@ import PackageSuccess from '@/pages/packages/PackageSuccess';
 import ProductCatalog from '@/pages/products/ProductCatalog';
 import Settings from '@/pages/settings/Settings';
 import Notifications from '@/pages/settings/Notifications';
+import PersonalInformation from '@/pages/settings/PersonalInformation';
+import KycVerification from '@/pages/settings/KycVerification';
+import KycBvnVerification from '@/pages/settings/KycBvnVerification';
+import KycIdVerification from '@/pages/settings/KycIdVerification';
+import KycSuccess from '@/pages/settings/KycSuccess';
 import Login from '@/pages/auth/Login';
 import Register from '@/pages/auth/Register';
 import Verify from '@/pages/auth/Verify';
@@ -87,6 +92,11 @@ function AppRoutes() {
             <Route path="/settings/setup-pin" element={<SetupPin />} />
             <Route path="/settings/pin-settings" element={<PinSettings />} />
             <Route path="/settings/notifications" element={<Notifications />} />
+            <Route path="/settings/personal-information" element={<PersonalInformation />} />
+            <Route path="/settings/kyc" element={<KycVerification />} />
+            <Route path="/settings/kyc/bvn" element={<KycBvnVerification />} />
+            <Route path="/settings/kyc/id" element={<KycIdVerification />} />
+            <Route path="/settings/kyc/success" element={<KycSuccess />} />
             <Route path="/payments/deposit" element={<Deposit />} />
             <Route path="/payments/success" element={<PaymentSuccess />} />
             <Route path="/payments/error" element={<PaymentError />} />

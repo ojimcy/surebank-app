@@ -14,9 +14,10 @@ export function useNotifications() {
     setLoading(true);
     setError(null);
     try {
-      const response = await notificationsApi.getAllNotifications(page, limit);
+      // Add sort parameter to ensure consistent sorting from the API
+      const response = await notificationsApi.getAllNotifications(page, limit, 'createdAt:desc');
       
-      // Sort notifications from latest to oldest
+      // Additional client-side sorting to ensure latest to oldest order
       const sortedNotifications = [...response.results].sort((a, b) => 
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );

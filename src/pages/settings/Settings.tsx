@@ -40,7 +40,10 @@ function Settings() {
             </h2>
             <p className="text-gray-500">{user?.email || 'No email'}</p>
           </div>
-          <button className="ml-auto bg-[#0066A1] text-white rounded-md px-4 py-2 text-sm">
+          <button 
+            onClick={() => navigate('/settings/personal-information')}
+            className="ml-auto bg-[#0066A1] text-white rounded-md px-4 py-2 text-sm"
+          >
             Edit Profile
           </button>
         </div>
@@ -53,7 +56,10 @@ function Settings() {
           <h3 className="font-bold text-lg mb-3">Account Settings</h3>
           <ul className="space-y-3">
             <li>
-              <button className="w-full flex items-center justify-between py-2">
+              <button 
+                onClick={() => navigate('/settings/personal-information')}
+                className="w-full flex items-center justify-between py-2"
+              >
                 <div className="flex text-left">
                   <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
                     <svg
@@ -71,7 +77,12 @@ function Settings() {
                       />
                     </svg>
                   </div>
-                  <span>Personal Information</span>
+                  <div>
+                    <span className='block'>Personal Information</span>
+                    <span className="text-xs text-gray-500">
+                      View and update your personal information
+                    </span>
+                  </div>
                 </div>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -91,7 +102,10 @@ function Settings() {
             </li>
 
             <li>
-              <button className="w-full flex items-center justify-between py-2">
+              <button 
+                onClick={() => navigate('/settings/kyc')}
+                className="w-full flex items-center justify-between py-2"
+              >
                 <div className="flex text-left">
                   <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
                     <svg
@@ -109,48 +123,10 @@ function Settings() {
                       />
                     </svg>
                   </div>
-                  <span>KYC & Verification</span>
-                </div>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-gray-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </button>
-            </li>
-
-            <li>
-              <button className="w-full flex items-center justify-between py-2">
-                <div className="flex text-left">
-                  <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 text-[#0066A1]"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"
-                      />
-                    </svg>
-                  </div>
                   <div>
-                    <span className="block">BVN Verification</span>
+                    <span className='block'>KYC & Verification</span>
                     <span className="text-xs text-gray-500">
-                      Link your Bank Verification Number
+                      Verify your identity
                     </span>
                   </div>
                 </div>
@@ -269,7 +245,10 @@ function Settings() {
             </li>
 
             <li>
-              <button className="w-full flex items-center justify-between py-2">
+              <button 
+                onClick={() => navigate('/auth/forgot-password')}
+                className="w-full flex items-center justify-between py-2"
+              >
                 <div className="flex text-left">
                   <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
                     <svg
@@ -403,48 +382,6 @@ function Settings() {
         <div className="p-4">
           <h3 className="font-bold text-lg mb-3">Payment Settings</h3>
           <ul className="space-y-3">
-            <li>
-              <button className="w-full flex items-center justify-between py-2">
-                <div className="flex text-left">
-                  <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 text-[#0066A1]"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <span className="block">Debit Cards</span>
-                    <span className="text-xs text-gray-500">
-                      Manage your saved payment cards
-                    </span>
-                  </div>
-                </div>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-gray-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </button>
-            </li>
             <li>
               <button className="w-full flex items-center justify-between py-2">
                 <div className="flex text-left">

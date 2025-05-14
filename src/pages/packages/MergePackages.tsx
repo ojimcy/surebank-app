@@ -40,7 +40,7 @@ function MergePackages() {
   
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { error: showError, success: showSuccess, info: showInfo } = useToast();
+  const { error: showError, success: showSuccess } = useToast();
   
   // Fetch user's packages when component mounts
   useEffect(() => {
