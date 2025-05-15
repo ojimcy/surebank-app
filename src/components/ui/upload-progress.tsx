@@ -1,5 +1,3 @@
-import React from 'react';
-
 interface UploadProgressProps {
   progress: number;
   isUploading: boolean;

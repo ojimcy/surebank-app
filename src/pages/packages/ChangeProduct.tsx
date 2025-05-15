@@ -194,7 +194,7 @@ function ChangeProduct() {
           >
             {isSubmitting ? (
               <>
-                <Spinner size="sm" className="mr-2" />
+                <Spinner size="sm" />
                 Changing Product...
               </>
             ) : (
