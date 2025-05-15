@@ -1,32 +1,20 @@
 import { Link } from 'react-router-dom';
-import { Transaction } from './types';
+import { useTransactionQueries, FormattedTransaction } from '@/hooks/queries/useTransactionQueries';
+import { Skeleton } from '../ui/skeleton';
 
 interface RecentTransactionsProps {
-  transactions?: Transaction[];
+  transactions?: FormattedTransaction[];
 }
 
-export function RecentTransactions({ transactions }: RecentTransactionsProps) {
-  // Sample transactions if none provided
-  const defaultTransactions: Transaction[] = [
-    {
-      id: 1,
-      type: 'deposit',
-      category: 'Daily Savings',
-      amount: 5000,
-      date: 'Today',
-      time: '10:30 AM',
-    },
-    {
-      id: 2,
-      type: 'withdrawal',
-      category: 'Interest Package',
-      amount: 15000,
-      date: 'Yesterday',
-      time: '2:15 PM',
-    },
-  ];
-
-  const displayTransactions = transactions || defaultTransactions;
+export function RecentTransactions({ transactions: propTransactions }: RecentTransactionsProps) {
+  // Fetch transactions using the hook if not provided as props
+  const {
+    formattedTransactions = [],
+    isTransactionsLoading,
+  } = useTransactionQueries();
+  
+  // Use prop transactions if provided, otherwise use fetched transactions
+  const displayTransactions = propTransactions || formattedTransactions;
 
   return (
     <div>
@@ -41,63 +29,91 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
           View All
         </Link>
       </div>
-      <div className="space-y-4">
-        {displayTransactions.map((transaction) => (
-          <div
-            key={transaction.id}
-            className="bg-white rounded-lg p-4 flex justify-between items-center hover:shadow-md transition-shadow cursor-pointer"
-          >
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-[#0066A1]"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
+      
+      {isTransactionsLoading ? (
+        // Loading skeleton
+        <div className="space-y-4">
+          {[...Array(3)].map((_, index) => (
+            <div key={index} className="bg-white rounded-lg p-4 flex justify-between items-center">
+              <div className="flex items-center">
+                <Skeleton className="w-10 h-10 rounded-full mr-3" />
+                <div>
+                  <Skeleton className="h-4 w-20 mb-2" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+              </div>
+              <div className="text-right">
+                <Skeleton className="h-4 w-24 mb-2" />
+                <Skeleton className="h-3 w-20" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : displayTransactions.length > 0 ? (
+        // Transactions list
+        <div className="space-y-4">
+          {displayTransactions.slice(0, 5).map((transaction) => (
+            <div
+              key={transaction.id}
+              className="bg-white rounded-lg p-4 flex justify-between items-center hover:shadow-md transition-shadow cursor-pointer"
+            >
+              <div className="flex items-center">
+                <div className="w-10 h-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 text-[#0066A1]"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    {transaction.type === 'deposit' ? (
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 10l7-7m0 0l7 7m-7-7v18"
+                      />
+                    ) : (
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                      />
+                    )}
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-medium">
+                    {transaction.type === 'deposit' ? 'Deposit' : 'Withdrawal'}
+                  </p>
+                  <p className="text-xs text-[#6c757d]">{transaction.category}</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p
+                  className={`font-medium ${
+                    transaction.type === 'deposit'
+                      ? 'text-[#28A745]'
+                      : 'text-[#DC3545]'
+                  }`}
                 >
-                  {transaction.type === 'deposit' ? (
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 10l7-7m0 0l7 7m-7-7v18"
-                    />
-                  ) : (
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 14l-7 7m0 0l-7-7m7 7V3"
-                    />
-                  )}
-                </svg>
-              </div>
-              <div>
-                <p className="font-medium">
-                  {transaction.type === 'deposit' ? 'Deposit' : 'Withdrawal'}
+                  {transaction.type === 'deposit' ? '+ ' : '- '}₦
+                  {transaction.amount.toLocaleString()}
                 </p>
-                <p className="text-xs text-[#6c757d]">{transaction.category}</p>
+                <p className="text-xs text-[#6c757d]">
+                  {transaction.date}, {transaction.time}
+                </p>
               </div>
             </div>
-            <div className="text-right">
-              <p
-                className={`font-medium ${
-                  transaction.type === 'deposit'
-                    ? 'text-[#28A745]'
-                    : 'text-[#DC3545]'
-                }`}
-              >
-                {transaction.type === 'deposit' ? '+ ' : '- '}₦
-                {transaction.amount.toLocaleString()}
-              </p>
-              <p className="text-xs text-[#6c757d]">
-                {transaction.date}, {transaction.time}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        // Empty state
+        <div className="bg-white rounded-lg p-6 text-center">
+          <p className="text-[#6c757d]">No transactions found</p>
+        </div>
+      )}
     </div>
   );
 }

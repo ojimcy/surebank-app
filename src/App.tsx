@@ -27,6 +27,7 @@ import MergePackages from '@/pages/packages/MergePackages';
 import ChangeProduct from '@/pages/packages/ChangeProduct';
 import PaymentSuccess from '@/pages/payments/PaymentSuccess';
 import PaymentError from '@/pages/payments/PaymentError';
+import TransactionHistory from '@/pages/payments/TransactionHistory';
 import ForgotPassword from '@/pages/auth/ForgotPassword';
 import VerifyResetCode from '@/pages/auth/VerifyResetCode';
 import ResetPassword from '@/pages/auth/ResetPassword';
@@ -102,6 +103,7 @@ function AppRoutes() {
             <Route path="/payments/withdraw" element={<Withdraw />} />
             <Route path="/payments/success" element={<PaymentSuccess />} />
             <Route path="/payments/error" element={<PaymentError />} />
+            <Route path="/payments/history" element={<TransactionHistory />} />
             <Route path="/pin-lock" element={<PinLock />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

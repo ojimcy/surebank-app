@@ -130,7 +130,7 @@ function Withdraw() {
       setAccountVerified(false);
       setBankAccountName("");
     }
-  }, [selectedBank, bankAccountNumber, verifyBankAccount]);
+  }, [selectedBank, bankAccountNumber]);
 
   const resetForm = () => {
     setAmount("");
