@@ -10,6 +10,7 @@ import NewSBPackage from '@/pages/packages/NewSBPackage';
 import NewIBSPackage from '@/pages/packages/NewIBSPackage';
 import PackageSuccess from '@/pages/packages/PackageSuccess';
 import ProductCatalog from '@/pages/products/ProductCatalog';
+import ProductDetail from '@/pages/products/ProductDetail';
 import Settings from '@/pages/settings/Settings';
 import Notifications from '@/pages/settings/Notifications';
 import PersonalInformation from '@/pages/settings/PersonalInformation';
@@ -28,6 +29,7 @@ import ChangeProduct from '@/pages/packages/ChangeProduct';
 import PaymentSuccess from '@/pages/payments/PaymentSuccess';
 import PaymentError from '@/pages/payments/PaymentError';
 import TransactionHistory from '@/pages/payments/TransactionHistory';
+import Checkout from '@/pages/checkout/Checkout';
 import ForgotPassword from '@/pages/auth/ForgotPassword';
 import VerifyResetCode from '@/pages/auth/VerifyResetCode';
 import ResetPassword from '@/pages/auth/ResetPassword';
@@ -89,6 +91,8 @@ function AppRoutes() {
             <Route path="/packages/merge" element={<MergePackages />} />
             <Route path="/packages/change-product" element={<ChangeProduct />} />
             <Route path="/products" element={<ProductCatalog />} />
+            <Route path="/products/:productId/:packageId" element={<ProductDetail />} />
+            <Route path="/checkout" element={<Checkout />} />
             <Route path="/accounts/:accountType" element={<AccountDetail />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/settings/setup-pin" element={<SetupPin />} />

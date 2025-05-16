@@ -18,6 +18,7 @@ export interface DailySavingsPackage {
 
 export interface SBPackage {
   _id: string;
+  id: string;
   accountNumber: string;
   targetAmount: number;
   totalContribution: number;
@@ -27,6 +28,11 @@ export interface SBPackage {
   product?: {
     id: string;
     name: string;
+    description?: string;
+    costPrice?: number;
+    sellingPrice?: number;
+    discount?: number;
+    quantity?: number;
     images?: string[];
   };
 }
@@ -147,6 +153,14 @@ const packagesApi = {
   getSBPackages: async (userId: string): Promise<SBPackage[]> => {
     const response = await api.get<SBPackage[]>(
       `/daily-savings/sb/package?userId=${userId}`
+    );
+    return response.data;
+  },
+
+  // Get SureBank package by ID
+  getSBPackageById: async (id: string): Promise<SBPackage> => {
+    const response = await api.get<SBPackage>(
+      `/daily-savings/sb/package/${id}`
     );
     return response.data;
   },

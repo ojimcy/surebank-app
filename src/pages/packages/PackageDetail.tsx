@@ -58,6 +58,16 @@ interface UIPackage {
   principalAmount: number;
   color: string;
   statusColor: string;
+  product?: {
+    id: string;
+    name: string;
+    images?: string[];
+    description?: string;
+    costPrice?: number;
+    sellingPrice?: number;
+    discount?: number;
+    quantity?: number;
+  };
   status: string;
   accountNumber: string;
   lastContribution?: string;
@@ -167,7 +177,7 @@ function PackageDetail() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showCloseDialog, setShowCloseDialog] = useState(false);
   // const [showChangeProductDialog, setShowChangeProductDialog] = useState(false);
-  const [showBuyDialog, setShowBuyDialog] = useState(false);
+  // Buy dialog removed as requested - now navigating directly to product detail page
   const [showWithdrawDialog, setShowWithdrawDialog] = useState(false);
 
   // Get status color
@@ -505,14 +515,18 @@ function PackageDetail() {
     });
   };
 
-  // Handle buy product
+  // Navigate directly to product detail page
   const handleBuyProduct = () => {
-    addToast({
-      title: 'Purchase initiated',
-      description: 'Your purchase has been initiated.',
-      variant: 'success',
-    });
-    setShowBuyDialog(false);
+    // Navigate to product detail page with the package ID
+    if (packageData && packageData.type === 'SB Package' && packageData.productDetails && id) {
+      navigate(`/products/${packageData.productDetails.id}/${id}`);
+    } else {
+      addToast({
+        title: 'Product not found',
+        description: 'This package does not have a product associated with it.',
+        variant: 'destructive',
+      });
+    }
   };
 
   // Handle withdraw
@@ -591,7 +605,7 @@ function PackageDetail() {
         color={packageData.color}
         onEditPackage={() => setShowEditDialog(true)}
         onClosePackage={() => setShowCloseDialog(true)}
-        onBuyProduct={() => setShowBuyDialog(true)}
+        onBuyProduct={handleBuyProduct}
         onChangeProduct={handleChangeProduct}
         hasMetTarget={
           packageData.type === 'SB Package'
@@ -728,14 +742,7 @@ function PackageDetail() {
 
 
 
-      <ConfirmationDialog
-        open={showBuyDialog}
-        onOpenChange={setShowBuyDialog}
-        title="Buy Product"
-        description="Complete your purchase for this product package."
-        confirmText="Proceed to Payment"
-        onConfirm={handleBuyProduct}
-      />
+      {/* Buy Product dialog removed as requested */}
 
       <ConfirmationDialog
         open={showWithdrawDialog}

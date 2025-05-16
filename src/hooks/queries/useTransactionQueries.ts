@@ -37,6 +37,8 @@ export function useTransactionQueries(filters: TransactionFilters = {}) {
       narration.includes('paystack payment')
     ) {
       return 'IBS Payment';
+    } else if (narration.includes('payment for order')) {
+      return 'Order Payment';
     } else {
       return 'Transaction';
     }
