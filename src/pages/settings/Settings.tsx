@@ -432,7 +432,7 @@ function Settings() {
           <h3 className="font-bold text-lg mb-3">Order Management</h3>
           <ul className="space-y-3">
             <li>
-              <button className="w-full flex items-center justify-between py-2 cursor-pointer cursor-pointer" onClick={() => navigate('/orders')}>
+              <button className="w-full flex items-center justify-between py-2 cursor-pointer" onClick={() => navigate('/orders')}>
                 <div className="flex text-left">
                   <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
                     <svg

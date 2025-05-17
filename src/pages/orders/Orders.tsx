@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useOrderQueries } from '@/hooks/queries/useOrderQueries';
 import { Button } from '@/components/ui/button';
@@ -36,7 +36,7 @@ interface NormalizedOrder {
 export default function Orders() {
   const { useUserOrders } = useOrderQueries();
   const { orders, isLoading, isError, refetch } = useUserOrders();
-  const [filteredOrders, setFilteredOrders] = useState<NormalizedOrder[]>([]);
+  // Filtered orders are computed with useMemo instead of being stored in state
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
@@ -47,7 +47,7 @@ export default function Orders() {
   
   // Normalize order data to handle API response variations
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const normalizeOrders = (apiOrders: any[]): NormalizedOrder[] => {
+  const normalizeOrders = useCallback((apiOrders: any[]): NormalizedOrder[] => {
     return apiOrders.map(order => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const normalizedProducts = (order.products || []).map((product: any) => ({
@@ -72,51 +72,49 @@ export default function Orders() {
         updatedAt: order.updatedAt || new Date().toISOString(),
       };
     });
-  };
+  }, []);
 
-  useEffect(() => {
-    if (orders) {
-      // Check if orders is an array
-      if (!Array.isArray(orders)) {
-        console.error('Orders is not an array:', orders);
-        setFilteredOrders([]);
-        return;
-      }
-      
-      // Normalize the orders data
-      const normalizedOrders = normalizeOrders(orders);
-      
-      let result = [...normalizedOrders];
-      
-      // Apply search filter
-      if (searchTerm) {
-        const term = searchTerm.toLowerCase();
-        result = result.filter(order => {
-          const orderNumberMatch = order.orderNumber?.toLowerCase().includes(term) || false;
-          const productsMatch = order.products?.some(product => 
-            product?.name?.toLowerCase().includes(term)
-          ) || false;
-          return orderNumberMatch || productsMatch;
-        });
-      }
-      
-      // Apply status filter
-      if (statusFilter !== 'all') {
-        result = result.filter(order => 
-          order.status?.toLowerCase() === statusFilter
-        );
-      }
-      
-      // Sort by most recent first
-      result.sort((a, b) => {
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return dateB - dateA;
-      });
-      
-      setFilteredOrders(result);
+  // Use useMemo to compute filtered orders based on dependencies
+  const filteredOrders = useMemo(() => {
+    if (!orders) return [];
+    
+    // Check if orders is an array
+    if (!Array.isArray(orders)) {
+      console.error('Orders is not an array:', orders);
+      return [];
     }
-  }, [orders, searchTerm, statusFilter]);
+    
+    // Normalize the orders data
+    const normalizedOrders = normalizeOrders(orders);
+    
+    let result = [...normalizedOrders];
+    
+    // Apply search filter
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(order => {
+        const orderNumberMatch = order.orderNumber?.toLowerCase().includes(term) || false;
+        const productsMatch = order.products?.some(product => 
+          product?.name?.toLowerCase().includes(term)
+        ) || false;
+        return orderNumberMatch || productsMatch;
+      });
+    }
+    
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      result = result.filter(order => 
+        order.status?.toLowerCase() === statusFilter
+      );
+    }
+    
+    // Sort by most recent first
+    return result.sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA;
+    });
+  }, [orders, searchTerm, statusFilter, normalizeOrders]);
 
   // Format date for display
   const formatDate = (dateString: string) => {
@@ -130,20 +128,18 @@ export default function Orders() {
 
   // Get status badge color based on order status
   const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100';
-      case 'processing':
-        return 'bg-blue-100 text-blue-800 hover:bg-blue-100';
-      case 'shipped':
-        return 'bg-purple-100 text-purple-800 hover:bg-purple-100';
-      case 'delivered':
-        return 'bg-green-100 text-green-800 hover:bg-green-100';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800 hover:bg-red-100';
-      default:
-        return 'bg-gray-100 text-gray-800 hover:bg-gray-100';
-    }
+    // Define a constant lookup object for status colors
+    const STATUS_COLORS: Record<string, string> = {
+      pending: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100',
+      processing: 'bg-blue-100 text-blue-800 hover:bg-blue-100',
+      shipped: 'bg-purple-100 text-purple-800 hover:bg-purple-100',
+      delivered: 'bg-green-100 text-green-800 hover:bg-green-100',
+      cancelled: 'bg-red-100 text-red-800 hover:bg-red-100',
+    };
+    
+    // Return the color from the map using the lowercased status as key
+    // Default to gray if status not found in the map
+    return STATUS_COLORS[status.toLowerCase()] || 'bg-gray-100 text-gray-800 hover:bg-gray-100';
   };
 
   // Get product summary text with additional safety checks
@@ -305,7 +301,7 @@ export default function Orders() {
             </p>
             {(orders?.length ?? 0) === 0 ? (
                <Button asChild>
-                 <Link to="/products">Browse Products</Link>
+                 <Link to="/packages/new/sb">Browse Products</Link>
                </Button>
             ) : (
               <Button variant="outline" onClick={() => {

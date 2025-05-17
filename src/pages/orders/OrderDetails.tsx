@@ -70,7 +70,7 @@ export default function OrderDetails() {
             current = (current as Record<string, unknown>)[key];
           }
           
-          return (current as unknown as T) || defaultValue;
+          return (current as unknown as T) ?? defaultValue; // nullish coalescing
         };
         
         // Handle products array
@@ -160,14 +160,13 @@ export default function OrderDetails() {
 
   // Format date for display
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-NG', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+return new Date(dateString).toLocaleString('en-NG', {
+   day: 'numeric',
+   month: 'long',
+   year: 'numeric',
+   hour: '2-digit',
+   minute: '2-digit',
+ });
   };
 
   // Get status badge color based on order status
