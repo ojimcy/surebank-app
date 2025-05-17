@@ -58,7 +58,7 @@ function Settings() {
             <li>
               <button 
                 onClick={() => navigate('/settings/personal-information')}
-                className="w-full flex items-center justify-between py-2"
+                className="w-full flex items-center justify-between py-2 cursor-pointer"
               >
                 <div className="flex text-left">
                   <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
@@ -104,7 +104,7 @@ function Settings() {
             <li>
               <button 
                 onClick={() => navigate('/settings/kyc')}
-                className="w-full flex items-center justify-between py-2"
+                className="w-full flex items-center justify-between py-2 cursor-pointer"
               >
                 <div className="flex text-left">
                   <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
@@ -148,7 +148,7 @@ function Settings() {
             </li>
 
             <li>
-              <button className="w-full flex items-center justify-between py-2">
+              <button className="w-full flex items-center justify-between py-2 cursor-pointer">
                 <div className="flex text-left">
                   <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
                     <svg
@@ -199,7 +199,7 @@ function Settings() {
             <li>
               <button
                 onClick={() => navigate('/settings/setup-pin')}
-                className="w-full flex items-center justify-between py-2"
+                className="w-full flex items-center justify-between py-2 cursor-pointer"
               >
                 <div className="flex text-left">
                   <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
@@ -247,7 +247,7 @@ function Settings() {
             <li>
               <button 
                 onClick={() => navigate('/auth/forgot-password')}
-                className="w-full flex items-center justify-between py-2"
+                className="w-full flex items-center justify-between py-2 cursor-pointer"
               >
                 <div className="flex text-left">
                   <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
@@ -291,7 +291,7 @@ function Settings() {
             </li>
 
             <li>
-              <button className="w-full flex items-center justify-between py-2">
+              <button className="w-full flex items-center justify-between py-2 cursor-pointer">
                 <div className="flex text-left">
                   <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
                     <svg
@@ -334,7 +334,7 @@ function Settings() {
             </li>
 
             <li>
-              <button className="w-full flex items-center justify-between py-2">
+              <button className="w-full flex items-center justify-between py-2 cursor-pointer">
                 <div className="flex text-left">
                   <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
                     <svg
@@ -383,7 +383,7 @@ function Settings() {
           <h3 className="font-bold text-lg mb-3">Payment Settings</h3>
           <ul className="space-y-3">
             <li>
-              <button className="w-full flex items-center justify-between py-2">
+              <button className="w-full flex items-center justify-between py-2 cursor-pointer">
                 <div className="flex text-left">
                   <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
                     <svg
@@ -427,12 +427,61 @@ function Settings() {
           </ul>
         </div>
 
+        {/* Order management */}
+        <div className="p-4">
+          <h3 className="font-bold text-lg mb-3">Order Management</h3>
+          <ul className="space-y-3">
+            <li>
+              <button className="w-full flex items-center justify-between py-2 cursor-pointer cursor-pointer" onClick={() => navigate('/orders')}>
+                <div className="flex text-left">
+                  <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 text-[#0066A1]"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <span className="block">Order Management</span>
+                    <span className="text-xs text-gray-500">
+                      Manage your orders
+                    </span>
+                  </div>
+                </div>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </button>
+            </li>
+          </ul>
+        </div>
+
         {/* App Preferences */}
         <div className="p-4">
           <h3 className="font-bold text-lg mb-3">App Preferences</h3>
           <ul className="space-y-3">
             <li>
-              <button className="w-full flex items-center justify-between py-2">
+              <button className="w-full flex items-center justify-between py-2 cursor-pointer">
                 <div className="flex text-left">
                   <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
                     <svg
@@ -469,7 +518,7 @@ function Settings() {
               </button>
             </li>
             <li>
-              <Link to="/settings/notifications" className="w-full flex items-center justify-between py-2">
+              <Link to="/settings/notifications" className="w-full flex items-center justify-between py-2 cursor-pointer">
                 <div className="flex text-left">
                   <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
                     <svg
@@ -506,7 +555,7 @@ function Settings() {
               </Link>
             </li>
             <li>
-              <button className="w-full flex items-center justify-between py-2">
+              <button className="w-full flex items-center justify-between py-2 cursor-pointer">
                 <div className="flex text-left">
                   <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
                     <svg
@@ -550,7 +599,7 @@ function Settings() {
           <h3 className="font-bold text-lg mb-3">Support & About</h3>
           <ul className="space-y-3">
             <li>
-              <button className="w-full flex items-center justify-between py-2">
+              <button className="w-full flex items-center justify-between py-2 cursor-pointer">
                 <div className="flex text-left">
                   <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
                     <svg
@@ -587,7 +636,7 @@ function Settings() {
               </button>
             </li>
             <li>
-              <button className="w-full flex items-center justify-between py-2">
+              <button className="w-full flex items-center justify-between py-2 cursor-pointer">
                 <div className="flex text-left">
                   <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
                     <svg

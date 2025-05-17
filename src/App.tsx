@@ -30,6 +30,8 @@ import PaymentSuccess from '@/pages/payments/PaymentSuccess';
 import PaymentError from '@/pages/payments/PaymentError';
 import TransactionHistory from '@/pages/payments/TransactionHistory';
 import Checkout from '@/pages/checkout/Checkout';
+import OrderDetails from '@/pages/orders/OrderDetails';
+import Orders from '@/pages/orders/Orders';
 import ForgotPassword from '@/pages/auth/ForgotPassword';
 import VerifyResetCode from '@/pages/auth/VerifyResetCode';
 import ResetPassword from '@/pages/auth/ResetPassword';
@@ -93,6 +95,8 @@ function AppRoutes() {
             <Route path="/products" element={<ProductCatalog />} />
             <Route path="/products/:productId/:packageId" element={<ProductDetail />} />
             <Route path="/checkout" element={<Checkout />} />
+            <Route path="/orders" element={<Orders />} />
+            <Route path="/orders/:orderId" element={<OrderDetails />} />
             <Route path="/accounts/:accountType" element={<AccountDetail />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/settings/setup-pin" element={<SetupPin />} />
