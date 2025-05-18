@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import ordersApi, { OrderResponse } from '@/lib/api/orders';
+import ordersApi  from '@/lib/api/orders';
 import { useToast } from '@/lib/toast-provider';
 import { AxiosError } from 'axios';
 import { useEffect } from 'react';
