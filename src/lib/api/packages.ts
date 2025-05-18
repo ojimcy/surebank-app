@@ -83,7 +83,7 @@ export interface InitiateIBSPackageParams {
   interestRate?: number;
   lockPeriod: number;
   earlyWithdrawalPenalty?: number;
-  redirect_url?: string;
+  redirectUrl?: string;
   callbackUrl?: string;
 }
 
@@ -232,9 +232,14 @@ const packagesApi = {
   initiateIBSPackagePayment: async (
     data: InitiateIBSPackageParams
   ): Promise<InitiatePaymentResponse> => {
+    const { redirectUrl, ...restData } = data;
+    const payload: Omit<InitiateIBSPackageParams, 'redirectUrl'> & { redirect_url?: string } = { ...restData };
+    if (redirectUrl) {
+      payload.redirect_url = redirectUrl;
+    }
     const response = await api.post<InitiatePaymentResponse>(
       '/interest-savings/package/init-payment',
-      data
+      payload
     );
     return response.data;
   },

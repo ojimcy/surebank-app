@@ -50,13 +50,16 @@ export function ChangeProductModal({ isOpen, onClose, packageData, onSuccess }: 
   const handleProductSelection = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const value = event.target.value;
     setSelectedProductId(value);
-    const selectedProductDetails = products.find(
-      (product) => product._id === value
-    );
-    
-    if (selectedProductDetails) {
-      setProductDetails(selectedProductDetails);
-    }
+const selectedProductDetails = products.find(
+     (product) => product._id === value
+   );
+
+   if (selectedProductDetails) {
+     setProductDetails(selectedProductDetails);
+  } else {
+     // Reset the preview when nothing is selected
+     setProductDetails(null);
+   }
   };
 
   const handleSubmit = async () => {

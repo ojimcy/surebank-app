@@ -4,7 +4,6 @@ import { useAuth } from '@/lib/auth-provider';
 import { Button } from '@/components/ui/button';
 import AuthLayout from '@/components/layout/AuthLayout';
 import Spinner from '@/components/ui/Spinner';
-import { useToast } from '@/lib/toast-provider';
 
 function Login() {
   const [identifier, setIdentifier] = useState('');
@@ -19,7 +18,6 @@ function Login() {
   const { login, isLoginLoading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const { addToast } = useToast();
 
   // Check for success message in location state (e.g., from password reset)
   useEffect(() => {
@@ -60,6 +58,7 @@ function Login() {
       await login(identifier, password);
       navigate('/');
     } catch (error: unknown) {
+      console.error("Login handleSubmit raw error:", error);
       const axiosError = error as {
         response?: { data?: { message?: string } };
       };
@@ -67,19 +66,7 @@ function Login() {
         axiosError.response?.data?.message || 'Authentication failed.';
 
       // Handle specific error types
-      if (errorMessage.includes('not found')) {
-        setErrors({
-          identifier:
-            'Account not found. Please check your email or phone number.',
-        });
-      } else if (
-        errorMessage.includes('password') ||
-        errorMessage.includes('credentials')
-      ) {
-        setErrors({
-          password: 'Incorrect password. Please try again.',
-        });
-      } else if (
+      if (
         errorMessage.includes('locked') ||
         errorMessage.includes('disabled')
       ) {
@@ -95,51 +82,25 @@ function Login() {
           general:
             'Your account is not verified. Please verify your account first.',
         });
+      } else if (errorMessage.includes('user not found. Please check your email or phone number')) {
+        setErrors({
+          identifier:
+            'Account not found. Please check your email or phone number.',
+        });
+      } else if (errorMessage.includes('password')) { // Explicitly "password", not "credentials"
+        setErrors({
+          password: 'Incorrect password. Please try again.',
+        });
+      } else if (errorMessage.includes('credentials')) { // Handles generic "credentials" error
+        setErrors({
+          general: 'Invalid email/phone number or password. Please check your details and try again.',
+        });
       } else {
         setErrors({
           general: errorMessage,
         });
       }
     }
-  };
-
-  // Test toast - will remove this later
-  const testToast = () => {
-    console.log('Test toast called');
-    addToast({
-      title: 'Welcome to SureBank',
-      description: 'Thank you for logging in to our application.',
-      variant: 'success',
-    });
-  };
-
-  // Add test examples for all toast types
-  const testToasts = () => {
-    console.log('Test all toasts called');
-    // Success toast
-    addToast({
-      title: 'Success Message',
-      description: 'This is a success toast notification example.',
-      variant: 'success',
-    });
-
-    // After a delay, show error toast
-    setTimeout(() => {
-      addToast({
-        title: 'Error Message',
-        description: 'This is an error toast notification example.',
-        variant: 'destructive',
-      });
-    }, 1000);
-
-    // After another delay, show info toast
-    setTimeout(() => {
-      addToast({
-        title: 'Information',
-        description: 'This is a default/info toast notification example.',
-        variant: 'default',
-      });
-    }, 2000);
   };
 
   useEffect(() => {
@@ -251,24 +212,6 @@ function Login() {
           {isLoginLoading && <Spinner size="sm" color="white" />}
           <span>{isLoginLoading ? 'Signing in...' : 'Sign in'}</span>
         </Button>
-
-        {/* Toast test button - for development only */}
-        <div className="pt-2 flex justify-center gap-2">
-          <button
-            type="button"
-            onClick={testToast}
-            className="text-xs text-[#6C757D] hover:underline"
-          >
-            Test success toast
-          </button>
-          <button
-            type="button"
-            onClick={testToasts}
-            className="text-xs text-[#6C757D] hover:underline"
-          >
-            Test all toasts
-          </button>
-        </div>
       </form>
 
       <div className="mt-6 text-center">

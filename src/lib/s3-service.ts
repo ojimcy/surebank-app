@@ -1,90 +1,74 @@
-import { S3Client } from '@aws-sdk/client-s3';
-import { Upload } from '@aws-sdk/lib-storage';
+import api from './api/axios';
 
-// Initialize the S3 client
-const s3Client = new S3Client({
-  region: import.meta.env.VITE_AWS_REGION,
-  credentials: {
-    accessKeyId: import.meta.env.VITE_AWS_ACCESS_KEY_ID,
-    secretAccessKey: import.meta.env.VITE_AWS_SECRET_ACCESS_KEY,
-  },
-});
+interface PresignedUrlResponse {
+  url: string;
+  key: string;
+}
 
-// Generate a unique file key
-const generateUniqueFileName = (file: File, userId: string, type: string): string => {
-  const fileExtension = file.name.split('.').pop();
-  const timestamp = new Date().getTime();
-  return `${userId}/${type}/${timestamp}-${Math.random().toString(36).substring(2, 15)}.${fileExtension}`;
-};
-
-// Upload a file to S3
+// Upload a file to S3 using a presigned URL from the backend
 export const uploadFileToS3 = async (
   file: File,
-  userId: string,
   type: 'id-document' | 'selfie',
   onProgress?: (progress: number) => void
 ): Promise<{ key: string; url: string }> => {
   try {
-    // Generate a unique file key
-    const key = generateUniqueFileName(file, userId, type);
-    
-    // Create the upload parameters
-    const params = {
-      Bucket: import.meta.env.VITE_AWS_S3_BUCKET,
-      Key: key,
-      Body: file,
-      ContentType: file.type,
-      // Set appropriate metadata
-      Metadata: {
-        'user-id': userId,
-        'document-type': type,
-        'original-name': encodeURIComponent(file.name),
-      },
-    };
-    
-    // Create a multipart upload
-    const upload = new Upload({
-      client: s3Client,
-      params,
+    // Get a presigned URL from the backend
+    const response = await api.post<PresignedUrlResponse>('/s3/presigned-url', {
+      contentType: file.type,
+      fileName: file.name,
+      documentType: type
     });
     
-    // Handle progress if a callback is provided
-    if (onProgress) {
-      upload.on('httpUploadProgress', (progress) => {
-        if (progress.loaded && progress.total) {
-          const percentage = Math.round((progress.loaded / progress.total) * 100);
-          onProgress(percentage);
+    const { url: uploadUrl, key } = response.data;
+    
+    // Use XMLHttpRequest to track upload progress
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      
+      // Set up progress tracking
+      if (onProgress) {
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const percentage = Math.round((event.loaded / event.total) * 100);
+            onProgress(percentage);
+          }
+        };
+      }
+      
+      // Handle completion
+      xhr.onload = async () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          // Get the URL of the uploaded file from the backend
+          const fileResponse = await api.get(`/s3/files/${encodeURIComponent(key)}`);
+          
+          resolve({
+            key,
+            url: fileResponse.data.url
+          });
+        } else {
+          reject(new Error(`Upload failed with status: ${xhr.status}`));
         }
-      });
-    }
-    
-    // Complete the upload
-    await upload.done();
-    
-    // Construct the URL (this is the S3 URL pattern)
-    const url = `https://${import.meta.env.VITE_AWS_S3_BUCKET}.s3.${import.meta.env.VITE_AWS_REGION}.amazonaws.com/${key}`;
-    
-    return {
-      key,
-      url,
-    };
+      };
+      
+      // Handle errors
+      xhr.onerror = () => reject(new Error('Network error during file upload'));
+      xhr.onabort = () => reject(new Error('File upload was aborted'));
+      
+      // Start the upload - for presigned PUT URLs
+      xhr.open('PUT', uploadUrl);
+      xhr.setRequestHeader('Content-Type', file.type);
+      xhr.send(file);
+    });
   } catch (error) {
     console.error('Error uploading file to S3:', error);
     throw error;
   }
 };
 
-// Delete a file from S3
+// Delete a file from S3 via the backend
 export const deleteFileFromS3 = async (key: string): Promise<void> => {
   try {
-    const { DeleteObjectCommand } = await import('@aws-sdk/client-s3');
-    
-    await s3Client.send(
-      new DeleteObjectCommand({
-        Bucket: import.meta.env.VITE_AWS_S3_BUCKET,
-        Key: key,
-      })
-    );
+    await api.delete(`/s3/files/${encodeURIComponent(key)}`);
   } catch (error) {
     console.error('Error deleting file from S3:', error);
     throw error;

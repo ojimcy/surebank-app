@@ -34,7 +34,11 @@ function Header() {
   // Get user's initials for avatar
   const getUserInitials = () => {
     if (!user) return '';
-    return `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`;
+    
+    const firstInitial = user.firstName ? user.firstName.charAt(0) : '';
+    const lastInitial = user.lastName ? user.lastName.charAt(0) : '';
+    
+    return `${firstInitial}${lastInitial}`;
   };
 
   return (

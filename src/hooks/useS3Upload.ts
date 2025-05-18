@@ -61,7 +61,7 @@ export function useS3Upload() {
       };
 
       // Upload the file
-      const result = await uploadFileToS3(file, user.id, documentType, onProgress);
+      const result = await uploadFileToS3(file, documentType, onProgress);
 
       // Update state with success
       setUploadState(prev => ({
@@ -87,7 +87,8 @@ export function useS3Upload() {
         },
       }));
       
-      return null;
+      // Re-throw the error so callers can handle it
+      throw error;
     }
   };
 
