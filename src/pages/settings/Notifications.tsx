@@ -71,13 +71,20 @@ function NotificationsPage() {
 
   // Toggle notification expansion and mark as read if not already read
   const toggleNotificationExpansion = async (notificationId: string, isRead: boolean) => {
-    setExpandedNotifications(prev => ({
-      ...prev,
-      [notificationId]: !prev[notificationId]
-    }));
+    // Compute new state and store it to use after state update
+    let willBeExpanded = false;
+    
+    setExpandedNotifications(prev => {
+      const newExpanded = !prev[notificationId];
+      willBeExpanded = newExpanded;
+      return {
+        ...prev,
+        [notificationId]: newExpanded
+      };
+    });
     
     // If expanding and not already read, mark as read
-    if (!expandedNotifications[notificationId] && !isRead) {
+    if (willBeExpanded && !isRead) {
       await handleMarkAsRead(notificationId);
     }
   };

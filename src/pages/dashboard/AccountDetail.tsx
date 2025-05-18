@@ -4,6 +4,7 @@ import { useAccountQueries } from '@/hooks/queries/useAccountQueries';
 import { Account } from '@/lib/api/accounts';
 import { useToast } from '@/lib/toast-provider';
 import { formatCurrency } from '@/lib/utils';
+import { format, isValid } from 'date-fns';
 
 export default function AccountDetail() {
   const { accountType } = useParams<{ accountType: 'ds' | 'sb' | 'ibs' }>();
@@ -14,60 +15,19 @@ export default function AccountDetail() {
   const [loading, setLoading] = useState(true);
   const [account, setAccount] = useState<Account | null>(null);
 
-  // Format date
-  const formatDate = (dateString: string): string => {
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) {
-        return 'Invalid date';
-      }
-
-      // Get day with ordinal suffix
-      const day = date.getDate();
-      let ordinalSuffix = 'th';
-      if (day > 3 && day < 21) {
-        ordinalSuffix = 'th';
-      } else {
-        switch (day % 10) {
-          case 1:
-            ordinalSuffix = 'st';
-            break;
-          case 2:
-            ordinalSuffix = 'nd';
-            break;
-          case 3:
-            ordinalSuffix = 'rd';
-            break;
-          default:
-            ordinalSuffix = 'th';
-            break;
-        }
-      }
-
-      // Format the date
-      const monthNames = [
-        'Jan',
-        'Feb',
-        'Mar',
-        'Apr',
-        'May',
-        'Jun',
-        'Jul',
-        'Aug',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dec',
-      ];
-      const month = monthNames[date.getMonth()];
-      const year = date.getFullYear();
-
-      return `${day}${ordinalSuffix} ${month}, ${year}`;
-    } catch (error) {
-      console.error('Error formatting date:', error);
-      return 'Invalid date';
-    }
-  };
+ 
+ const formatDate = (dateString: string): string => {
+   try {
+     const date = new Date(dateString);
+     if (!isValid(date)) {
+       return 'Invalid date';
+     }
+     return format(date, "do MMM, yyyy");
+   } catch (error) {
+     console.error('Error formatting date:', error);
+     return 'Invalid date';
+   }
+ };
 
   useEffect(() => {
     const fetchAccount = async () => {

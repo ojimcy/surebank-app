@@ -292,8 +292,8 @@ return new Date(dateString).toLocaleString('en-NG', {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {order?.products && order.products.map((product, index) => (
-                    <div key={index} className="flex items-start justify-between py-2">
+                  {order?.products && order.products.map((product) => (
+                    <div key={product.productId } className="flex items-start justify-between py-2">
                       <div className="flex gap-4">
                         <div className="flex h-16 w-16 items-center justify-center rounded-md bg-muted">
                           <Package className="h-8 w-8 text-muted-foreground" />

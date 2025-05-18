@@ -115,15 +115,16 @@ function PaymentSuccess() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleViewPackage = () => {
-    if (paymentData?.type === 'contribution' && paymentData.packageId) {
-      navigate(`/packages/${paymentData.packageId}`);
-    } else if (paymentData?.type === 'ibs') {
-      navigate('/packages');
-    } else {
-      navigate('/packages');
-    }
-  };
+const handleViewPackage = () => {
+  // If we have a specific package ID for contribution, navigate to it
+  if (paymentData?.type === 'contribution' && paymentData.packageId) {
+    navigate(`/packages/${paymentData.packageId}`);
+    return;
+  }
+  
+  // Default case: navigate to packages list
+  navigate('/packages');
+};
 
   const handleBackToHome = () => {
     navigate('/dashboard');

@@ -192,15 +192,16 @@ function ProductDetail() {
           
           <div className="flex items-center space-x-2">
             <span className="text-2xl font-bold text-primary">
-              {formatCurrency(product.sellingPrice)}
+              {formatCurrency(product.discount)}
             </span>
-            {product.discount > 0 && (
+            {product.discount > 0 && product.discount < product.sellingPrice && (
               <>
                 <span className="text-lg text-gray-500 line-through">
-                  {formatCurrency(product.discount)}
+                  {formatCurrency(product.sellingPrice)}
                 </span>
                 <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                  {Math.round(((product.discount - product.sellingPrice) / product.discount) * 100)}% OFF
+                  {product.sellingPrice > 0 ? 
+                    Math.round(((product.sellingPrice - product.discount) / product.sellingPrice) * 100) : 0}% OFF
                 </span>
               </>
             )}

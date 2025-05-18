@@ -140,13 +140,15 @@ function MergePackages() {
               <SelectTrigger id="fromPackage">
                 <SelectValue placeholder="Select source package" />
               </SelectTrigger>
-              <SelectContent>
-                {packages.map((pkg) => (
-                  <SelectItem key={pkg.id} value={pkg.id}>
-                    {pkg.name} ({formatCurrency(pkg.balance)})
-                  </SelectItem>
-                ))}
-              </SelectContent>
+<SelectContent>
+  {packages
+   .filter(pkg => pkg.id !== fromPackage) // Remove already selected source package
+   .map((pkg) => (
+    <SelectItem key={pkg.id} value={pkg.id}>
+      {pkg.name} ({formatCurrency(pkg.balance)})
+    </SelectItem>
+  ))}
+</SelectContent>
             </Select>
           </div>
           

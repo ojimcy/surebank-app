@@ -2,10 +2,12 @@ import { useState, ChangeEvent, FormEvent } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import Spinner from '@/components/ui/Spinner';
+import { useToast } from '@/lib/toast-provider';
 
 function PersonalInformation() {
   const { user } = useAuth();
   const { updateProfile, isUpdateLoading } = useUserProfile();
+  const { info } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
@@ -46,9 +48,13 @@ function PersonalInformation() {
     }
   };
   
-  const requestPhoneChange = () => {
+const requestPhoneChange = () => {
     // TODO: Implement phone verification flow
-    alert('This feature is not available at the moment.');
+    info({
+    title: 'Phone number change feature is coming soon!',
+    description: 'Please contact support to change your phone number.',
+    duration: 5000,
+   });
   };
   
   return (

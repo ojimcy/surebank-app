@@ -845,7 +845,7 @@ function Checkout() {
                   <div key={item._id} className="flex items-center space-x-3 py-2 border-b">
                     {item.product.images && item.product.images.length > 0 ? (
                       <div className="h-16 w-16 rounded-md bg-muted overflow-hidden">
-                        <img src={item.product.images[0]} alt={item.name} className="h-full w-full object-cover" />
+                        <img src={item.product.images[0]} alt={item.name ?? 'product image'} className="h-full w-full object-cover" />
                       </div>
                     ) : (
                       <div className="h-16 w-16 rounded-md bg-muted flex items-center justify-center">

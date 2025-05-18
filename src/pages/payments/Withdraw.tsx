@@ -110,7 +110,7 @@ function Withdraw() {
     setWithdrawalSuccess(false);
     fetchUserAccounts();
     fetchBanks();
-  }, [user?.id]);
+  }, [user?.id, fetchUserAccounts, fetchBanks]);
 
   // Update selected account data when an account is selected
   useEffect(() => {

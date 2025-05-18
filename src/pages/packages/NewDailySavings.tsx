@@ -263,17 +263,17 @@ function NewDailySavings() {
             >
               Amount Per Day (₦)
             </label>
-            <input
-              type="number"
-              id="amountPerDay"
-              name="amountPerDay"
-              value={formData.amountPerDay}
-              onChange={handleChange}
-              min="100"
-              step="100"
-              className="w-full p-3 border border-[#CED4DA] rounded-lg focus:ring-2 focus:ring-[#0066A1] focus:border-[#0066A1] outline-none transition"
-              required
-            />
+ <input
+   type="number"
+   id="amountPerDay"
+   name="amountPerDay"
+   value={formData.amountPerDay}
+   onChange={handleChange}
+   min="1000"
+   step="100"
+   className="w-full p-3 border border-[#CED4DA] rounded-lg focus:ring-2 focus:ring-[#0066A1] focus:border-[#0066A1] outline-none transition"
+   required
+ />
             <p className="text-xs text-[#6c757d] mt-1">
               Minimum amount: ₦1000 per day
             </p>
