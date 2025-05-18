@@ -317,7 +317,7 @@ export default function TransactionHistory() {
                       </div>
                       <div>
                         <p className="font-medium">
-                          {transaction.type === 'deposit' ? 'Deposit' : 'Withdrawal'}
+                          {transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}
                         </p>
                         <p className="text-xs text-[#6c757d]">{transaction.category}</p>
                       </div>
@@ -326,7 +326,9 @@ export default function TransactionHistory() {
                           className={`font-medium ${
                             transaction.type === 'deposit'
                               ? 'text-[#28A745]'
-                              : 'text-[#DC3545]'
+                              : transaction.type === 'withdrawal'
+                              ? 'text-[#DC3545]'
+                              : 'text-gray-800' // Neutral color for 'other'
                           }`}
                         >
                           {transaction.type === 'deposit' ? '+ ' : '- '}
@@ -372,7 +374,7 @@ export default function TransactionHistory() {
                       </div>
                       <div>
                         <p className="font-medium">
-                          {transaction.type === 'deposit' ? 'Deposit' : 'Withdrawal'}
+                          {transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}
                         </p>
                         <p className="text-xs text-[#6c757d]">{transaction.category}</p>
                       </div>
@@ -390,7 +392,9 @@ export default function TransactionHistory() {
                         className={`font-medium ${
                           transaction.type === 'deposit'
                             ? 'text-[#28A745]'
-                            : 'text-[#DC3545]'
+                            : transaction.type === 'withdrawal'
+                            ? 'text-[#DC3545]'
+                            : 'text-gray-800' // Neutral color for 'other'
                         }`}
                       >
                         {transaction.type === 'deposit' ? '+ ' : '- '}

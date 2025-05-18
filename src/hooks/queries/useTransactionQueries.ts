@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 
 export interface FormattedTransaction {
   id: string;
-  type: 'deposit' | 'withdrawal';
+  type: 'deposit' | 'withdrawal' | 'other';
   category: string;
   amount: number;
   date: string;
@@ -72,9 +72,16 @@ export function useTransactionQueries(filters: TransactionFilters = {}) {
         hour12: true
       });
 
+      let transactionType: 'deposit' | 'withdrawal' | 'other';
+      if (transaction.narration.toLowerCase().includes('payment for order')) {
+        transactionType = 'other';
+      } else {
+        transactionType = transaction.direction === 'inflow' ? 'deposit' : 'withdrawal';
+      }
+
       return {
         id: transaction.id,
-        type: transaction.direction === 'inflow' ? 'deposit' : 'withdrawal',
+        type: transactionType,
         category: getCategoryFromNarration(transaction),
         amount: transaction.amount,
         date: dateString,
