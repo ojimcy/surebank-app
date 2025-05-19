@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">SureBank</string>
+    <string name="title_activity_main">SureBank</string>
+    <string name="package_name">surebankstores.ng</string>
+    <string name="custom_url_scheme">surebankstores.ng</string>
+</resources>

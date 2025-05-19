@@ -9,7 +9,8 @@ interface PresignedUrlResponse {
 export const uploadFileToS3 = async (
   file: File,
   type: 'id-document' | 'selfie',
-  onProgress?: (progress: number) => void
+  onProgress?: (progress: number) => void,
+  userId?: string
 ): Promise<{ key: string; url: string }> => {
   try {
     // Get a presigned URL from the backend
@@ -57,6 +58,14 @@ export const uploadFileToS3 = async (
       // Start the upload - for presigned PUT URLs
       xhr.open('PUT', uploadUrl);
       xhr.setRequestHeader('Content-Type', file.type);
+      
+      // Add required metadata headers
+      if (userId) {
+        xhr.setRequestHeader('x-amz-meta-user-id', userId);
+      }
+      xhr.setRequestHeader('x-amz-meta-document-type', type);
+      xhr.setRequestHeader('x-amz-meta-original-name', encodeURIComponent(file.name));
+      
       xhr.send(file);
     });
   } catch (error) {
