@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build && npm run postbuild",
-    "build-mobile": "npm run build && npx cap sync && npx cap open android",
-    "build-ios": "npm run build && npx cap sync && npx cap open ios",
+    "android": "npm run build && npx cap sync && npx cap open android",
+    "ios": "npm run build && npx cap sync && npx cap open ios",
     "postbuild": "cp _headers _redirects netlify.toml dist/",
     "lint": "eslint .",
     "preview": "vite preview"
