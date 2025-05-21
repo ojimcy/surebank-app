@@ -29,9 +29,17 @@ function Dashboard() {
   // Use package queries to get packages data
   const {
     packages: savingsPackages,
-    hasPackages,
     isLoading: isPackagesLoading,
   } = usePackageQueries();
+
+  // Filter out closed packages
+  const activePackages = useMemo(() => {
+    return savingsPackages.filter(pkg => {
+      if (!pkg.status) return true; // Include packages with no status field
+      const status = pkg.status.toLowerCase();
+      return status !== 'closed';
+    });
+  }, [savingsPackages]);
 
   // Available package types - memoized to prevent recreation on each render
   const packageTypes = useMemo<PackageType[]>(
@@ -95,10 +103,10 @@ function Dashboard() {
         <div className="p-4 bg-white rounded-xl shadow-sm flex justify-center">
           <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
         </div>
-      ) : hasPackages ? (
+      ) : activePackages.length > 0 ? (
         // Existing Savings Plans Section
         <SavingsPackages
-          packages={savingsPackages}
+          packages={activePackages}
           formatCurrency={formatCurrency}
         />
       ) : (

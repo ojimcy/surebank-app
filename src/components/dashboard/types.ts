@@ -17,6 +17,7 @@ export interface SavingsPackage {
   totalContribution: number;
   target: number;
   color: string;
+  status?: string;
 }
 
 export interface PackageType {
