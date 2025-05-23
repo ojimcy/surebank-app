@@ -1,4 +1,5 @@
 import api from './axios';
+import storage, { STORAGE_KEYS } from './storage';
 
 export interface Address {
   street: string;
@@ -81,11 +82,10 @@ const authApi = {
       payload
     );
 
-    // Store token in localStorage
+    // Store tokens using cross-platform storage
     if (response.data.tokens.access.token) {
-      localStorage.setItem('auth-token', response.data.tokens.access.token);
-      // Store refresh token for potential token refresh implementation
-      localStorage.setItem('refresh-token', response.data.tokens.refresh.token);
+      await storage.setItem(STORAGE_KEYS.AUTH_TOKEN, response.data.tokens.access.token);
+      await storage.setItem(STORAGE_KEYS.REFRESH_TOKEN, response.data.tokens.refresh.token);
     }
 
     return response.data.user;
@@ -109,10 +109,10 @@ const authApi = {
       payload
     );
 
-    // Store token in localStorage
+    // Store tokens using cross-platform storage
     if (response.data.tokens.access.token) {
-      localStorage.setItem('auth-token', response.data.tokens.access.token);
-      localStorage.setItem('refresh-token', response.data.tokens.refresh.token);
+      await storage.setItem(STORAGE_KEYS.AUTH_TOKEN, response.data.tokens.access.token);
+      await storage.setItem(STORAGE_KEYS.REFRESH_TOKEN, response.data.tokens.refresh.token);
     }
 
     return response.data.user;
@@ -169,9 +169,9 @@ const authApi = {
   },
 
   // Logout and clear token
-  logout: (): void => {
-    localStorage.removeItem('auth-token');
-    localStorage.removeItem('refresh-token');
+  logout: async (): Promise<void> => {
+    await storage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+    await storage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
   },
 };
 

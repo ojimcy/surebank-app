@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { CheckCircle, ArrowLeft, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'react-hot-toast';
+import storage from '@/lib/api/storage';
+
+const CONTRIBUTION_DATA_KEY = 'contributionData';
 
 interface ContributionData {
   packageId: string;
@@ -17,19 +20,23 @@ function ContributionSuccess() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Retrieve stored contribution data from localStorage
-    try {
-      const storedData = localStorage.getItem('contributionData');
-      if (storedData) {
-        const parsedData = JSON.parse(storedData);
-        setContributionData(parsedData);
-        // Clear the data after retrieval
-        localStorage.removeItem('contributionData');
+    // Retrieve stored contribution data from cross-platform storage
+    const fetchData = async () => {
+      try {
+        const storedData = await storage.getItem(CONTRIBUTION_DATA_KEY);
+        if (storedData) {
+          const parsedData = JSON.parse(storedData);
+          setContributionData(parsedData);
+          // Clear the data after retrieval
+          await storage.removeItem(CONTRIBUTION_DATA_KEY);
+        }
+      } catch (error) {
+        console.error('Error retrieving contribution data:', error);
+        toast.error('Failed to retrieve transaction details');
       }
-    } catch (error) {
-      console.error('Error retrieving contribution data:', error);
-      toast.error('Failed to retrieve transaction details');
-    }
+    };
+    
+    fetchData();
   }, []);
 
   const handleViewPackage = () => {

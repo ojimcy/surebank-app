@@ -8,17 +8,30 @@ import authApi, {
   NewPasswordPayload,
   User,
 } from '@/lib/api/auth';
+import { useEffect, useState } from 'react';
+import storage, { STORAGE_KEYS } from '@/lib/api/storage';
 
 // Custom hook for auth-related queries and mutations
 export function useAuthQueries() {
   const queryClient = useQueryClient();
+  const [hasToken, setHasToken] = useState(false);
+
+  // Check for token on mount
+  useEffect(() => {
+    const checkToken = async () => {
+      const token = await storage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+      setHasToken(!!token);
+    };
+    
+    checkToken();
+  }, []);
 
   // Get current user query (will run on component mount if enabled)
   const currentUserQuery = useQuery({
     queryKey: ['currentUser'],
     queryFn: authApi.getCurrentUser,
     retry: 1,
-    enabled: !!localStorage.getItem('auth-token'), // Only run if token exists
+    enabled: hasToken, // Only run if token exists
   });
 
   // Login mutation
@@ -27,6 +40,7 @@ export function useAuthQueries() {
     onSuccess: (user) => {
       // Update user data in the cache
       queryClient.setQueryData(['currentUser'], user);
+      setHasToken(true);
     },
   });
 
@@ -67,12 +81,13 @@ export function useAuthQueries() {
   });
 
   // Logout function with client-side cache clearing
-  const logout = () => {
-    authApi.logout();
+  const logout = async () => {
+    await authApi.logout();
     // Clear user from cache
     queryClient.setQueryData(['currentUser'], null);
     // Invalidate all queries
     queryClient.invalidateQueries();
+    setHasToken(false);
   };
 
   return {

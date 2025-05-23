@@ -9,6 +9,7 @@ import packagesApi, {
 import { StyledButton } from '@/components/ui/styled-button';
 import { getUserAccountByType, createAccount } from '@/lib/api/accounts';
 import { useQuery } from '@tanstack/react-query';
+import storage from '@/lib/api/storage';
 
 // Lock period options in days (1 month, 3 months, 6 months, 1 year, 2 years)
 const lockPeriodOptions = [
@@ -18,6 +19,8 @@ const lockPeriodOptions = [
   { label: '1 Year', value: 365 },
   { label: '2 Years', value: 730 },
 ];
+
+const IBS_PACKAGE_DATA_KEY = 'ibsPackageData';
 
 function NewIBSPackage() {
   const toast = useToast();
@@ -180,9 +183,9 @@ function NewIBSPackage() {
       // Initiate payment
       const response = await packagesApi.initiateIBSPackagePayment(paymentData);
 
-      // Store package details in localStorage for retrieval after payment
-      localStorage.setItem(
-        'ibsPackageData',
+      // Store package details using cross-platform storage
+      await storage.setItem(
+        IBS_PACKAGE_DATA_KEY,
         JSON.stringify({
           ...formData, // Store complete form data including interestRate
           paymentReference: response.reference,

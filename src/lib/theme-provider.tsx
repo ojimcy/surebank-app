@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import storage from './api/storage';
 
 type Theme = 'light' | 'dark';
 
@@ -7,27 +8,40 @@ interface ThemeContextType {
   setTheme: (theme: Theme) => void;
 }
 
+const THEME_KEY = 'theme';
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    // Check for saved theme preference
-    const savedTheme = localStorage.getItem('theme') as Theme | null;
+  const [theme, setTheme] = useState<Theme>('light');
+  const [isLoaded, setIsLoaded] = useState(false);
 
-    // Check for system preference if no saved theme
-    if (!savedTheme) {
-      const systemPreference = window.matchMedia('(prefers-color-scheme: dark)')
-        .matches
-        ? 'dark'
-        : 'light';
-      return systemPreference;
-    }
+  // Load theme on initial render
+  useEffect(() => {
+    const loadTheme = async () => {
+      // Check for saved theme preference
+      const savedTheme = await storage.getItem(THEME_KEY) as Theme | null;
 
-    return savedTheme || 'light';
-  });
+      // Check for system preference if no saved theme
+      if (!savedTheme && typeof window !== 'undefined') {
+        const systemPreference = window.matchMedia('(prefers-color-scheme: dark)')
+          .matches
+          ? 'dark'
+          : 'light';
+        setTheme(systemPreference);
+      } else if (savedTheme) {
+        setTheme(savedTheme);
+      }
+      
+      setIsLoaded(true);
+    };
+
+    loadTheme();
+  }, []);
 
   // Update theme class on the document element
   useEffect(() => {
+    if (!isLoaded) return;
+    
     const root = document.documentElement;
     if (theme === 'dark') {
       root.classList.add('dark');
@@ -36,11 +50,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Save theme preference
-    localStorage.setItem('theme', theme);
-  }, [theme]);
+    storage.setItem(THEME_KEY, theme);
+  }, [theme, isLoaded]);
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeContext.Provider value={{ 
+      theme, 
+      setTheme: (newTheme: Theme) => {
+        setTheme(newTheme);
+      }
+    }}>
       {children}
     </ThemeContext.Provider>
   );

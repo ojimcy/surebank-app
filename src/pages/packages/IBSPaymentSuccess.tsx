@@ -5,6 +5,9 @@ import { useLoader } from '@/lib/loader-provider';
 import packagesApi, { IBPackage } from '@/lib/api/packages';
 import { CheckCircle, AlertCircle } from 'lucide-react';
 import { formatDateTime } from '@/lib/utils';
+import storage from '@/lib/api/storage';
+
+const IBS_PACKAGE_DATA_KEY = 'ibsPackageData';
 
 function IBSPackageSuccess() {
   const navigate = useNavigate();
@@ -54,7 +57,7 @@ function IBSPackageSuccess() {
         }
 
         // Clean up any leftover data
-        localStorage.removeItem('ibsPackageData');
+        await storage.removeItem(IBS_PACKAGE_DATA_KEY);
       } catch (error) {
         console.error('Failed to fetch package:', error);
         setStatus('error');

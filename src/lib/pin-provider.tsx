@@ -8,6 +8,11 @@ import {
 } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './auth-provider';
+import storage from './api/storage';
+
+// Storage keys
+const PIN_KEY = 'pin';
+const INACTIVITY_TIMEOUT_KEY = 'inactivityTimeout';
 
 // Inactivity timeout in milliseconds (5 minutes by default)
 const DEFAULT_INACTIVITY_TIMEOUT = 5 * 60 * 1000;
@@ -16,17 +21,17 @@ interface PinContextType {
   // PIN management
   isPinSet: boolean;
   isLocked: boolean;
-  setupPin: (pin: string) => void;
+  setupPin: (pin: string) => Promise<void>;
   verifyPin: (pin: string) => boolean;
   lockApp: () => void;
   unlockApp: (pin: string) => boolean;
 
   // Settings
   inactivityTimeout: number;
-  setInactivityTimeout: (timeout: number) => void;
+  setInactivityTimeout: (timeout: number) => Promise<void>;
 
   // For development/testing
-  clearPin: () => void;
+  clearPin: () => Promise<void>;
 }
 
 const PinContext = createContext<PinContextType | undefined>(undefined);
@@ -36,21 +41,38 @@ export function PinProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
 
   // State
-  const [pin, setPin] = useState<string | null>(localStorage.getItem('pin'));
+  const [pin, setPin] = useState<string | null>(null);
   const [isLocked, setIsLocked] = useState(false);
   const [lastActivity, setLastActivity] = useState(Date.now());
-  const [inactivityTimeout, setInactivityTimeout] = useState(
-    Number(localStorage.getItem('inactivityTimeout')) ||
-      DEFAULT_INACTIVITY_TIMEOUT
-  );
+  const [inactivityTimeout, setInactivityTimeout] = useState(DEFAULT_INACTIVITY_TIMEOUT);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load initial values
+  useEffect(() => {
+    const loadValues = async () => {
+      // Load PIN
+      const savedPin = await storage.getItem(PIN_KEY);
+      setPin(savedPin);
+      
+      // Load inactivity timeout
+      const savedTimeout = await storage.getItem(INACTIVITY_TIMEOUT_KEY);
+      if (savedTimeout) {
+        setInactivityTimeout(Number(savedTimeout));
+      }
+      
+      setIsLoaded(true);
+    };
+    
+    loadValues();
+  }, []);
 
   // Setup a new PIN
-  const setupPin = useCallback((newPin: string) => {
+  const setupPin = useCallback(async (newPin: string) => {
     if (newPin.length < 4) {
       throw new Error('PIN must be at least 4 digits');
     }
 
-    localStorage.setItem('pin', newPin);
+    await storage.setItem(PIN_KEY, newPin);
     setPin(newPin);
     setIsLocked(false);
   }, []);
@@ -85,21 +107,21 @@ export function PinProvider({ children }: { children: ReactNode }) {
   );
 
   // Clear PIN (for settings/development)
-  const clearPin = useCallback(() => {
-    localStorage.removeItem('pin');
+  const clearPin = useCallback(async () => {
+    await storage.removeItem(PIN_KEY);
     setPin(null);
     setIsLocked(false);
   }, []);
 
   // Update inactivity timeout
-  const updateInactivityTimeout = useCallback((timeout: number) => {
-    localStorage.setItem('inactivityTimeout', timeout.toString());
+  const updateInactivityTimeout = useCallback(async (timeout: number) => {
+    await storage.setItem(INACTIVITY_TIMEOUT_KEY, timeout.toString());
     setInactivityTimeout(timeout);
   }, []);
 
   // Track user activity to reset the inactivity timer
   useEffect(() => {
-    if (!isAuthenticated || !pin) return;
+    if (!isAuthenticated || !pin || !isLoaded) return;
 
     const resetTimer = () => {
       setLastActivity(Date.now());
@@ -120,11 +142,11 @@ export function PinProvider({ children }: { children: ReactNode }) {
       window.removeEventListener('touchmove', resetTimer);
       window.removeEventListener('touchstart', resetTimer);
     };
-  }, [isAuthenticated, pin]);
+  }, [isAuthenticated, pin, isLoaded]);
 
   // Check for inactivity and lock app if needed
   useEffect(() => {
-    if (!isAuthenticated || !pin || isLocked) return;
+    if (!isAuthenticated || !pin || isLocked || !isLoaded) return;
 
     const checkInactivity = () => {
       if (Date.now() - lastActivity > inactivityTimeout) {
@@ -144,6 +166,7 @@ export function PinProvider({ children }: { children: ReactNode }) {
     lastActivity,
     inactivityTimeout,
     lockApp,
+    isLoaded,
   ]);
 
   const contextValue: PinContextType = {

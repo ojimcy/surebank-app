@@ -1,4 +1,5 @@
 import axios from 'axios';
+import storage, { STORAGE_KEYS } from './storage';
 
 // Create an Axios instance with custom config
 const api = axios.create({
@@ -9,11 +10,11 @@ const api = axios.create({
   },
 });
 
-
 // Request interceptor for adding auth token
 api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('auth-token');
+  async (config) => {
+    // Get token from cross-platform storage
+    const token = await storage.getItem(STORAGE_KEYS.AUTH_TOKEN);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -32,9 +33,8 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      // You could implement a token refresh mechanism here
-      // For now, just redirect to login
-      localStorage.removeItem('auth-token');
+      // Clear token from cross-platform storage
+      await storage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
       window.location.href = '/auth/login';
       return Promise.reject(error);
     }

@@ -6,6 +6,10 @@ import { useToast } from '@/lib/toast-provider';
 import { useLoader } from '@/lib/loader-provider';
 import packagesApi, { IBPackage } from '@/lib/api/packages';
 import { formatDateTime } from '@/lib/utils';
+import storage from '@/lib/api/storage';
+
+const CONTRIBUTION_DATA_KEY = 'contributionData';
+const IBS_PACKAGE_DATA_KEY = 'ibsPackageData';
 
 // Generic payment success data interface
 interface PaymentData {
@@ -51,9 +55,9 @@ function PaymentSuccess() {
           else if (reference.startsWith('ibs_')) paymentType = 'ibs';
         }
 
-        // Check localStorage for data first (for direct redirects from payment gateways)
-        const contributionData = localStorage.getItem('contributionData');
-        const ibsPackageData = localStorage.getItem('ibsPackageData');
+        // Check storage for data first (for direct redirects from payment gateways)
+        const contributionData = await storage.getItem(CONTRIBUTION_DATA_KEY);
+        const ibsPackageData = await storage.getItem(IBS_PACKAGE_DATA_KEY);
 
         if (contributionData) {
           // Handle contribution payment
@@ -62,7 +66,7 @@ function PaymentSuccess() {
             type: 'contribution',
             ...parsedData,
           });
-          localStorage.removeItem('contributionData');
+          await storage.removeItem(CONTRIBUTION_DATA_KEY);
         } else if (ibsPackageData) {
           // Handle IBS package data
           const parsedData = JSON.parse(ibsPackageData);
@@ -70,7 +74,7 @@ function PaymentSuccess() {
             type: 'ibs',
             ...parsedData,
           });
-          localStorage.removeItem('ibsPackageData');
+          await storage.removeItem(IBS_PACKAGE_DATA_KEY);
         } else if (reference && paymentType === 'ibs') {
           // Fetch IBS package by reference if no local data
           const packageDetails = await packagesApi.getIBPackageByReference(

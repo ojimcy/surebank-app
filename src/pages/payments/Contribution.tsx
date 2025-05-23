@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 import { Check, Circle, Loader2, Package, Wallet } from 'lucide-react';
+import storage from '@/lib/api/storage';
 
 // Define package type options
 type PackageType = 'ds' | 'sb';
@@ -22,6 +23,8 @@ interface PackageOption {
   amountPerDay?: number;
   status?: string;
 }
+
+const CONTRIBUTION_DATA_KEY = 'contributionData';
 
 function Contribution() {
   const [selectedType, setSelectedType] = useState<PackageType>('ds');
@@ -144,9 +147,9 @@ function Contribution() {
 
       const response = await packagesApi.initializeContribution(paymentData);
 
-      // Store contribution details in localStorage for retrieval after payment
-      localStorage.setItem(
-        'contributionData',
+      // Store contribution details using cross-platform storage
+      await storage.setItem(
+        CONTRIBUTION_DATA_KEY,
         JSON.stringify({
           packageId: selectedPackage,
           packageName: selectedPackageData.name,
