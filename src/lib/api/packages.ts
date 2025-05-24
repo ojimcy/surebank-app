@@ -139,6 +139,18 @@ export interface ChangeProductParams {
   newProductId: string;
 }
 
+// Add payment status interface
+export interface PaymentStatus {
+  reference: string;
+  status: 'pending' | 'success' | 'failed' | 'abandoned';
+  amount: number;
+  packageId?: string;
+  packageType?: 'ds' | 'sb' | 'ibs';
+  createdAt: string;
+  updatedAt: string;
+  metadata?: Record<string, unknown>;
+}
+
 // Packages API functions
 const packagesApi = {
   // Get daily savings packages for a user
@@ -352,6 +364,12 @@ const packagesApi = {
       packageFromId,
       packageToId,
     });
+    return response.data;
+  },
+
+  // Check payment status by reference
+  checkPaymentStatus: async (reference: string): Promise<PaymentStatus> => {
+    const response = await api.get<PaymentStatus>(`/payments/status/${reference}`);
     return response.data;
   },
 };

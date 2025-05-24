@@ -47,6 +47,7 @@ import { LoaderProvider } from '@/lib/loader-provider';
 import { setupSafeArea } from '@/lib/safe-area';
 import AuthGuard from '@/components/auth/AuthGuard';
 import PinGuard from '@/components/auth/PinGuard';
+import { UrlHandler } from '@/lib/services/url-handler';
 
 // Auth routes don't need the main layout
 function AuthRoutes() {
@@ -145,6 +146,11 @@ function App() {
     return () => {
       cleanup();
     };
+  }, []);
+
+  useEffect(() => {
+    // Initialize URL handler for deep links
+    UrlHandler.initialize();
   }, []);
 
   return (

@@ -4,12 +4,15 @@ import packagesApi, {
   DailySavingsPackage,
   SBPackage,
   InitiateContributionParams,
+  PaymentStatus,
 } from '@/lib/api/packages';
 import { Button } from '@/components/ui/button';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 import { Check, Circle, Loader2, Package, Wallet } from 'lucide-react';
 import storage from '@/lib/api/storage';
+import { getRedirectUrl, isMobile } from '@/lib/utils/platform';
+import { paymentPolling } from '@/lib/services/payment-polling';
 
 // Define package type options
 type PackageType = 'ds' | 'sb';
@@ -33,6 +36,7 @@ function Contribution() {
   const [amount, setAmount] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [fetchingPackages, setFetchingPackages] = useState(false);
+  const [paymentReference, setPaymentReference] = useState<string>('');
 
   const { user } = useAuth();
 
@@ -105,26 +109,20 @@ function Contribution() {
   }, [selectedType, user?.id]);
 
   const handleSubmit = async () => {
-    if (!selectedPackage) {
-      toast.error('Please select a package to contribute to.');
+    if (!selectedPackage || !amount || parseFloat(amount) <= 0) {
+      toast.error('Please select a package and enter a valid amount.');
       return;
     }
 
-    if (!amount || parseFloat(amount) <= 0) {
-      toast.error('Please enter a valid amount.');
-      return;
-    }
-
-    const selectedPackageData = packages.find(
-      (pkg) => pkg.id === selectedPackage
-    );
+    const selectedPackageData = packages.find(pkg => pkg.id === selectedPackage);
     if (!selectedPackageData) {
       toast.error('Package information not found.');
       return;
     }
 
-    // For DS packages, validate that amount is a multiple of amountPerDay
     const contributionAmount = parseFloat(amount);
+    
+    // Validate DS contribution if needed
     if (
       selectedPackageData.type === 'Daily Savings' &&
       !validateDSContribution(selectedPackageData, contributionAmount)
@@ -142,12 +140,16 @@ function Contribution() {
         packageId: selectedPackage,
         amount: contributionAmount,
         packageType: selectedType,
-        redirect_url: `${window.location.origin}/payments/success`,
+        // Only include redirect_url for web
+        ...(getRedirectUrl('/payments/success') && {
+          redirect_url: getRedirectUrl('/payments/success')
+        })
       };
 
       const response = await packagesApi.initializeContribution(paymentData);
+      setPaymentReference(response.reference);
 
-      // Store contribution details using cross-platform storage
+      // Store contribution details
       await storage.setItem(
         CONTRIBUTION_DATA_KEY,
         JSON.stringify({
@@ -159,6 +161,25 @@ function Contribution() {
         })
       );
 
+      if (isMobile()) {
+        // For mobile: start polling and redirect to payment page
+        paymentPolling.startPolling({
+          reference: response.reference,
+          onSuccess: (status: PaymentStatus) => {
+            toast.success('Payment successful!');
+            window.location.href = `/payments/success?reference=${status.reference}`;
+          },
+          onError: (status: PaymentStatus) => {
+            toast.error('Payment failed. Please try again.');
+            window.location.href = `/payments/error?reference=${status.reference}`;
+          },
+          onTimeout: () => {
+            toast.error('Payment verification timed out. Please contact support if money was deducted.');
+            window.location.href = `/payments/error?reference=${response.reference}&message=timeout`;
+          }
+        });
+      }
+
       // Redirect to Paystack payment page
       window.location.href = response.authorizationUrl;
     } catch (error) {
@@ -168,6 +189,15 @@ function Contribution() {
       setLoading(false);
     }
   };
+
+  // Cleanup polling on component unmount
+  useEffect(() => {
+    return () => {
+      if (paymentPolling.isCurrentlyPolling()) {
+        paymentPolling.stopPolling();
+      }
+    };
+  }, []);
 
   const getTypeIcon = (type: PackageType) => {
     switch (type) {

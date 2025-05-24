@@ -10,6 +10,7 @@ import { StyledButton } from '@/components/ui/styled-button';
 import { getUserAccountByType, createAccount } from '@/lib/api/accounts';
 import { useQuery } from '@tanstack/react-query';
 import storage from '@/lib/api/storage';
+import { getPaymentSuccessUrl } from '@/lib/utils/payment-redirect';
 
 // Lock period options in days (1 month, 3 months, 6 months, 1 year, 2 years)
 const lockPeriodOptions = [
@@ -177,7 +178,7 @@ function NewIBSPackage() {
         name: formData.name,
         principalAmount: formData.principalAmount,
         lockPeriod: formData.lockPeriod,
-        redirectUrl: `${window.location.origin}/payments/success`,
+        redirectUrl: getPaymentSuccessUrl(),
       };
 
       // Initiate payment
