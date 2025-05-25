@@ -36,7 +36,6 @@ function Contribution() {
   const [amount, setAmount] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [fetchingPackages, setFetchingPackages] = useState(false);
-  const [paymentReference, setPaymentReference] = useState<string>('');
 
   const { user } = useAuth();
 
@@ -136,18 +135,15 @@ function Contribution() {
     setLoading(true);
     try {
       // Initialize payment through Paystack
+      const redirectUrl = getRedirectUrl('/payments/success') || '/payments/success';
       const paymentData: InitiateContributionParams = {
         packageId: selectedPackage,
         amount: contributionAmount,
         packageType: selectedType,
-        // Only include redirect_url for web
-        ...(getRedirectUrl('/payments/success') && {
-          redirect_url: getRedirectUrl('/payments/success')
-        })
+        redirect_url: redirectUrl,
       };
 
       const response = await packagesApi.initializeContribution(paymentData);
-      setPaymentReference(response.reference);
 
       // Store contribution details
       await storage.setItem(
