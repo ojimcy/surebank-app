@@ -50,8 +50,12 @@ class PaymentPollingService {
       });
     }
 
-    // Start immediate check
-    this.checkPaymentStatus();
+    // Start first check after initial delay to allow payment to be processed
+    setTimeout(() => {
+      if (this.isPolling) {
+        this.checkPaymentStatus();
+      }
+    }, 5000); // 5 second initial delay
 
     // Set up polling interval
     this.pollingInterval = setInterval(() => {
@@ -83,15 +87,15 @@ class PaymentPollingService {
       if (status.status === 'success') {
         console.log('Payment successful!');
         this.stopPolling();
-        this.config.onSuccess(status);
+        this.config?.onSuccess(status);
       } else if (status.status === 'failed' || status.status === 'abandoned') {
         console.log('Payment failed or abandoned');
         this.stopPolling();
-        this.config.onError(status);
-      } else if (this.attempts >= (this.config.maxAttempts || 60)) {
+        this.config?.onError(status);
+      } else if (this.attempts >= (this.config?.maxAttempts || 60)) {
         console.log('Max polling attempts reached');
         this.stopPolling();
-        this.config.onTimeout();
+        this.config?.onTimeout();
       }
       // If status is still 'pending', continue polling
     } catch (error) {

@@ -63,7 +63,7 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ onMobileRedirect, onWeb
   const [loading, setLoading] = useState(true);
   const [redirecting, setRedirecting] = useState(false);
   const [isMobileDevice, setIsMobileDevice] = useState(false);
-  const [countdown, setCountdown] = useState(3);
+  const [countdown, setCountdown] = useState(5);
 
   // Extract payment data from URL parameters
   const urlPaymentData: PaymentData = {
@@ -213,7 +213,7 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ onMobileRedirect, onWeb
       onMobileRedirect(deepLinkUrl);
     }
 
-    // Web Bridge: Automatic redirect after showing success message (3 seconds)
+    // Web Bridge: Automatic redirect after showing success message (8 seconds)
     setTimeout(() => {
       console.log('Web Bridge: Attempting to redirect to mobile app...');
       window.location.href = deepLinkUrl;
@@ -222,7 +222,7 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ onMobileRedirect, onWeb
       setTimeout(() => {
         setRedirecting(false);
       }, 3000);
-    }, 3000);
+    }, 8000);
   };
 
   const handleWebSuccess = (data: PaymentData) => {
@@ -347,7 +347,7 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ onMobileRedirect, onWeb
                 <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                   <div 
                     className="bg-primary h-full transition-all duration-1000 ease-linear"
-                    style={{ width: `${((3 - countdown) / 3) * 100}%` }}
+                    style={{ width: `${((5 - countdown) / 5) * 100}%` }}
                   ></div>
                 </div>
                 <div className="text-xs text-muted-foreground mt-2">
