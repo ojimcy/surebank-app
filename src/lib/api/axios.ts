@@ -1,32 +1,74 @@
 import axios from 'axios';
 import storage, { STORAGE_KEYS } from './storage';
+import { isMobile } from '@/lib/utils/platform';
+import { config } from '@/lib/config';
 
 // Create an Axios instance with custom config
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://19igw0ftch.execute-api.us-east-2.amazonaws.com/v1',
-  timeout: 30000,
+  baseURL: config.apiBaseUrl,
+  timeout: config.timeout,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Request interceptor for adding auth token
+// Request interceptor for adding auth token and mobile headers
 api.interceptors.request.use(
   async (config) => {
-    // Get token from cross-platform storage
-    const token = await storage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    try {
+      // Log request details for debugging
+      console.log('API Request:', {
+        method: config.method,
+        url: config.url,
+        baseURL: config.baseURL,
+        platform: isMobile() ? 'mobile' : 'web'
+      });
+
+      // Get token from cross-platform storage
+      const token = await storage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+
+      // Add mobile platform headers when on mobile
+      if (isMobile()) {
+        config.headers['X-App-Platform'] = 'mobile';
+        config.headers['X-Mobile-App'] = 'true';
+      }
+
+      return config;
+    } catch (error) {
+      console.error('Request interceptor error:', error);
+      return config;
     }
-    return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    console.error('Request interceptor failed:', error);
+    return Promise.reject(error);
+  }
 );
 
 // Response interceptor for handling token expiration
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('API Response:', {
+      status: response.status,
+      url: response.config.url,
+      method: response.config.method
+    });
+    return response;
+  },
   async (error) => {
+    // Log error details for debugging
+    console.error('API Error:', {
+      message: error.message,
+      code: error.code,
+      status: error.response?.status,
+      url: error.config?.url,
+      method: error.config?.method,
+      baseURL: error.config?.baseURL
+    });
+
     const originalRequest = error.config;
 
     // Handle 401 (Unauthorized) errors

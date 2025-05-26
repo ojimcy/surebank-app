@@ -1,134 +1,258 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { CheckCircle, ArrowLeft, Home } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { useToast } from '@/lib/toast-provider';
 import { useLoader } from '@/lib/loader-provider';
 import packagesApi, { IBPackage } from '@/lib/api/packages';
 import { formatDateTime } from '@/lib/utils';
+import { isMobile } from '@/lib/utils/platform';
 import storage from '@/lib/api/storage';
 
 const CONTRIBUTION_DATA_KEY = 'contributionData';
 const IBS_PACKAGE_DATA_KEY = 'ibsPackageData';
 
-// Generic payment success data interface
+// Enhanced payment data interface for hybrid approach
 interface PaymentData {
-  type: 'ibs' | 'contribution' | 'other';
+  type: string;
   packageId?: string;
   packageName?: string;
   amount?: number;
   reference?: string;
+  platform?: string;
   packageDetails?: IBPackage;
-  [key: string]:
-    | string
-    | number
-    | boolean
-    | Date
-    | IBPackage
-    | undefined
-    | 'ibs'
-    | 'contribution'
-    | 'other';
+  [key: string]: string | number | boolean | Date | IBPackage | undefined;
 }
 
-function PaymentSuccess() {
+interface PaymentSuccessProps {
+  // Optional props for customization
+  onMobileRedirect?: (deepLink: string) => void;
+  onWebSuccess?: (paymentData: PaymentData) => void;
+}
+
+// Declare gtag type for analytics
+declare global {
+  function gtag(command: string, action: string, parameters: Record<string, string | number | boolean>): void;
+}
+
+/**
+ * PaymentSuccess Component - Web Bridge Solution
+ * 
+ * This component implements the Web Bridge architecture for handling
+ * mobile payment redirects from Paystack:
+ * 
+ * Flow:
+ * 1. Mobile App → Backend API (with mobile headers)
+ * 2. Backend API → Generates web URL with platform=mobile
+ * 3. Paystack → Redirects to this React component
+ * 4. React Component → Detects platform=mobile and auto-redirects to mobile app
+ * 
+ * Routes:
+ * - Mobile: ?platform=mobile → Auto-redirect to surebank://payment/callback
+ * - Web: (no platform) → Show success page
+ * 
+ * CRITICAL: This route MUST be public (no authentication required)
+ */
+const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ onMobileRedirect, onWebSuccess }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const toast = useToast();
   const { showLoader, hideLoader } = useLoader();
+  
   const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [redirecting, setRedirecting] = useState(false);
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
+
+  // Extract payment data from URL parameters
+  const urlPaymentData: PaymentData = {
+    type: searchParams.get('type') || 'payment',
+    packageId: searchParams.get('packageId') || undefined,
+    reference: searchParams.get('reference') || undefined,
+    platform: searchParams.get('platform') || undefined,
+  };
 
   useEffect(() => {
-    const fetchPaymentData = async () => {
+    const initializePaymentSuccess = async () => {
       try {
         showLoader();
 
-        // Get reference from URL params
-        const reference = searchParams.get('reference');
+        // Web Bridge Solution: Detect mobile primarily from platform parameter
+        const isMobileRequest = urlPaymentData.platform === 'mobile';
 
-        // Determine payment type from reference prefix if available
-        let paymentType: 'ibs' | 'contribution' | 'other' = 'other';
-        if (reference) {
-          if (reference.startsWith('ds_')) paymentType = 'contribution';
-          else if (reference.startsWith('sb_')) paymentType = 'contribution';
-          else if (reference.startsWith('ibs_')) paymentType = 'ibs';
-        }
+        // Fallback detection for edge cases
+        const isMobileFallback = 
+          isMobile() ||
+          /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-        // Check storage for data first (for direct redirects from payment gateways)
-        const contributionData = await storage.getItem(CONTRIBUTION_DATA_KEY);
-        const ibsPackageData = await storage.getItem(IBS_PACKAGE_DATA_KEY);
+        // Use platform parameter as primary detection (Web Bridge)
+        const finalIsMobile = isMobileRequest || isMobileFallback;
+        setIsMobileDevice(finalIsMobile);
 
-        if (contributionData) {
-          // Handle contribution payment
-          const parsedData = JSON.parse(contributionData);
-          setPaymentData({
-            type: 'contribution',
-            ...parsedData,
-          });
-          await storage.removeItem(CONTRIBUTION_DATA_KEY);
-        } else if (ibsPackageData) {
-          // Handle IBS package data
-          const parsedData = JSON.parse(ibsPackageData);
-          setPaymentData({
-            type: 'ibs',
-            ...parsedData,
-          });
-          await storage.removeItem(IBS_PACKAGE_DATA_KEY);
-        } else if (reference && paymentType === 'ibs') {
-          // Fetch IBS package by reference if no local data
-          const packageDetails = await packagesApi.getIBPackageByReference(
-            reference
-          );
-          setPaymentData({
-            type: 'ibs',
-            reference,
-            packageDetails,
-          });
-          toast.success({ title: 'Package fetched successfully' });
-        } else if (reference && paymentType === 'contribution') {
-          // Handle contribution reference
-          // We might need to fetch contribution details from API
-          setPaymentData({
-            type: 'contribution',
-            reference,
-            date: new Date(),
-          });
-        } else if (reference) {
-          // Generic reference handling for other payment types
-          setPaymentData({
-            type: 'other',
-            reference,
-            date: new Date(),
-          });
+        console.log('Payment success page loaded (Web Bridge):', {
+          ...urlPaymentData,
+          isMobileFromPlatform: isMobileRequest,
+          isMobileFallback: isMobileFallback,
+          finalIsMobile: finalIsMobile,
+          userAgent: navigator.userAgent,
+        });
+
+        // Fetch payment data from storage or API
+        const fetchedData = await fetchPaymentData();
+        
+        if (finalIsMobile) {
+          // Handle mobile redirect (Web Bridge auto-redirect)
+          handleMobileRedirect(fetchedData);
         } else {
-          // Fallback if no identifiable information
-          toast.error({ title: 'Missing payment information' });
-          navigate('/dashboard');
+          // Handle web success
+          handleWebSuccess(fetchedData);
         }
       } catch (error) {
-        console.error('Failed to fetch payment details:', error);
-        toast.error({ title: 'Failed to fetch payment details' });
+        console.error('Failed to initialize payment success:', error);
+        toast.error({ title: 'Failed to load payment details' });
       } finally {
         setLoading(false);
         hideLoader();
       }
     };
 
-    fetchPaymentData();
+    initializePaymentSuccess();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-const handleViewPackage = () => {
-  // If we have a specific package ID for contribution, navigate to it
-  if (paymentData?.type === 'contribution' && paymentData.packageId) {
-    navigate(`/packages/${paymentData.packageId}`);
-    return;
-  }
-  
-  // Default case: navigate to packages list
-  navigate('/packages');
-};
+  const fetchPaymentData = async (): Promise<PaymentData> => {
+    const reference = urlPaymentData.reference;
+    
+    // Determine payment type from reference prefix if available
+    let paymentType: string = urlPaymentData.type || 'other';
+    if (reference) {
+      if (reference.startsWith('ds_')) paymentType = 'daily_savings';
+      else if (reference.startsWith('sb_')) paymentType = 'savings_buying';
+      else if (reference.startsWith('ibs_')) paymentType = 'interest_package';
+    }
+
+    // Check storage for data first (for direct redirects from payment gateways)
+    const contributionData = await storage.getItem(CONTRIBUTION_DATA_KEY);
+    const ibsPackageData = await storage.getItem(IBS_PACKAGE_DATA_KEY);
+
+    let finalPaymentData: PaymentData = { 
+      ...urlPaymentData, 
+      type: paymentType 
+    };
+
+    if (contributionData) {
+      // Handle contribution payment
+      const parsedData = JSON.parse(contributionData);
+      finalPaymentData = {
+        ...urlPaymentData,
+        ...parsedData,
+        type: 'contribution',
+      };
+      await storage.removeItem(CONTRIBUTION_DATA_KEY);
+    } else if (ibsPackageData) {
+      // Handle IBS package data
+      const parsedData = JSON.parse(ibsPackageData);
+      finalPaymentData = {
+        ...urlPaymentData,
+        ...parsedData,
+        type: 'interest_package',
+      };
+      await storage.removeItem(IBS_PACKAGE_DATA_KEY);
+    } else if (reference && paymentType === 'interest_package') {
+      // Fetch IBS package by reference if no local data
+      try {
+        const packageDetails = await packagesApi.getIBPackageByReference(reference);
+        finalPaymentData = {
+          ...urlPaymentData,
+          type: 'interest_package',
+          reference,
+          packageDetails,
+        };
+      } catch (error) {
+        console.error('Failed to fetch IBS package:', error);
+      }
+    }
+
+    setPaymentData(finalPaymentData);
+    return finalPaymentData;
+  };
+
+  const handleMobileRedirect = (data: PaymentData) => {
+    setRedirecting(true);
+
+    // Web Bridge Solution: Generate deep link URL for mobile app
+    const baseScheme = 'surebank';
+    const deepLinkParams = new URLSearchParams({
+      type: data.type,
+      status: 'success',
+      ...(data.packageId && { packageId: data.packageId }),
+      ...(data.reference && { reference: data.reference }),
+    });
+
+    const deepLinkUrl = `${baseScheme}://payment/callback?${deepLinkParams.toString()}`;
+
+    console.log('Web Bridge: Generated deep link for mobile app:', {
+      deepLinkUrl,
+      paymentData: data,
+      platform: urlPaymentData.platform,
+    });
+
+    // Call custom handler if provided
+    if (onMobileRedirect) {
+      onMobileRedirect(deepLinkUrl);
+    }
+
+    // Web Bridge: Automatic redirect after showing success message
+    setTimeout(() => {
+      console.log('Web Bridge: Attempting to redirect to mobile app...');
+      window.location.href = deepLinkUrl;
+
+      // Hide loading after redirect attempt
+      setTimeout(() => {
+        setRedirecting(false);
+      }, 3000);
+    }, 1500);
+  };
+
+  const handleWebSuccess = (data: PaymentData) => {
+    // Call custom handler if provided
+    if (onWebSuccess) {
+      onWebSuccess(data);
+    }
+
+    // Optional: Track analytics
+    if (typeof gtag !== 'undefined') {
+      gtag('event', 'payment_success', {
+        platform: 'web',
+        payment_type: data.type,
+      });
+    }
+  };
+
+  const handleManualAppOpen = () => {
+    if (!paymentData) return;
+    
+    const baseScheme = 'surebank';
+    const deepLinkParams = new URLSearchParams({
+      type: paymentData.type,
+      status: 'success',
+      ...(paymentData.packageId && { packageId: paymentData.packageId }),
+      ...(paymentData.reference && { reference: paymentData.reference }),
+    });
+
+    const deepLinkUrl = `${baseScheme}://payment/callback?${deepLinkParams.toString()}`;
+    window.location.href = deepLinkUrl;
+  };
+
+  const handleViewPackage = () => {
+    // If we have a specific package ID for contribution, navigate to it
+    if (paymentData?.type === 'contribution' && paymentData.packageId) {
+      navigate(`/packages/${paymentData.packageId}`);
+      return;
+    }
+    
+    // Default case: navigate to packages list
+    navigate('/packages');
+  };
 
   const handleBackToHome = () => {
     navigate('/dashboard');
@@ -136,78 +260,116 @@ const handleViewPackage = () => {
 
   if (loading) {
     return (
-      <div className="max-w-md mx-auto px-4 py-8">
-        <div className="flex flex-col items-center justify-center text-center">
-          <div className="w-16 h-16 flex items-center justify-center mb-6">
-            <div className="h-10 w-10 border-4 border-t-blue-500 rounded-full animate-spin"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 p-4">
+        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 max-w-md w-full text-center text-white">
+          <div className="w-16 h-16 flex items-center justify-center mb-6 mx-auto">
+            <div className="h-10 w-10 border-4 border-t-white/60 border-white/20 rounded-full animate-spin"></div>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Processing Your Payment
-          </h1>
-          <p className="text-gray-600 mb-6">
-            Please wait while we confirm your transaction...
-          </p>
+          <h1 className="text-2xl font-bold mb-2">Processing Your Payment</h1>
+          <p className="text-white/90 mb-6">Please wait while we confirm your transaction...</p>
         </div>
       </div>
     );
   }
 
+  // Mobile UI with hybrid approach
+  if (isMobileDevice) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 p-4">
+        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 max-w-md w-full text-center text-white">
+          <div className="text-6xl mb-6">🎉</div>
+          <h1 className="text-2xl font-bold mb-4">Payment Successful!</h1>
+          <p className="text-white/90 mb-6">
+            Your {paymentData?.type === 'interest_package' ? 'investment package' : 'payment'} has been processed successfully.
+          </p>
+
+          {paymentData?.reference && (
+            <div className="bg-white/10 rounded-lg p-4 mb-6">
+              <p className="text-sm text-white/70 mb-1">Reference</p>
+              <p className="font-mono text-sm">{paymentData.reference}</p>
+            </div>
+          )}
+
+          {redirecting ? (
+            <div className="bg-white/10 rounded-lg p-4 mb-6">
+              <div className="animate-spin w-8 h-8 border-3 border-white/30 border-t-white rounded-full mx-auto mb-3"></div>
+              <p className="text-sm">Opening SureBank app...</p>
+              <p className="text-xs text-white/70 mt-2">You will be redirected automatically</p>
+            </div>
+          ) : (
+            <div className="bg-white/10 rounded-lg p-4 mb-6">
+              <p className="text-sm mb-3">App didn't open automatically?</p>
+              <button
+                onClick={handleManualAppOpen}
+                className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-full font-medium transition-all duration-300 hover:transform hover:-translate-y-1"
+              >
+                Open SureBank App
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Web UI - Enhanced version of the original
   return (
-    <div className="max-w-md mx-auto px-4 py-8">
-      <div className="flex flex-col items-center justify-center text-center">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6">
-          <CheckCircle className="h-10 w-10 text-green-600" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 p-4">
+      <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 max-w-md w-full text-center text-white">
+        <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mb-6 mx-auto">
+          <CheckCircle className="h-10 w-10 text-green-300" />
         </div>
 
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          {paymentData?.type === 'ibs'
+        <h1 className="text-2xl font-bold mb-4">
+          {paymentData?.type === 'interest_package'
             ? 'Package Created Successfully!'
             : paymentData?.type === 'contribution'
             ? 'Contribution Successful!'
             : 'Payment Successful!'}
         </h1>
 
-        <p className="text-gray-600 mb-6">
-          {paymentData?.type === 'ibs'
+        <p className="text-white/90 mb-6">
+          {paymentData?.type === 'interest_package'
             ? 'Your investment package has been created successfully.'
             : paymentData?.type === 'contribution'
             ? 'Your contribution has been processed successfully.'
-            : 'Your transaction has been processed successfully.'}
+            : 'Your transaction has been processed successfully.'} 
+          Thank you for using SureBank!
         </p>
 
-        <div className="bg-white rounded-xl shadow-sm p-6 w-full mb-6">
+        {/* Payment Details */}
+        <div className="bg-white/10 rounded-xl p-6 w-full mb-6 text-left">
           <div className="space-y-4">
             {/* IBS Package Details */}
-            {paymentData?.type === 'ibs' && paymentData.packageDetails && (
+            {paymentData?.type === 'interest_package' && paymentData.packageDetails && (
               <>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Package Name</span>
-                  <span className="font-medium text-gray-900">
+                  <span className="text-white/70">Package Name</span>
+                  <span className="font-medium text-white">
                     {paymentData.packageDetails.name}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Principal Amount</span>
-                  <span className="font-medium text-gray-900">
-                    ₦
-                    {paymentData.packageDetails.principalAmount.toLocaleString()}
+                  <span className="text-white/70">Principal Amount</span>
+                  <span className="font-medium text-white">
+                    ₦{paymentData.packageDetails.principalAmount.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Interest Rate</span>
-                  <span className="font-medium text-gray-900">
+                  <span className="text-white/70">Interest Rate</span>
+                  <span className="font-medium text-white">
                     {paymentData.packageDetails.interestRate}%
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Lock Period</span>
-                  <span className="font-medium text-gray-900">
+                  <span className="text-white/70">Lock Period</span>
+                  <span className="font-medium text-white">
                     {paymentData.packageDetails.lockPeriod} days
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Maturity Date</span>
-                  <span className="font-medium text-gray-900">
+                  <span className="text-white/70">Maturity Date</span>
+                  <span className="font-medium text-white">
                     {formatDateTime(paymentData.packageDetails.maturityDate)}
                   </span>
                 </div>
@@ -217,8 +379,8 @@ const handleViewPackage = () => {
             {/* Common Details */}
             {paymentData?.reference && (
               <div className="flex justify-between">
-                <span className="text-gray-500">Reference</span>
-                <span className="font-medium text-gray-900">
+                <span className="text-white/70">Reference</span>
+                <span className="font-medium text-white font-mono text-sm">
                   {paymentData.reference.length > 12
                     ? `${paymentData.reference.substring(0, 12)}...`
                     : paymentData.reference}
@@ -227,8 +389,8 @@ const handleViewPackage = () => {
             )}
 
             <div className="flex justify-between">
-              <span className="text-gray-500">Date</span>
-              <span className="font-medium text-gray-900">
+              <span className="text-white/70">Date</span>
+              <span className="font-medium text-white">
                 {new Date().toLocaleDateString('en-NG', {
                   year: 'numeric',
                   month: 'short',
@@ -236,30 +398,39 @@ const handleViewPackage = () => {
                 })}
               </span>
             </div>
+
+            {paymentData?.type && (
+              <div className="flex justify-between">
+                <span className="text-white/70">Payment Type</span>
+                <span className="font-medium text-white">
+                  {paymentData.type.replace('_', ' ').toUpperCase()}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
+        {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-3 w-full">
-          <Button
+          <button
             onClick={handleViewPackage}
-            className="flex items-center justify-center bg-[#0066A1]"
+            className="flex items-center justify-center bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-full font-medium transition-all duration-300 hover:transform hover:-translate-y-1"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            {paymentData?.type === 'ibs' ? 'View Packages' : 'View Package'}
-          </Button>
+            {paymentData?.type === 'interest_package' ? 'View Packages' : 'View Package'}
+          </button>
 
-          <Button
+          <button
             onClick={handleBackToHome}
-            variant="outline"
-            className="flex items-center justify-center"
+            className="flex items-center justify-center bg-white/20 hover:bg-white/30 text-white px-4 py-3 rounded-full font-medium transition-all duration-300 hover:transform hover:-translate-y-1"
           >
             <Home className="h-4 w-4 mr-2" />
             Back to Home
-          </Button>
+          </button>
         </div>
       </div>
     </div>
   );
-}
+};
 
 export default PaymentSuccess;

@@ -92,20 +92,34 @@ export interface CreateIBSPackageParams extends InitiateIBSPackageParams {
 }
 
 export interface InitiatePaymentResponse {
+  success: boolean;
   reference: string;
   authorizationUrl: string;
   accessCode: string;
-  principalAmount: number;
-  interestRate: number;
-  lockPeriod: number;
+  paymentData?: Record<string, unknown>;
+  principalAmount?: number;
+  interestRate?: number;
+  lockPeriod?: number;
 }
 
-// Interface for initializing a contribution through Paystack
+// Interface for initializing a contribution through Paystack (updated for unified API)
 export interface InitiateContributionParams {
   packageId: string;
   amount: number;
   packageType: 'ds' | 'sb';
-  redirect_url: string;
+  redirect_url?: string;
+}
+
+// New unified payment request interface
+export interface UnifiedPaymentRequest {
+  contributionType: 'daily_savings' | 'savings_buying' | 'interest_package';
+  packageId?: string;
+  amount: number;
+  // Interest package specific fields
+  name?: string;
+  principalAmount?: number;
+  lockPeriod?: number;
+  earlyWithdrawalPenalty?: number;
 }
 
 // Interface for withdrawal request
@@ -240,18 +254,22 @@ const packagesApi = {
     return response.data;
   },
 
-  // Initiate payment for an Interest-Based Savings package
+  // Initiate payment for an Interest-Based Savings package (updated for unified API)
   initiateIBSPackagePayment: async (
     data: InitiateIBSPackageParams
   ): Promise<InitiatePaymentResponse> => {
-    const { redirectUrl, ...restData } = data;
-    const payload: Omit<InitiateIBSPackageParams, 'redirectUrl'> & { redirect_url?: string } = { ...restData };
-    if (redirectUrl) {
-      payload.redirect_url = redirectUrl;
-    }
+    const unifiedPayload: UnifiedPaymentRequest = {
+      contributionType: 'interest_package',
+      amount: data.principalAmount,
+      name: data.name,
+      principalAmount: data.principalAmount,
+      lockPeriod: data.lockPeriod,
+      earlyWithdrawalPenalty: data.earlyWithdrawalPenalty,
+    };
+
     const response = await api.post<InitiatePaymentResponse>(
-      '/interest-savings/package/init-payment',
-      payload
+      '/payments/init-contribution',
+      unifiedPayload
     );
     return response.data;
   },
@@ -290,26 +308,22 @@ const packagesApi = {
     return response.data;
   },
 
-  // Initialize a contribution payment
+  // Initialize a contribution payment (updated for unified API)
   initializeContribution: async (
     data: InitiateContributionParams
   ): Promise<InitiatePaymentResponse> => {
-    // Determine endpoint based on package type
-    const endpoint =
-      data.packageType === 'ds'
-        ? '/daily-savings/init-contribution'
-        : '/daily-savings/sb/init-contribution';
+    // Map package type to contribution type
+    const contributionType = data.packageType === 'ds' ? 'daily_savings' : 'savings_buying';
 
-    // Create payload without packageType field
-    const payloadData = {
+    const unifiedPayload: UnifiedPaymentRequest = {
+      contributionType,
       packageId: data.packageId,
       amount: data.amount,
-      redirect_url: data.redirect_url,
     };
 
     const response = await api.post<InitiatePaymentResponse>(
-      endpoint,
-      payloadData
+      '/payments/init-contribution',
+      unifiedPayload
     );
     return response.data;
   },

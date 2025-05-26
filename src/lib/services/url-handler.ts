@@ -20,10 +20,22 @@ export class UrlHandler {
       const path = urlObj.pathname;
       const searchParams = urlObj.searchParams;
       
-      // Handle payment redirects
-      if (path.startsWith('/payment')) {
+      // Handle payment callback from new unified API
+      if (path.startsWith('/payment/callback')) {
+        const reference = searchParams.get('reference');
+        const status = searchParams.get('status');
+        const type = searchParams.get('type');
+        
+        if (status === 'success') {
+          this.handlePaymentSuccess(reference, type);
+        } else {
+          this.handlePaymentFailure(reference, type);
+        }
+      }
+      // Legacy payment redirect handling (for backward compatibility)
+      else if (path.startsWith('/payment')) {
         if (path.includes('/success')) {
-          this.handlePaymentSuccess(searchParams);
+          this.handlePaymentSuccess(searchParams.get('reference'));
         } else if (path.includes('/error')) {
           this.handlePaymentError(searchParams);
         }
@@ -31,14 +43,41 @@ export class UrlHandler {
     }
   }
 
-  private static handlePaymentSuccess(params: URLSearchParams) {
-    const reference = params.get('reference');
-    const status = params.get('status');
+  private static handlePaymentSuccess(reference: string | null, type?: string | null) {
+    if (!reference) {
+      console.error('Payment success callback missing reference');
+      return;
+    }
     
     // Navigate to success page with parameters
     const currentPath = window.location.pathname;
     if (currentPath !== '/payments/success') {
-      window.history.pushState({}, '', `/payments/success?reference=${reference}&status=${status}`);
+      let successUrl = `/payments/success?reference=${reference}&status=success`;
+      if (type) {
+        successUrl += `&type=${type}`;
+      }
+      
+      window.history.pushState({}, '', successUrl);
+      // Trigger a custom event to update the app
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    }
+  }
+
+  private static handlePaymentFailure(reference: string | null, type?: string | null) {
+    if (!reference) {
+      console.error('Payment failure callback missing reference');
+      return;
+    }
+    
+    // Navigate to error page with parameters
+    const currentPath = window.location.pathname;
+    if (currentPath !== '/payments/error') {
+      let errorUrl = `/payments/error?reference=${reference}&status=failure`;
+      if (type) {
+        errorUrl += `&type=${type}`;
+      }
+      
+      window.history.pushState({}, '', errorUrl);
       // Trigger a custom event to update the app
       window.dispatchEvent(new PopStateEvent('popstate'));
     }

@@ -11,6 +11,8 @@ import { getUserAccountByType, createAccount } from '@/lib/api/accounts';
 import { useQuery } from '@tanstack/react-query';
 import storage from '@/lib/api/storage';
 import { getPaymentSuccessUrl } from '@/lib/utils/payment-redirect';
+import { Browser } from '@capacitor/browser';
+import { isMobile } from '@/lib/utils/platform';
 
 // Lock period options in days (1 month, 3 months, 6 months, 1 year, 2 years)
 const lockPeriodOptions = [
@@ -174,15 +176,23 @@ function NewIBSPackage() {
 
     try {
       loader.showLoader('Initiating payment...');
+      // Only include redirectUrl for web platforms
+      const redirectUrl = !isMobile() ? getPaymentSuccessUrl() : undefined;
       const paymentData: InitiateIBSPackageParams = {
         name: formData.name,
         principalAmount: formData.principalAmount,
         lockPeriod: formData.lockPeriod,
-        redirectUrl: getPaymentSuccessUrl(),
+        ...(redirectUrl && { redirectUrl }),
       };
 
       // Initiate payment
+      console.log('IBS Payment request data:', paymentData);
       const response = await packagesApi.initiateIBSPackagePayment(paymentData);
+      console.log('IBS Payment response:', {
+        reference: response.reference,
+        authorizationUrl: response.authorizationUrl,
+        platform: isMobile() ? 'mobile' : 'web'
+      });
 
       // Store package details using cross-platform storage
       await storage.setItem(
@@ -192,8 +202,17 @@ function NewIBSPackage() {
           paymentReference: response.reference,
         })
       );
-      // Redirect to payment gateway - using window.location.replace for a more forceful redirect
-      window.location.href = response.authorizationUrl;
+      // Redirect to payment gateway
+      if (isMobile()) {
+        // For mobile, open Paystack checkout in external browser
+        await Browser.open({
+          url: response.authorizationUrl,
+          windowName: '_system',
+        });
+      } else {
+        // For web, redirect in same window
+        window.location.href = response.authorizationUrl;
+      }
     } catch (error) {
       console.error('Failed to initiate payment:', error);
       toast.error({ title: 'Failed to initiate payment' });

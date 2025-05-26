@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import packagesApi, {
   DailySavingsPackage,
@@ -13,6 +14,7 @@ import { Check, Circle, Loader2, Package, Wallet } from 'lucide-react';
 import storage from '@/lib/api/storage';
 import { getRedirectUrl, isMobile } from '@/lib/utils/platform';
 import { paymentPolling } from '@/lib/services/payment-polling';
+import { Browser } from '@capacitor/browser';
 
 // Define package type options
 type PackageType = 'ds' | 'sb';
@@ -30,6 +32,7 @@ interface PackageOption {
 const CONTRIBUTION_DATA_KEY = 'contributionData';
 
 function Contribution() {
+  const navigate = useNavigate();
   const [selectedType, setSelectedType] = useState<PackageType>('ds');
   const [packages, setPackages] = useState<PackageOption[]>([]);
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
@@ -135,15 +138,22 @@ function Contribution() {
     setLoading(true);
     try {
       // Initialize payment through Paystack
-      const redirectUrl = getRedirectUrl('/payments/success') || '/payments/success';
+      const redirectUrl = getRedirectUrl('/payments/success');
       const paymentData: InitiateContributionParams = {
         packageId: selectedPackage,
         amount: contributionAmount,
         packageType: selectedType,
-        redirect_url: redirectUrl,
+        // Only include redirect_url for web platforms
+        ...(redirectUrl && { redirect_url: redirectUrl }),
       };
 
+      console.log('Payment request data:', paymentData);
       const response = await packagesApi.initializeContribution(paymentData);
+      console.log('Payment response:', {
+        reference: response.reference,
+        authorizationUrl: response.authorizationUrl,
+        platform: isMobile() ? 'mobile' : 'web'
+      });
 
       // Store contribution details
       await storage.setItem(
@@ -158,26 +168,32 @@ function Contribution() {
       );
 
       if (isMobile()) {
-        // For mobile: start polling and redirect to payment page
+        // For mobile: start polling and open in external browser
         paymentPolling.startPolling({
           reference: response.reference,
           onSuccess: (status: PaymentStatus) => {
             toast.success('Payment successful!');
-            window.location.href = `/payments/success?reference=${status.reference}`;
+            navigate(`/payments/success?reference=${status.reference}`);
           },
           onError: (status: PaymentStatus) => {
             toast.error('Payment failed. Please try again.');
-            window.location.href = `/payments/error?reference=${status.reference}`;
+            navigate(`/payments/error?reference=${status.reference}`);
           },
           onTimeout: () => {
             toast.error('Payment verification timed out. Please contact support if money was deducted.');
-            window.location.href = `/payments/error?reference=${response.reference}&message=timeout`;
+            navigate(`/payments/error?reference=${response.reference}&message=timeout`);
           }
         });
-      }
 
-      // Redirect to Paystack payment page
-      window.location.href = response.authorizationUrl;
+        // Open Paystack checkout in external browser (mobile)
+        await Browser.open({
+          url: response.authorizationUrl,
+          windowName: '_system',
+        });
+      } else {
+        // For web, redirect in same window
+        window.location.href = response.authorizationUrl;
+      }
     } catch (error) {
       console.error('Failed to initialize payment:', error);
       toast.error('Failed to process your contribution. Please try again.');

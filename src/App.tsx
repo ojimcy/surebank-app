@@ -65,6 +65,16 @@ function AuthRoutes() {
   );
 }
 
+// Public routes that don't require authentication (for Web Bridge payment callbacks)
+function PublicRoutes() {
+  return (
+    <Routes>
+      <Route path="/payments/success" element={<PaymentSuccess />} />
+      <Route path="/payments/error" element={<PaymentError />} />
+    </Routes>
+  );
+}
+
 // App routes with the main layout
 function AppRoutes() {
   const location = useLocation();
@@ -109,8 +119,6 @@ function AppRoutes() {
             <Route path="/settings/kyc/success" element={<KycSuccess />} />
             <Route path="/payments/deposit" element={<Deposit />} />
             <Route path="/payments/withdraw" element={<Withdraw />} />
-            <Route path="/payments/success" element={<PaymentSuccess />} />
-            <Route path="/payments/error" element={<PaymentError />} />
             <Route path="/payments/history" element={<TransactionHistory />} />
             <Route path="/pin-lock" element={<PinLock />} />
             <Route path="*" element={<Navigate to="/" replace />} />
@@ -125,16 +133,26 @@ function AppRoutes() {
 function MainRoutes() {
   const location = useLocation();
 
+  // Check if current route is a public payment callback route (Web Bridge)
+  const isPaymentCallbackRoute = 
+    location.pathname === '/payments/success' || 
+    location.pathname === '/payments/error';
+
   // Check if current route is an auth route
   const isAuthRoute =
     location.pathname.startsWith('/auth/') || location.pathname === '/login';
 
-  // Show auth routes if on auth path, otherwise show protected app routes
+  // Show public payment routes first (for Web Bridge)
+  if (isPaymentCallbackRoute) {
+    return <PublicRoutes />;
+  }
+
+  // Show auth routes if on auth path
   if (isAuthRoute) {
     return <AuthRoutes />;
   }
 
-  // Show app routes otherwise
+  // Show protected app routes otherwise
   return <AppRoutes />;
 }
 
