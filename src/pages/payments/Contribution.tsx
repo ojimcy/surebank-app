@@ -10,7 +10,7 @@ import packagesApi, {
 import { Button } from '@/components/ui/button';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/lib/utils';
-import { Check, Circle, Loader2, Package, Wallet } from 'lucide-react';
+import { Check, Circle, Loader2, Package, Wallet, ExternalLink, CreditCard } from 'lucide-react';
 import storage from '@/lib/api/storage';
 import { getRedirectUrl, isMobile } from '@/lib/utils/platform';
 import { paymentPolling } from '@/lib/services/payment-polling';
@@ -39,6 +39,7 @@ function Contribution() {
   const [amount, setAmount] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [fetchingPackages, setFetchingPackages] = useState(false);
+  const [paymentStep, setPaymentStep] = useState<'form' | 'processing' | 'redirecting' | 'success'>('form');
 
   const { user } = useAuth();
 
@@ -136,6 +137,8 @@ function Contribution() {
     }
 
     setLoading(true);
+    setPaymentStep('processing');
+
     try {
       // Initialize payment through Paystack
       const redirectUrl = getRedirectUrl('/payments/success');
@@ -167,13 +170,18 @@ function Contribution() {
         })
       );
 
+      setPaymentStep('redirecting');
+
       if (isMobile()) {
         // For mobile: start polling and open in external browser
         paymentPolling.startPolling({
           reference: response.reference,
           onSuccess: (status: PaymentStatus) => {
+            setPaymentStep('success');
             toast.success('Payment successful!');
-            navigate(`/payments/success?reference=${status.reference}`);
+            setTimeout(() => {
+              navigate(`/payments/success?reference=${status.reference}`);
+            }, 2000);
           },
           onError: (status: PaymentStatus) => {
             toast.error('Payment failed. Please try again.');
@@ -185,18 +193,23 @@ function Contribution() {
           }
         });
 
-        // Open Paystack checkout in external browser (mobile)
-        await Browser.open({
-          url: response.authorizationUrl,
-          windowName: '_system',
-        });
+        // Show mobile redirect message with delay
+        setTimeout(async () => {
+          await Browser.open({
+            url: response.authorizationUrl,
+            windowName: '_system',
+          });
+        }, 1500);
       } else {
-        // For web, redirect in same window
-        window.location.href = response.authorizationUrl;
+        // For web, show redirect message briefly then redirect
+        setTimeout(() => {
+          window.location.href = response.authorizationUrl;
+        }, 2000);
       }
     } catch (error) {
       console.error('Failed to initialize payment:', error);
       toast.error('Failed to process your contribution. Please try again.');
+      setPaymentStep('form');
     } finally {
       setLoading(false);
     }
@@ -210,6 +223,86 @@ function Contribution() {
       }
     };
   }, []);
+
+  // Payment Processing UI
+  if (paymentStep === 'processing' || paymentStep === 'redirecting' || paymentStep === 'success') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
+          <div className="w-16 h-16 mx-auto mb-6 bg-blue-100 rounded-full flex items-center justify-center">
+            {paymentStep === 'processing' ? (
+              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            ) : paymentStep === 'success' ? (
+              <Check className="h-8 w-8 text-green-600" />
+            ) : (
+              <ExternalLink className="h-8 w-8 text-blue-600" />
+            )}
+          </div>
+          
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            {paymentStep === 'processing' 
+              ? 'Preparing Your Payment' 
+              : paymentStep === 'success'
+              ? 'Payment Successful!'
+              : 'Redirecting to Payment Gateway'
+            }
+          </h2>
+          
+          <p className="text-gray-600 mb-6">
+            {paymentStep === 'processing' 
+              ? 'Please wait while we set up your secure payment...'
+              : paymentStep === 'success'
+              ? 'Your contribution has been processed successfully. Returning to your package...'
+              : isMobile() 
+                ? 'Opening Paystack in your browser. Complete your payment and return to the app.'
+                : 'You will be redirected to Paystack to complete your payment securely.'
+            }
+          </p>
+
+          {paymentStep === 'redirecting' && (
+            <div className="bg-blue-50 rounded-lg p-4 mb-6">
+              <div className="flex items-center justify-center mb-2">
+                <CreditCard className="h-5 w-5 text-blue-600 mr-2" />
+                <span className="text-sm font-medium text-blue-900">Secure Payment Gateway</span>
+              </div>
+              <p className="text-xs text-blue-700">
+                You're being redirected to complete your ₦{parseFloat(amount).toLocaleString()} payment
+              </p>
+            </div>
+          )}
+
+          {paymentStep === 'success' && (
+            <div className="bg-green-50 rounded-lg p-4 mb-6">
+              <div className="flex items-center justify-center mb-2">
+                <Check className="h-5 w-5 text-green-600 mr-2" />
+                <span className="text-sm font-medium text-green-900">Contribution Complete</span>
+              </div>
+              <p className="text-xs text-green-700">
+                ₦{parseFloat(amount).toLocaleString()} has been added to your package
+              </p>
+            </div>
+          )}
+
+          <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
+            <div 
+              className="bg-blue-600 h-2 rounded-full transition-all duration-1000 ease-out"
+              style={{ 
+                width: paymentStep === 'processing' ? '60%' : 
+                       paymentStep === 'redirecting' ? '90%' : '100%' 
+              }}
+            ></div>
+          </div>
+
+          <p className="text-xs text-gray-500">
+            {paymentStep === 'success' 
+              ? 'Redirecting to your package...'
+              : 'This page will update automatically. Please do not close this window.'
+            }
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const getTypeIcon = (type: PackageType) => {
     switch (type) {

@@ -120,6 +120,7 @@ export interface UnifiedPaymentRequest {
   principalAmount?: number;
   lockPeriod?: number;
   earlyWithdrawalPenalty?: number;
+  metadata?: Record<string, unknown>;
 }
 
 // Interface for withdrawal request
@@ -319,6 +320,25 @@ const packagesApi = {
       contributionType,
       packageId: data.packageId,
       amount: data.amount,
+      // Add metadata to customize Paystack experience
+      metadata: {
+        custom_fields: [
+          {
+            display_name: "Package Type",
+            variable_name: "package_type",
+            value: data.packageType
+          },
+          {
+            display_name: "Package ID",
+            variable_name: "package_id",
+            value: data.packageId
+          }
+        ],
+        // Minimize Paystack success page display time
+        success_message: "Payment successful! Redirecting to SureBank...",
+        // Custom payment description
+        payment_description: `SureBank ${data.packageType === 'ds' ? 'Daily Savings' : 'SureBank Package'} Contribution`
+      }
     };
 
     const response = await api.post<InitiatePaymentResponse>(

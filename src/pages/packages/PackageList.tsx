@@ -446,12 +446,34 @@ function PackageList() {
           };
         });
 
-        // Combine all packages
-        setPackages([
+        // Combine all packages and sort them (active packages first)
+        const allPackages = [
           ...dsPackages,
           ...sbPackagesProcessed,
           ...ibPackagesProcessed,
-        ]);
+        ];
+
+        // Sort packages: active (open) first, then by start date (newest first)
+        const sortedPackages = allPackages.sort((a, b) => {
+          // First, sort by status - 'open' (active) packages first
+          const aIsActive = a.status.toLowerCase() === 'active' || getOriginalStatus(a.status) === 'open';
+          const bIsActive = b.status.toLowerCase() === 'active' || getOriginalStatus(b.status) === 'open';
+          
+          if (aIsActive && !bIsActive) return -1;
+          if (!aIsActive && bIsActive) return 1;
+          
+          // If both have same status, sort by start date (newest first)
+          const aDate = parseDate(a.startDate);
+          const bDate = parseDate(b.startDate);
+          
+          if (aDate && bDate) {
+            return bDate.getTime() - aDate.getTime();
+          }
+          
+          return 0;
+        });
+
+        setPackages(sortedPackages);
       } catch (err) {
         console.error('Error fetching packages:', err);
         setError('Failed to load packages. Please try again later.');
@@ -490,6 +512,19 @@ function PackageList() {
         return 'Pending';
       default:
         return status;
+    }
+  };
+
+  const getOriginalStatus = (formattedStatus: string): string => {
+    switch (formattedStatus.toLowerCase()) {
+      case 'active':
+        return 'open';
+      case 'closed':
+        return 'closed';
+      case 'pending':
+        return 'pending';
+      default:
+        return formattedStatus.toLowerCase();
     }
   };
 

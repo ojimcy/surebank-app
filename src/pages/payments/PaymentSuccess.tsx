@@ -213,7 +213,7 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ onMobileRedirect, onWeb
       onMobileRedirect(deepLinkUrl);
     }
 
-    // Web Bridge: Automatic redirect after showing success message (8 seconds)
+    // Web Bridge: Automatic redirect after showing success message (5 seconds)
     setTimeout(() => {
       console.log('Web Bridge: Attempting to redirect to mobile app...');
       window.location.href = deepLinkUrl;
@@ -222,7 +222,7 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ onMobileRedirect, onWeb
       setTimeout(() => {
         setRedirecting(false);
       }, 3000);
-    }, 8000);
+    }, 5000);
   };
 
   const handleWebSuccess = (data: PaymentData) => {
