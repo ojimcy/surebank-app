@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { CheckCircle, ArrowLeft, Home } from 'lucide-react';
+import { CheckCircle, ArrowLeft, Home, ExternalLink, Smartphone } from 'lucide-react';
 import { useToast } from '@/lib/toast-provider';
 import { useLoader } from '@/lib/loader-provider';
 import packagesApi, { IBPackage } from '@/lib/api/packages';
 import { formatDateTime } from '@/lib/utils';
 import { isMobile } from '@/lib/utils/platform';
 import storage from '@/lib/api/storage';
+import { Button } from '@/components/ui/button';
 
 const CONTRIBUTION_DATA_KEY = 'contributionData';
 const IBS_PACKAGE_DATA_KEY = 'ibsPackageData';
@@ -62,6 +63,7 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ onMobileRedirect, onWeb
   const [loading, setLoading] = useState(true);
   const [redirecting, setRedirecting] = useState(false);
   const [isMobileDevice, setIsMobileDevice] = useState(false);
+  const [countdown, setCountdown] = useState(3);
 
   // Extract payment data from URL parameters
   const urlPaymentData: PaymentData = {
@@ -118,6 +120,16 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ onMobileRedirect, onWeb
     initializePaymentSuccess();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Countdown timer for mobile redirect
+  useEffect(() => {
+    if (isMobileDevice && redirecting && countdown > 0) {
+      const timer = setTimeout(() => {
+        setCountdown(countdown - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [isMobileDevice, redirecting, countdown]);
 
   const fetchPaymentData = async (): Promise<PaymentData> => {
     const reference = urlPaymentData.reference;
@@ -201,7 +213,7 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ onMobileRedirect, onWeb
       onMobileRedirect(deepLinkUrl);
     }
 
-    // Web Bridge: Automatic redirect after showing success message
+    // Web Bridge: Automatic redirect after showing success message (3 seconds)
     setTimeout(() => {
       console.log('Web Bridge: Attempting to redirect to mobile app...');
       window.location.href = deepLinkUrl;
@@ -210,7 +222,7 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ onMobileRedirect, onWeb
       setTimeout(() => {
         setRedirecting(false);
       }, 3000);
-    }, 1500);
+    }, 3000);
   };
 
   const handleWebSuccess = (data: PaymentData) => {
@@ -244,7 +256,24 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ onMobileRedirect, onWeb
   };
 
   const handleViewPackage = () => {
-    // If we have a specific package ID for contribution, navigate to it
+    if (isMobileDevice) {
+      // For mobile, redirect to the app instead of web navigation
+      if (!paymentData) return;
+      
+      const baseScheme = 'surebank';
+      const deepLinkParams = new URLSearchParams({
+        action: 'navigate',
+        route: paymentData.type === 'contribution' && paymentData.packageId 
+          ? `/packages/${paymentData.packageId}` 
+          : '/packages',
+      });
+
+      const deepLinkUrl = `${baseScheme}://navigate?${deepLinkParams.toString()}`;
+      window.location.href = deepLinkUrl;
+      return;
+    }
+
+    // Web navigation (original logic)
     if (paymentData?.type === 'contribution' && paymentData.packageId) {
       navigate(`/packages/${paymentData.packageId}`);
       return;
@@ -255,72 +284,129 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ onMobileRedirect, onWeb
   };
 
   const handleBackToHome = () => {
+    if (isMobileDevice) {
+      // For mobile, redirect to the app instead of web navigation
+      const baseScheme = 'surebank';
+      const deepLinkParams = new URLSearchParams({
+        action: 'navigate',
+        route: '/dashboard',
+      });
+
+      const deepLinkUrl = `${baseScheme}://navigate?${deepLinkParams.toString()}`;
+      window.location.href = deepLinkUrl;
+      return;
+    }
+
+    // Web navigation (original logic)
     navigate('/dashboard');
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 p-4">
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 max-w-md w-full text-center text-white">
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="bg-card rounded-xl p-8 max-w-md w-full text-center shadow-lg border">
           <div className="w-16 h-16 flex items-center justify-center mb-6 mx-auto">
-            <div className="h-10 w-10 border-4 border-t-white/60 border-white/20 rounded-full animate-spin"></div>
+            <div className="h-10 w-10 border-4 border-t-primary border-muted rounded-full animate-spin"></div>
           </div>
-          <h1 className="text-2xl font-bold mb-2">Processing Your Payment</h1>
-          <p className="text-white/90 mb-6">Please wait while we confirm your transaction...</p>
+          <h1 className="text-2xl font-bold mb-2 text-foreground">Processing Your Payment</h1>
+          <p className="text-muted-foreground mb-6">Please wait while we confirm your transaction...</p>
         </div>
       </div>
     );
   }
 
-  // Mobile UI with hybrid approach
+  // Mobile UI with enhanced design
   if (isMobileDevice) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 p-4">
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 max-w-md w-full text-center text-white">
-          <div className="text-6xl mb-6">🎉</div>
-          <h1 className="text-2xl font-bold mb-4">Payment Successful!</h1>
-          <p className="text-white/90 mb-6">
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="bg-card rounded-xl p-8 max-w-md w-full text-center shadow-lg border">
+          <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mb-6 mx-auto">
+            <CheckCircle className="h-10 w-10 text-green-600" />
+          </div>
+
+          <h1 className="text-2xl font-bold mb-4 text-foreground">Payment Successful!</h1>
+          <p className="text-muted-foreground mb-6">
             Your {paymentData?.type === 'interest_package' ? 'investment package' : 'payment'} has been processed successfully.
           </p>
 
           {paymentData?.reference && (
-            <div className="bg-white/10 rounded-lg p-4 mb-6">
-              <p className="text-sm text-white/70 mb-1">Reference</p>
-              <p className="font-mono text-sm">{paymentData.reference}</p>
+            <div className="bg-muted rounded-lg p-4 mb-6">
+              <p className="text-sm text-muted-foreground mb-1">Reference</p>
+              <p className="font-mono text-sm text-foreground">{paymentData.reference}</p>
             </div>
           )}
 
           {redirecting ? (
-            <div className="bg-white/10 rounded-lg p-4 mb-6">
-              <div className="animate-spin w-8 h-8 border-3 border-white/30 border-t-white rounded-full mx-auto mb-3"></div>
-              <p className="text-sm">Opening SureBank app...</p>
-              <p className="text-xs text-white/70 mt-2">You will be redirected automatically</p>
+            <div className="bg-primary/10 rounded-lg p-6 mb-6">
+              <div className="flex items-center justify-center mb-4">
+                <Smartphone className="h-8 w-8 text-primary mr-3" />
+                <div className="text-primary font-semibold">Opening SureBank App</div>
+              </div>
+              
+              <div className="relative mb-4">
+                <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                  <div 
+                    className="bg-primary h-full transition-all duration-1000 ease-linear"
+                    style={{ width: `${((3 - countdown) / 3) * 100}%` }}
+                  ></div>
+                </div>
+                <div className="text-xs text-muted-foreground mt-2">
+                  Redirecting in {countdown} second{countdown !== 1 ? 's' : ''}...
+                </div>
+              </div>
+              
+              <p className="text-sm text-muted-foreground">
+                You will be redirected to the SureBank mobile app automatically
+              </p>
             </div>
           ) : (
-            <div className="bg-white/10 rounded-lg p-4 mb-6">
-              <p className="text-sm mb-3">App didn't open automatically?</p>
-              <button
+            <div className="bg-muted/50 rounded-lg p-4 mb-6">
+              <p className="text-sm mb-3 text-foreground">App didn't open automatically?</p>
+              <Button
                 onClick={handleManualAppOpen}
-                className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-full font-medium transition-all duration-300 hover:transform hover:-translate-y-1"
+                className="w-full"
+                size="lg"
               >
+                <ExternalLink className="h-4 w-4 mr-2" />
                 Open SureBank App
-              </button>
+              </Button>
             </div>
           )}
+
+          {/* Mobile-specific navigation buttons */}
+          <div className="grid grid-cols-2 gap-3 w-full">
+            <Button
+              onClick={handleViewPackage}
+              variant="outline"
+              className="flex items-center justify-center"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              {paymentData?.type === 'interest_package' ? 'View Packages' : 'View Package'}
+            </Button>
+
+            <Button
+              onClick={handleBackToHome}
+              variant="outline"
+              className="flex items-center justify-center"
+            >
+              <Home className="h-4 w-4 mr-2" />
+              Back to Home
+            </Button>
+          </div>
         </div>
       </div>
     );
   }
 
-  // Web UI - Enhanced version of the original
+  // Web UI - Enhanced with proper design system
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 p-4">
-      <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 max-w-md w-full text-center text-white">
-        <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mb-6 mx-auto">
-          <CheckCircle className="h-10 w-10 text-green-300" />
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="bg-card rounded-xl p-8 max-w-md w-full text-center shadow-lg border">
+        <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mb-6 mx-auto">
+          <CheckCircle className="h-10 w-10 text-green-600" />
         </div>
 
-        <h1 className="text-2xl font-bold mb-4">
+        <h1 className="text-2xl font-bold mb-4 text-foreground">
           {paymentData?.type === 'interest_package'
             ? 'Package Created Successfully!'
             : paymentData?.type === 'contribution'
@@ -328,7 +414,7 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ onMobileRedirect, onWeb
             : 'Payment Successful!'}
         </h1>
 
-        <p className="text-white/90 mb-6">
+        <p className="text-muted-foreground mb-6">
           {paymentData?.type === 'interest_package'
             ? 'Your investment package has been created successfully.'
             : paymentData?.type === 'contribution'
@@ -338,38 +424,38 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ onMobileRedirect, onWeb
         </p>
 
         {/* Payment Details */}
-        <div className="bg-white/10 rounded-xl p-6 w-full mb-6 text-left">
+        <div className="bg-muted/50 rounded-xl p-6 w-full mb-6 text-left">
           <div className="space-y-4">
             {/* IBS Package Details */}
             {paymentData?.type === 'interest_package' && paymentData.packageDetails && (
               <>
                 <div className="flex justify-between">
-                  <span className="text-white/70">Package Name</span>
-                  <span className="font-medium text-white">
+                  <span className="text-muted-foreground">Package Name</span>
+                  <span className="font-medium text-foreground">
                     {paymentData.packageDetails.name}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-white/70">Principal Amount</span>
-                  <span className="font-medium text-white">
+                  <span className="text-muted-foreground">Principal Amount</span>
+                  <span className="font-medium text-foreground">
                     ₦{paymentData.packageDetails.principalAmount.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-white/70">Interest Rate</span>
-                  <span className="font-medium text-white">
+                  <span className="text-muted-foreground">Interest Rate</span>
+                  <span className="font-medium text-foreground">
                     {paymentData.packageDetails.interestRate}%
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-white/70">Lock Period</span>
-                  <span className="font-medium text-white">
+                  <span className="text-muted-foreground">Lock Period</span>
+                  <span className="font-medium text-foreground">
                     {paymentData.packageDetails.lockPeriod} days
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-white/70">Maturity Date</span>
-                  <span className="font-medium text-white">
+                  <span className="text-muted-foreground">Maturity Date</span>
+                  <span className="font-medium text-foreground">
                     {formatDateTime(paymentData.packageDetails.maturityDate)}
                   </span>
                 </div>
@@ -379,8 +465,8 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ onMobileRedirect, onWeb
             {/* Common Details */}
             {paymentData?.reference && (
               <div className="flex justify-between">
-                <span className="text-white/70">Reference</span>
-                <span className="font-medium text-white font-mono text-sm">
+                <span className="text-muted-foreground">Reference</span>
+                <span className="font-medium text-foreground font-mono text-sm">
                   {paymentData.reference.length > 12
                     ? `${paymentData.reference.substring(0, 12)}...`
                     : paymentData.reference}
@@ -389,8 +475,8 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ onMobileRedirect, onWeb
             )}
 
             <div className="flex justify-between">
-              <span className="text-white/70">Date</span>
-              <span className="font-medium text-white">
+              <span className="text-muted-foreground">Date</span>
+              <span className="font-medium text-foreground">
                 {new Date().toLocaleDateString('en-NG', {
                   year: 'numeric',
                   month: 'short',
@@ -401,8 +487,8 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ onMobileRedirect, onWeb
 
             {paymentData?.type && (
               <div className="flex justify-between">
-                <span className="text-white/70">Payment Type</span>
-                <span className="font-medium text-white">
+                <span className="text-muted-foreground">Payment Type</span>
+                <span className="font-medium text-foreground">
                   {paymentData.type.replace('_', ' ').toUpperCase()}
                 </span>
               </div>
@@ -412,21 +498,22 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ onMobileRedirect, onWeb
 
         {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-3 w-full">
-          <button
+          <Button
             onClick={handleViewPackage}
-            className="flex items-center justify-center bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-full font-medium transition-all duration-300 hover:transform hover:-translate-y-1"
+            className="flex items-center justify-center"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             {paymentData?.type === 'interest_package' ? 'View Packages' : 'View Package'}
-          </button>
+          </Button>
 
-          <button
+          <Button
             onClick={handleBackToHome}
-            className="flex items-center justify-center bg-white/20 hover:bg-white/30 text-white px-4 py-3 rounded-full font-medium transition-all duration-300 hover:transform hover:-translate-y-1"
+            variant="outline"
+            className="flex items-center justify-center"
           >
             <Home className="h-4 w-4 mr-2" />
             Back to Home
-          </button>
+          </Button>
         </div>
       </div>
     </div>
