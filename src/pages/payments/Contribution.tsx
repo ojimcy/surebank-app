@@ -42,6 +42,8 @@ function Contribution() {
   const [loading, setLoading] = useState(false);
   const [fetchingPackages, setFetchingPackages] = useState(false);
   const [paymentStep, setPaymentStep] = useState<'form' | 'processing' | 'redirecting' | 'success'>('form');
+  const [paymentUrl, setPaymentUrl] = useState<string>('');
+  const [paymentReference, setPaymentReference] = useState<string>('');
 
   const { user } = useAuth();
 
@@ -159,6 +161,9 @@ function Contribution() {
         authorizationUrl: response.authorizationUrl,
         platform: isMobile() ? 'mobile' : 'web'
       });
+      
+      setPaymentUrl(response.authorizationUrl);
+      setPaymentReference(response.reference);
 
       // Store contribution details
       await storage.setItem(
@@ -201,15 +206,45 @@ function Contribution() {
           }
         });
 
-        // Show mobile redirect message with delay
-        setTimeout(async () => {
-          await Browser.open({
-            url: response.authorizationUrl,
-            windowName: '_system',
-          });
-        }, 1500);
-
-        // Note: Manual buttons will be available for users who get stuck
+        // Open browser immediately with fallback
+        const openBrowser = async () => {
+          if (paymentUrl) {
+            try {
+              console.log('Attempting to open browser with:', paymentUrl);
+              await Browser.open({
+                url: paymentUrl,
+                windowName: '_system',
+                presentationStyle: 'popover',
+              });
+              console.log('Browser opened successfully');
+            } catch (error) {
+              console.error('Primary browser open method failed:', error);
+              
+              // Fallback method - try again with different options
+              try {
+                await Browser.open({
+                  url: paymentUrl,
+                  windowName: '_blank',
+                });
+                console.log('Browser opened with fallback method');
+              } catch (fallbackError) {
+                console.error('Fallback browser open failed:', fallbackError);
+                toast.error('Could not open payment page automatically. Please use the button below to open it manually.');
+              }
+            }
+          }
+        };
+        
+        // Try opening immediately
+        openBrowser();
+        
+        // Also schedule a retry after a short delay if the app may need more time to initialize
+        setTimeout(() => {
+          if (paymentStep === 'redirecting') {
+            console.log('Retrying browser open after delay');
+            openBrowser();
+          }
+        }, 2000);
 
         // Fallback: If polling doesn't work after 5 minutes, redirect to dashboard anyway
         setTimeout(() => {
@@ -235,6 +270,46 @@ function Contribution() {
       setPaymentStep('form');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Function to manually check payment status
+  const manualCheckPaymentStatus = async () => {
+    if (!paymentReference) {
+      toast.error('No payment reference found');
+      return;
+    }
+
+    toast.loading('Checking payment status...', { id: 'payment-check' });
+
+    try {
+      const status = await packagesApi.checkPaymentStatus(paymentReference);
+      console.log('Manual payment status check:', status);
+
+      toast.dismiss('payment-check');
+
+      if (status.status === 'success') {
+        // Handle successful payment
+        toast.success('Payment confirmed! Redirecting to dashboard...');
+        setPaymentStep('success');
+        
+        // Refresh data after successful payment
+        queryClient.invalidateQueries({ queryKey: ['userPackages'] });
+        queryClient.invalidateQueries({ queryKey: ['accounts'] });
+        queryClient.invalidateQueries({ queryKey: ['transactions'] });
+        
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 2000);
+      } else if (status.status === 'failed' || status.status === 'abandoned') {
+        toast.error(`Payment ${status.status}. Please try again.`);
+      } else {
+        toast('Payment is still processing. Please wait or complete the payment.');
+      }
+    } catch (error) {
+      console.error('Error checking payment status:', error);
+      toast.dismiss('payment-check');
+      toast.error('Could not verify payment status. Please try again later.');
     }
   };
 
@@ -291,6 +366,32 @@ function Contribution() {
               <p className="text-xs text-blue-700">
                 You're being redirected to complete your ₦{parseFloat(amount).toLocaleString()} payment
               </p>
+              {isMobile() && paymentUrl && (
+                <Button
+                  onClick={async () => {
+                    await Browser.open({
+                      url: paymentUrl,
+                      windowName: '_system', 
+                      presentationStyle: 'popover',
+                    });
+                  }}
+                  className="w-full mt-2 bg-blue-600 text-white"
+                  size="sm"
+                >
+                  Continue with Payment
+                </Button>
+              )}
+              
+              {isMobile() && (
+                <div className="mt-2 pt-2 border-t border-blue-100">
+                  <p className="text-xs text-blue-700 font-medium">Troubleshooting Tips:</p>
+                  <ul className="text-xs text-blue-700 list-disc pl-4 mt-1">
+                    <li>Make sure you complete the payment in your browser</li>
+                    <li>After payment, return to this app</li>
+                    <li>Use the "Check Payment Status" button below if needed</li>
+                  </ul>
+                </div>
+              )}
             </div>
           )}
 
@@ -327,7 +428,7 @@ function Contribution() {
           {paymentStep === 'redirecting' && isMobile() && (
             <div className="mt-6 pt-4 border-t border-gray-200">
               <p className="text-xs text-gray-600 mb-3">Payment completed but app didn't redirect?</p>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2 mb-3">
                 <Button
                   onClick={() => {
                     paymentPolling.stopPolling();
@@ -356,6 +457,15 @@ function Contribution() {
                   View Package
                 </Button>
               </div>
+              <Button
+                onClick={manualCheckPaymentStatus}
+                variant="secondary"
+                size="sm"
+                className="w-full text-xs py-2 h-auto"
+              >
+                <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                Check Payment Status
+              </Button>
             </div>
           )}
         </div>
