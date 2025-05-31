@@ -120,7 +120,10 @@ export interface UnifiedPaymentRequest {
   principalAmount?: number;
   lockPeriod?: number;
   earlyWithdrawalPenalty?: number;
-  metadata?: Record<string, unknown>;
+  interestRate?: number;
+  // Optional fields for all contribution types
+  callbackUrl?: string;
+  redirect_url?: string;
 }
 
 // Interface for withdrawal request
@@ -266,6 +269,10 @@ const packagesApi = {
       principalAmount: data.principalAmount,
       lockPeriod: data.lockPeriod,
       earlyWithdrawalPenalty: data.earlyWithdrawalPenalty,
+      // Include optional fields if provided
+      ...(data.interestRate && { interestRate: data.interestRate }),
+      ...(data.callbackUrl && { callbackUrl: data.callbackUrl }),
+      ...(data.redirectUrl && { redirect_url: data.redirectUrl }),
     };
 
     const response = await api.post<InitiatePaymentResponse>(
@@ -320,25 +327,8 @@ const packagesApi = {
       contributionType,
       packageId: data.packageId,
       amount: data.amount,
-      // Add metadata to customize Paystack experience
-      metadata: {
-        custom_fields: [
-          {
-            display_name: "Package Type",
-            variable_name: "package_type",
-            value: data.packageType
-          },
-          {
-            display_name: "Package ID",
-            variable_name: "package_id",
-            value: data.packageId
-          }
-        ],
-        // Minimize Paystack success page display time
-        success_message: "Payment successful! Redirecting to SureBank...",
-        // Custom payment description
-        payment_description: `SureBank ${data.packageType === 'ds' ? 'Daily Savings' : 'SureBank Package'} Contribution`
-      }
+      // Include redirect_url if provided
+      ...(data.redirect_url && { redirect_url: data.redirect_url }),
     };
 
     const response = await api.post<InitiatePaymentResponse>(

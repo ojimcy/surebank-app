@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useQueryClient } from '@tanstack/react-query';
 import packagesApi, {
   DailySavingsPackage,
   SBPackage,
@@ -33,6 +34,7 @@ const CONTRIBUTION_DATA_KEY = 'contributionData';
 
 function Contribution() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [selectedType, setSelectedType] = useState<PackageType>('ds');
   const [packages, setPackages] = useState<PackageOption[]>([]);
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
@@ -176,11 +178,17 @@ function Contribution() {
         // For mobile: start polling and open in external browser
         paymentPolling.startPolling({
           reference: response.reference,
-          onSuccess: (status: PaymentStatus) => {
+          onSuccess: () => {
             setPaymentStep('success');
-            toast.success('Payment successful!');
+            toast.success('Payment successful! Redirecting to dashboard...');
+            
+            // Refresh data after successful payment
+            queryClient.invalidateQueries({ queryKey: ['userPackages'] });
+            queryClient.invalidateQueries({ queryKey: ['accounts'] });
+            queryClient.invalidateQueries({ queryKey: ['transactions'] });
+            
             setTimeout(() => {
-              navigate(`/payments/success?reference=${status.reference}`);
+              navigate('/dashboard');
             }, 2000);
           },
           onError: (status: PaymentStatus) => {
@@ -200,6 +208,21 @@ function Contribution() {
             windowName: '_system',
           });
         }, 1500);
+
+        // Note: Manual buttons will be available for users who get stuck
+
+        // Fallback: If polling doesn't work after 5 minutes, redirect to dashboard anyway
+        setTimeout(() => {
+          if (paymentPolling.isCurrentlyPolling()) {
+            console.log('Payment polling timeout reached, stopping and redirecting to dashboard');
+            paymentPolling.stopPolling();
+            queryClient.invalidateQueries({ queryKey: ['userPackages'] });
+            queryClient.invalidateQueries({ queryKey: ['accounts'] });
+            queryClient.invalidateQueries({ queryKey: ['transactions'] });
+            toast.success('Redirecting to dashboard. Please check your package balance.');
+            navigate('/dashboard');
+          }
+        }, 300000); // 5 minutes
       } else {
         // For web, show redirect message briefly then redirect
         setTimeout(() => {
@@ -252,9 +275,9 @@ function Contribution() {
             {paymentStep === 'processing' 
               ? 'Please wait while we set up your secure payment...'
               : paymentStep === 'success'
-              ? 'Your contribution has been processed successfully. Returning to your package...'
+              ? 'Your contribution has been processed successfully. Redirecting to dashboard...'
               : isMobile() 
-                ? 'Opening Paystack in your browser. Complete your payment and return to the app.'
+                ? 'Opening Paystack in your browser. Complete your payment and return to the app. We\'ll automatically check for your payment confirmation.'
                 : 'You will be redirected to Paystack to complete your payment securely.'
             }
           </p>
@@ -295,10 +318,46 @@ function Contribution() {
 
           <p className="text-xs text-gray-500">
             {paymentStep === 'success' 
-              ? 'Redirecting to your package...'
+              ? 'Redirecting to dashboard...'
               : 'This page will update automatically. Please do not close this window.'
             }
           </p>
+
+          {/* Show manual buttons for mobile users if redirecting for too long */}
+          {paymentStep === 'redirecting' && isMobile() && (
+            <div className="mt-6 pt-4 border-t border-gray-200">
+              <p className="text-xs text-gray-600 mb-3">Payment completed but app didn't redirect?</p>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  onClick={() => {
+                    paymentPolling.stopPolling();
+                    queryClient.invalidateQueries({ queryKey: ['userPackages'] });
+                    navigate('/dashboard');
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs py-2 h-auto"
+                >
+                  Go to Dashboard
+                </Button>
+                <Button
+                  onClick={() => {
+                    const selectedPkg = packages.find(p => p.id === selectedPackage);
+                    if (selectedPkg) {
+                      paymentPolling.stopPolling();
+                      queryClient.invalidateQueries({ queryKey: ['userPackages'] });
+                      navigate(`/packages/${selectedPackage}`);
+                    }
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs py-2 h-auto"
+                >
+                  View Package
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );

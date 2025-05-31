@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { CheckCircle, ArrowLeft, Home, ExternalLink, Smartphone } from 'lucide-react';
 import { useToast } from '@/lib/toast-provider';
 import { useLoader } from '@/lib/loader-provider';
+import { useQueryClient } from '@tanstack/react-query';
 import packagesApi, { IBPackage } from '@/lib/api/packages';
 import { formatDateTime } from '@/lib/utils';
 import { isMobile } from '@/lib/utils/platform';
@@ -58,6 +59,7 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ onMobileRedirect, onWeb
   const [searchParams] = useSearchParams();
   const toast = useToast();
   const { showLoader, hideLoader } = useLoader();
+  const queryClient = useQueryClient();
   
   const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -111,6 +113,11 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ onMobileRedirect, onWeb
       } catch (error) {
         console.error('Failed to initialize payment success:', error);
         toast.error({ title: 'Failed to load payment details' });
+        // Refresh data and redirect to dashboard on error
+        queryClient.invalidateQueries({ queryKey: ['userPackages'] });
+        queryClient.invalidateQueries({ queryKey: ['accounts'] });
+        queryClient.invalidateQueries({ queryKey: ['transactions'] });
+        setTimeout(() => navigate('/dashboard'), 2000);
       } finally {
         setLoading(false);
         hideLoader();
@@ -191,18 +198,21 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ onMobileRedirect, onWeb
   const handleMobileRedirect = (data: PaymentData) => {
     setRedirecting(true);
 
-    // Web Bridge Solution: Generate deep link URL for mobile app
+    // Web Bridge Solution: Generate deep link URL for mobile app to dashboard
+    // This ensures users see their updated data after successful payment
     const baseScheme = 'surebank';
     const deepLinkParams = new URLSearchParams({
+      action: 'navigate',
+      route: '/dashboard',
+      // Include payment success data for the app to refresh data
+      paymentSuccess: 'true',
       type: data.type,
-      status: 'success',
-      ...(data.packageId && { packageId: data.packageId }),
       ...(data.reference && { reference: data.reference }),
     });
 
-    const deepLinkUrl = `${baseScheme}://payment/callback?${deepLinkParams.toString()}`;
+    const deepLinkUrl = `${baseScheme}://navigate?${deepLinkParams.toString()}`;
 
-    console.log('Web Bridge: Generated deep link for mobile app:', {
+    console.log('Web Bridge: Generated deep link for mobile app dashboard:', {
       deepLinkUrl,
       paymentData: data,
       platform: urlPaymentData.platform,
@@ -215,7 +225,7 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ onMobileRedirect, onWeb
 
     // Web Bridge: Automatic redirect after showing success message (5 seconds)
     setTimeout(() => {
-      console.log('Web Bridge: Attempting to redirect to mobile app...');
+      console.log('Web Bridge: Attempting to redirect to mobile app dashboard...');
       window.location.href = deepLinkUrl;
 
       // Hide loading after redirect attempt
@@ -238,6 +248,22 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ onMobileRedirect, onWeb
         payment_type: data.type,
       });
     }
+
+    // Refresh dashboard data by invalidating relevant queries
+    queryClient.invalidateQueries({ queryKey: ['userPackages'] });
+    queryClient.invalidateQueries({ queryKey: ['accounts'] });
+    queryClient.invalidateQueries({ queryKey: ['transactions'] });
+
+    // Show success message briefly, then redirect to dashboard
+    toast.success({ 
+      title: 'Payment Successful!',
+      description: 'Redirecting to dashboard...'
+    });
+
+    // Redirect to dashboard after 3 seconds
+    setTimeout(() => {
+      navigate('/dashboard');
+    }, 3000);
   };
 
   const handleManualAppOpen = () => {
@@ -245,13 +271,14 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ onMobileRedirect, onWeb
     
     const baseScheme = 'surebank';
     const deepLinkParams = new URLSearchParams({
+      action: 'navigate',
+      route: '/dashboard',
+      paymentSuccess: 'true',
       type: paymentData.type,
-      status: 'success',
-      ...(paymentData.packageId && { packageId: paymentData.packageId }),
       ...(paymentData.reference && { reference: paymentData.reference }),
     });
 
-    const deepLinkUrl = `${baseScheme}://payment/callback?${deepLinkParams.toString()}`;
+    const deepLinkUrl = `${baseScheme}://navigate?${deepLinkParams.toString()}`;
     window.location.href = deepLinkUrl;
   };
 
@@ -297,6 +324,11 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ onMobileRedirect, onWeb
       return;
     }
 
+    // Refresh dashboard data before navigation
+    queryClient.invalidateQueries({ queryKey: ['userPackages'] });
+    queryClient.invalidateQueries({ queryKey: ['accounts'] });
+    queryClient.invalidateQueries({ queryKey: ['transactions'] });
+    
     // Web navigation (original logic)
     navigate('/dashboard');
   };
@@ -340,7 +372,7 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ onMobileRedirect, onWeb
             <div className="bg-primary/10 rounded-lg p-6 mb-6">
               <div className="flex items-center justify-center mb-4">
                 <Smartphone className="h-8 w-8 text-primary mr-3" />
-                <div className="text-primary font-semibold">Opening SureBank App</div>
+                <div className="text-primary font-semibold">Redirecting to Dashboard</div>
               </div>
               
               <div className="relative mb-4">
@@ -356,7 +388,7 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ onMobileRedirect, onWeb
               </div>
               
               <p className="text-sm text-muted-foreground">
-                You will be redirected to the SureBank mobile app automatically
+                You will be redirected to your dashboard to see updated account information
               </p>
             </div>
           ) : (
@@ -368,7 +400,7 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ onMobileRedirect, onWeb
                 size="lg"
               >
                 <ExternalLink className="h-4 w-4 mr-2" />
-                Open SureBank App
+                Go to Dashboard
               </Button>
             </div>
           )}
