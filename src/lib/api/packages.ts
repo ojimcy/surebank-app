@@ -93,11 +93,19 @@ export interface CreateIBSPackageParams extends InitiateIBSPackageParams {
 
 export interface InitiatePaymentResponse {
   reference: string;
-  authorizationUrl: string;
-  accessCode: string;
-  principalAmount: number;
-  interestRate: number;
-  lockPeriod: number;
+  authorization_url: string;
+  access_code?: string;
+  authorizationUrl?: string;
+  accessCode?: string;
+  principalAmount?: number;
+  interestRate?: number;
+  lockPeriod?: number;
+  success?: boolean;
+  data?: {
+    reference?: string;
+    authorization_url?: string;
+    access_code?: string;
+  };
 }
 
 // Interface for initializing a contribution through Paystack
@@ -105,7 +113,7 @@ export interface InitiateContributionParams {
   packageId: string;
   amount: number;
   packageType: 'ds' | 'sb';
-  redirect_url: string;
+  redirect_url?: string;
 }
 
 // Interface for withdrawal request
@@ -249,11 +257,42 @@ const packagesApi = {
     if (redirectUrl) {
       payload.redirect_url = redirectUrl;
     }
-    const response = await api.post<InitiatePaymentResponse>(
-      '/interest-savings/package/init-payment',
-      payload
-    );
-    return response.data;
+    
+    console.log('API Request - IBS Payment - Payload:', payload);
+    
+    try {
+      const response = await api.post<InitiatePaymentResponse>(
+        '/interest-savings/package/init-payment',
+        payload
+      );
+      
+      console.log('API Response - IBS Payment:', response.data);
+      
+      // Handle nested response format if necessary
+      if (response.data.data && response.data.success) {
+        console.log('API Response - IBS Payment - Nested data detected');
+        // If the response is nested in a 'data' property, extract it
+        return {
+          reference: response.data.data.reference || '',
+          authorization_url: response.data.data.authorization_url || '',
+          access_code: response.data.data.access_code || '',
+          // Add normalized camelCase properties for easier use
+          authorizationUrl: response.data.data.authorization_url || '',
+          accessCode: response.data.data.access_code || '',
+        };
+      }
+      
+      // Ensure we always have normalized properties
+      if (response.data.authorization_url && !response.data.authorizationUrl) {
+        console.log('API Response - IBS Payment - Normalizing snake_case to camelCase');
+        response.data.authorizationUrl = response.data.authorization_url;
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('API Error - IBS Payment:', error);
+      throw error;
+    }
   },
 
   // Create a new Interest-Based Savings package after payment
@@ -294,24 +333,57 @@ const packagesApi = {
   initializeContribution: async (
     data: InitiateContributionParams
   ): Promise<InitiatePaymentResponse> => {
-    // Determine endpoint based on package type
-    const endpoint =
-      data.packageType === 'ds'
-        ? '/daily-savings/init-contribution'
-        : '/daily-savings/sb/init-contribution';
+    // Map package type to contribution type for API
+    const contributionType = 
+      data.packageType === 'ds' 
+        ? 'daily_savings' 
+        : 'savings_buying';
 
-    // Create payload without packageType field
+    // Create payload with correct parameters
     const payloadData = {
       packageId: data.packageId,
       amount: data.amount,
+      contributionType,
       redirect_url: data.redirect_url,
     };
 
-    const response = await api.post<InitiatePaymentResponse>(
-      endpoint,
-      payloadData
-    );
-    return response.data;
+    try {
+      const response = await api.post<InitiatePaymentResponse>(
+        '/payments/init-contribution',
+        payloadData
+      );
+      
+      // Handle nested response format if necessary
+      if (response.data.data && response.data.success) {
+        // If the response is nested in a 'data' property, extract it
+        const extractedData = {
+          reference: response.data.data.reference || '',
+          authorization_url: response.data.data.authorization_url || '',
+          access_code: response.data.data.access_code || '',
+          // Add normalized camelCase properties for easier use
+          authorizationUrl: response.data.data.authorization_url || '',
+          accessCode: response.data.data.access_code || '',
+        };
+        return extractedData;
+      }
+      
+      // Ensure we always have normalized properties
+      if (response.data.authorization_url && !response.data.authorizationUrl) {
+        response.data.authorizationUrl = response.data.authorization_url;
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('API Error:', error);
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { status: number; data: unknown } };
+        if (axiosError.response) {
+          console.error('API Error - Status:', axiosError.response.status);
+          console.error('API Error - Data:', JSON.stringify(axiosError.response.data));
+        }
+      }
+      throw error;
+    }
   },
 
   // Process a withdrawal from a package
@@ -336,7 +408,6 @@ const packagesApi = {
         amount: data.amount
       };
     }
-    console.log('payload', payload);
     const response = await api.post(endpoint, payload);
     return response.data;
   },

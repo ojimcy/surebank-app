@@ -30,6 +30,15 @@
                 <data android:scheme="surebank" />
             </intent-filter>
 
+            <!-- Add HTTPS scheme for universal links -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" 
+                      android:host="surebankstores.ng" />
+            </intent-filter>
+
         </activity>
 
         <provider

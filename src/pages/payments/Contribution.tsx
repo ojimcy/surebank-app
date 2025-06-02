@@ -11,8 +11,14 @@ import { toast } from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 import { Check, Circle, Loader2, Package, Wallet } from 'lucide-react';
 import storage from '@/lib/api/storage';
-import { getRedirectUrl, isMobile } from '@/lib/utils/platform';
+import { getRedirectUrl, isMobile, getPlatformInfo } from '@/lib/utils/platform';
 import { paymentPolling } from '@/lib/services/payment-polling';
+import { logger } from '@/lib/utils/logger';
+import { paymentLogger } from '@/lib/utils/payment-logger';
+import api from '@/lib/api/axios';
+
+// Create a logger instance for the contribution component
+const contributionLogger = logger.create('Contribution');
 
 // Define package type options
 type PackageType = 'ds' | 'sb';
@@ -36,7 +42,6 @@ function Contribution() {
   const [amount, setAmount] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [fetchingPackages, setFetchingPackages] = useState(false);
-  const [paymentReference, setPaymentReference] = useState<string>('');
 
   const { user } = useAuth();
 
@@ -135,55 +140,134 @@ function Contribution() {
 
     setLoading(true);
     try {
+      // Log platform info for debugging
+      const platformInfo = getPlatformInfo();
+      contributionLogger.info('Platform info:', platformInfo);
+      
+      // Add headers for platform detection
+      if (isMobile()) {
+        // Make sure the API knows this is a mobile request
+        api.defaults.headers['x-app-platform'] = 'mobile';
+        api.defaults.headers['x-mobile-app'] = 'true';
+        contributionLogger.info('Setting mobile headers for API request');
+      }
+
       // Initialize payment through Paystack
       const paymentData: InitiateContributionParams = {
         packageId: selectedPackage,
         amount: contributionAmount,
         packageType: selectedType,
-        // Only include redirect_url for web
-        ...(getRedirectUrl('/payments/success') && {
-          redirect_url: getRedirectUrl('/payments/success')
-        })
       };
+      
+      // Add redirect URL for both web and mobile
+      const successPath = `/payments/success?success=true&type=${selectedType === 'ds' ? 'daily_savings' : 'surebank'}&packageId=${selectedPackage}`;
+      const redirectUrl = getRedirectUrl(successPath);
+      if (redirectUrl) {
+        paymentData.redirect_url = redirectUrl;
+        contributionLogger.info('Using redirect URL:', redirectUrl);
+      } else {
+        contributionLogger.warn('No redirect URL available');
+      }
 
+      // Use the dedicated payment logger
+      paymentLogger.logInitialize({
+        packageId: selectedPackage,
+        packageName: selectedPackageData.name,
+        amount: contributionAmount,
+        packageType: selectedType,
+        redirectUrl: paymentData.redirect_url
+      });
+      
+      contributionLogger.info('Initializing contribution with data:', paymentData);
+      
       const response = await packagesApi.initializeContribution(paymentData);
-      setPaymentReference(response.reference);
+      paymentLogger.logApiResponse('/payments/init-contribution', response);
+      
+      const paymentReference = response.reference;
+      contributionLogger.info('Payment reference:', paymentReference);
+      
+      // Get the authorization URL (supporting both snake_case and camelCase)
+      const authorizationUrl = response.authorization_url || response.authorizationUrl;
+      
+      if (!authorizationUrl) {
+        paymentLogger.logError('Missing authorization URL', response);
+        throw new Error('No authorization URL received from payment initialization');
+      }
+      
+      paymentLogger.logStatus(paymentReference, 'initialized', {
+        authorizationUrl
+      });
 
-      // Store contribution details
-      await storage.setItem(
-        CONTRIBUTION_DATA_KEY,
-        JSON.stringify({
-          packageId: selectedPackage,
-          packageName: selectedPackageData.name,
-          amount: contributionAmount,
-          packageType: selectedType,
-          paymentReference: response.reference,
-        })
-      );
+      try {
+        // Store contribution details
+        await storage.setItem(
+          CONTRIBUTION_DATA_KEY,
+          JSON.stringify({
+            packageId: selectedPackage,
+            packageName: selectedPackageData.name,
+            amount: contributionAmount,
+            packageType: selectedType,
+            paymentReference,
+            authorizationUrl,
+          })
+        );
+        contributionLogger.info('Contribution data stored successfully');
+      } catch (storageError) {
+        contributionLogger.warn('Failed to store contribution data:', storageError);
+        // Continue even if storage fails
+      }
 
       if (isMobile()) {
+        contributionLogger.info('Mobile device detected, starting payment polling');
         // For mobile: start polling and redirect to payment page
         paymentPolling.startPolling({
-          reference: response.reference,
+          reference: paymentReference,
           onSuccess: (status: PaymentStatus) => {
+            paymentLogger.logComplete(status.reference, true, {
+              status: status.status,
+              amount: status.amount,
+              packageId: status.packageId,
+              packageType: status.packageType,
+              createdAt: status.createdAt,
+              updatedAt: status.updatedAt
+            });
             toast.success('Payment successful!');
-            window.location.href = `/payments/success?reference=${status.reference}`;
+            window.location.href = `/payments/success?reference=${status.reference}&success=true`;
           },
           onError: (status: PaymentStatus) => {
+            paymentLogger.logComplete(status.reference, false, {
+              status: status.status,
+              amount: status.amount,
+              packageId: status.packageId,
+              packageType: status.packageType,
+              createdAt: status.createdAt,
+              updatedAt: status.updatedAt
+            });
             toast.error('Payment failed. Please try again.');
-            window.location.href = `/payments/error?reference=${status.reference}`;
+            window.location.href = `/payments/error?reference=${status.reference}&success=false`;
           },
           onTimeout: () => {
+            paymentLogger.logError('Payment polling timeout', { reference: paymentReference });
             toast.error('Payment verification timed out. Please contact support if money was deducted.');
-            window.location.href = `/payments/error?reference=${response.reference}&message=timeout`;
+            window.location.href = `/payments/error?reference=${paymentReference}&message=timeout`;
           }
         });
       }
 
       // Redirect to Paystack payment page
-      window.location.href = response.authorizationUrl;
+      paymentLogger.logRedirect(authorizationUrl, {
+        reference: paymentReference,
+        isMobile: isMobile()
+      });
+      
+      // Use setTimeout to ensure logs are processed before redirect
+      setTimeout(() => {
+        // Use window.location.assign which is better for redirects than href
+        contributionLogger.info('Executing redirect now...');
+        window.location.assign(authorizationUrl);
+      }, 1000);
     } catch (error) {
-      console.error('Failed to initialize payment:', error);
+      paymentLogger.logError('Failed to initialize payment', error);
       toast.error('Failed to process your contribution. Please try again.');
     } finally {
       setLoading(false);

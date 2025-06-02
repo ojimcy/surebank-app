@@ -48,7 +48,7 @@ function ContributionSuccess() {
   };
 
   const handleBackToHome = () => {
-    navigate('/dashboard');
+    navigate('/');
   };
 
   return (

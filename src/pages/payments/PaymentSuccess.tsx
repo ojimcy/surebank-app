@@ -104,7 +104,7 @@ function PaymentSuccess() {
         } else {
           // Fallback if no identifiable information
           toast.error({ title: 'Missing payment information' });
-          navigate('/dashboard');
+          navigate('/');
         }
       } catch (error) {
         console.error('Failed to fetch payment details:', error);
@@ -131,7 +131,7 @@ const handleViewPackage = () => {
 };
 
   const handleBackToHome = () => {
-    navigate('/dashboard');
+    navigate('/');
   };
 
   if (loading) {

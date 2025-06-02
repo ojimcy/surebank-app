@@ -1,6 +1,10 @@
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, PluginListenerHandle } from '@capacitor/core';
 import { App } from '@capacitor/app';
 import packagesApi, { PaymentStatus } from '@/lib/api/packages';
+import { logger } from '@/lib/utils/logger';
+
+// Create a logger instance for payment polling
+const paymentLogger = logger.create('PaymentPolling');
 
 interface PollingConfig {
   reference: string;
@@ -18,8 +22,10 @@ class PaymentPollingService {
   private config: PollingConfig | null = null;
   private attempts = 0;
   private isPolling = false;
+  private appUrlListener: PluginListenerHandle | null = null;
+  private appStateListener: PluginListenerHandle | null = null;
 
-  startPolling(config: PollingConfig) {
+  async startPolling(config: PollingConfig) {
     this.config = {
       maxAttempts: 60, // 60 attempts = 3 minutes at 3-second intervals
       pollInterval: 3000, // Poll every 3 seconds
@@ -30,41 +36,69 @@ class PaymentPollingService {
     this.attempts = 0;
     this.isPolling = true;
 
-    console.log('Starting payment polling for reference:', this.config.reference);
+    paymentLogger.info('Starting payment polling for reference:', this.config.reference);
 
     // Set up app state listener for mobile
     if (Capacitor.isNativePlatform()) {
-      App.addListener('appStateChange', ({ isActive }) => {
-        if (isActive && this.isPolling) {
-          console.log('App became active, checking payment status immediately');
-          this.checkPaymentStatus();
-        }
-      });
+      try {
+        // Listen for app state changes (background/foreground)
+        this.appStateListener = await App.addListener('appStateChange', async ({ isActive }) => {
+          if (isActive && this.isPolling) {
+            paymentLogger.info('App became active, checking payment status immediately');
+            await this.checkPaymentStatus();
+          }
+        });
 
-      // Also listen for app URL opens (in case of redirect)
-      App.addListener('appUrlOpen', () => {
-        if (this.isPolling) {
-          console.log('App opened via URL, checking payment status');
-          this.checkPaymentStatus();
-        }
-      });
+        // Listen for deep link handling
+        this.appUrlListener = await App.addListener('appUrlOpen', async (data: { url: string }) => {
+          paymentLogger.info('App opened via URL:', data.url);
+          
+          if (this.isPolling) {
+            // Check if the URL contains our reference or success indicators
+            if (data.url.includes('success') || 
+                data.url.includes('success=true') ||
+                data.url.includes(this.config?.reference || '')) {
+              paymentLogger.info('Success URL detected, checking payment status');
+              await this.checkPaymentStatus();
+            } else if (data.url.includes('error') || data.url.includes('failed')) {
+              paymentLogger.info('Error URL detected');
+              if (this.config) {
+                // Create a minimal error status
+                const errorStatus: PaymentStatus = {
+                  reference: this.config.reference,
+                  status: 'failed',
+                  amount: 0,
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString()
+                };
+                await this.stopPolling();
+                this.config.onError(errorStatus);
+              }
+            }
+          }
+        });
+
+        paymentLogger.info('Set up mobile app URL and state listeners');
+      } catch (error) {
+        paymentLogger.error('Error setting up listeners:', error);
+      }
     }
 
     // Start immediate check
-    this.checkPaymentStatus();
+    await this.checkPaymentStatus();
 
     // Set up polling interval
-    this.pollingInterval = setInterval(() => {
+    this.pollingInterval = setInterval(async () => {
       if (this.isPolling) {
-        this.checkPaymentStatus();
+        await this.checkPaymentStatus();
       }
     }, this.config.pollInterval);
 
     // Set up timeout
-    this.timeoutTimer = setTimeout(() => {
+    this.timeoutTimer = setTimeout(async () => {
       if (this.isPolling) {
-        console.log('Payment polling timed out');
-        this.stopPolling();
+        paymentLogger.warn('Payment polling timed out');
+        await this.stopPolling();
         this.config?.onTimeout();
       }
     }, this.config.timeoutDuration);
@@ -74,39 +108,39 @@ class PaymentPollingService {
     if (!this.config || !this.isPolling) return;
 
     this.attempts++;
-    console.log(`Payment status check attempt ${this.attempts}/${this.config.maxAttempts}`);
+    paymentLogger.debug(`Payment status check attempt ${this.attempts}/${this.config.maxAttempts}`);
 
     try {
       const status = await packagesApi.checkPaymentStatus(this.config.reference);
-      console.log('Payment status:', status);
+      paymentLogger.debug('Payment status:', status);
 
       if (status.status === 'success') {
-        console.log('Payment successful!');
-        this.stopPolling();
+        paymentLogger.info('Payment successful!');
+        await this.stopPolling();
         this.config.onSuccess(status);
       } else if (status.status === 'failed' || status.status === 'abandoned') {
-        console.log('Payment failed or abandoned');
-        this.stopPolling();
+        paymentLogger.warn('Payment failed or abandoned');
+        await this.stopPolling();
         this.config.onError(status);
       } else if (this.attempts >= (this.config.maxAttempts || 60)) {
-        console.log('Max polling attempts reached');
-        this.stopPolling();
+        paymentLogger.warn('Max polling attempts reached');
+        await this.stopPolling();
         this.config.onTimeout();
       }
       // If status is still 'pending', continue polling
     } catch (error) {
-      console.error('Error checking payment status:', error);
+      paymentLogger.error('Error checking payment status:', error);
       
       // If we can't reach the server, stop after max attempts
       if (this.attempts >= (this.config.maxAttempts || 60)) {
-        this.stopPolling();
+        await this.stopPolling();
         this.config?.onTimeout();
       }
     }
   }
 
-  stopPolling() {
-    console.log('Stopping payment polling');
+  async stopPolling() {
+    paymentLogger.info('Stopping payment polling');
     this.isPolling = false;
 
     if (this.pollingInterval) {
@@ -121,7 +155,19 @@ class PaymentPollingService {
 
     // Clean up listeners
     if (Capacitor.isNativePlatform()) {
-      App.removeAllListeners();
+      try {
+        if (this.appStateListener) {
+          await this.appStateListener.remove();
+          this.appStateListener = null;
+        }
+        
+        if (this.appUrlListener) {
+          await this.appUrlListener.remove();
+          this.appUrlListener = null;
+        }
+      } catch (error) {
+        paymentLogger.error('Error removing listeners:', error);
+      }
     }
 
     this.config = null;

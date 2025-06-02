@@ -11,6 +11,12 @@ import { getUserAccountByType, createAccount } from '@/lib/api/accounts';
 import { useQuery } from '@tanstack/react-query';
 import storage from '@/lib/api/storage';
 import { getPaymentSuccessUrl } from '@/lib/utils/payment-redirect';
+import { paymentLogger } from '@/lib/utils/payment-logger';
+import { logger } from '@/lib/utils/logger';
+import { getPlatformInfo } from '@/lib/utils/platform';
+
+// Create a logger instance for the IBS package component
+const ibsLogger = logger.create('IBSPackage');
 
 // Lock period options in days (1 month, 3 months, 6 months, 1 year, 2 years)
 const lockPeriodOptions = [
@@ -174,15 +180,30 @@ function NewIBSPackage() {
 
     try {
       loader.showLoader('Initiating payment...');
+      
+      // Log platform info for debugging
+      const platformInfo = getPlatformInfo();
+      ibsLogger.info('Platform info:', platformInfo);
+      
       const paymentData: InitiateIBSPackageParams = {
         name: formData.name,
         principalAmount: formData.principalAmount,
         lockPeriod: formData.lockPeriod,
         redirectUrl: getPaymentSuccessUrl(),
       };
+      
+      // Log payment initialization
+      paymentLogger.logInitialize({
+        name: formData.name,
+        principalAmount: formData.principalAmount,
+        lockPeriod: formData.lockPeriod,
+        redirectUrl: paymentData.redirectUrl
+      });
 
       // Initiate payment
       const response = await packagesApi.initiateIBSPackagePayment(paymentData);
+      console.log('Payment initiation response:', response);
+      paymentLogger.logApiResponse('/interest-savings/package/init-payment', response);
 
       // Store package details using cross-platform storage
       await storage.setItem(
@@ -192,10 +213,35 @@ function NewIBSPackage() {
           paymentReference: response.reference,
         })
       );
-      // Redirect to payment gateway - using window.location.replace for a more forceful redirect
-      window.location.href = response.authorizationUrl;
+      ibsLogger.info('IBS package data stored successfully');
+
+      // Get the correct authorization URL (supporting both snake_case and camelCase formats)
+      const paymentUrl = response.authorization_url || response.authorizationUrl;
+
+      if (!paymentUrl) {
+        paymentLogger.logError('No payment URL received', response);
+        throw new Error('Payment initiation failed: No payment URL received');
+      }
+
+      // Log the redirect
+      paymentLogger.logStatus(response.reference, 'initialized', {
+        authorizationUrl: paymentUrl
+      });
+      
+      paymentLogger.logRedirect(paymentUrl, {
+        reference: response.reference
+      });
+      
+      console.log('Redirecting to payment page:', paymentUrl);
+      
+      // Redirect to payment gateway - using a small timeout to ensure logs are processed
+      setTimeout(() => {
+        ibsLogger.info('Executing redirect now...');
+        window.location.assign(paymentUrl);
+      }, 300);
     } catch (error) {
       console.error('Failed to initiate payment:', error);
+      paymentLogger.logError('Failed to initiate IBS payment', error);
       toast.error({ title: 'Failed to initiate payment' });
     } finally {
       loader.hideLoader();
