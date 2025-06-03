@@ -3,8 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useToast } from '@/lib/toast-provider';
-import { Check, Loader2, CheckCircle2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Loader2, CheckCircle2 } from "lucide-react";
 import { Account, getUserAccounts } from "@/lib/api/accounts";
 import paymentsApi from "@/lib/api/payments";
 
@@ -15,8 +14,6 @@ interface Bank {
 
 function Withdraw() {
   const [accounts, setAccounts] = useState<Account[]>([]);
-  const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
-  const [selectedAccountData, setSelectedAccountData] = useState<Account | null>(null);
   const [amount, setAmount] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [fetchingAccounts, setFetchingAccounts] = useState(false);
@@ -34,13 +31,15 @@ function Withdraw() {
   const navigate = useNavigate();
   const toast = useToast();
 
-  // Validate withdrawal amount based on available balance
+  // Calculate total available balance across all accounts
+  const totalAvailableBalance = accounts.reduce((sum, account) => sum + account.availableBalance, 0);
+
+  // Validate withdrawal amount based on total available balance
   const validateWithdrawal = (
-    accountData: Account,
     withdrawalAmount: number
   ): boolean => {
-    // Check if withdrawal amount is less than or equal to available balance
-    return withdrawalAmount <= accountData.availableBalance;
+    // Check if withdrawal amount is less than or equal to total available balance
+    return withdrawalAmount <= totalAvailableBalance;
   };
 
   // Fetch user accounts
@@ -105,22 +104,10 @@ function Withdraw() {
   // Fetch accounts and banks when user changes
   useEffect(() => {
     if (!user?.id) return;
-    setSelectedAccount(null);
-    setSelectedAccountData(null);
     setWithdrawalSuccess(false);
     fetchUserAccounts();
     fetchBanks();
   }, [user?.id, fetchUserAccounts, fetchBanks]);
-
-  // Update selected account data when an account is selected
-  useEffect(() => {
-    if (selectedAccount) {
-      const accountData = accounts.find((acc) => acc._id === selectedAccount);
-      setSelectedAccountData(accountData || null);
-    } else {
-      setSelectedAccountData(null);
-    }
-  }, [selectedAccount, accounts]);
 
   // Verify bank account when bank and account number are entered
   useEffect(() => {
@@ -134,7 +121,6 @@ function Withdraw() {
 
   const resetForm = () => {
     setAmount("");
-    setSelectedAccount(null);
     setSelectedBank(null);
     setBankAccountNumber("");
     setBankAccountName("");
@@ -158,8 +144,8 @@ function Withdraw() {
   };
 
   const processWithdrawal = async () => {
-    if (!selectedAccountData || !selectedBank || !bankAccountNumber || !bankAccountName || !accountVerified) {
-      toast.error({ title: "Please complete all fields before proceeding" });
+    if (!selectedBank || !bankAccountNumber || !bankAccountName || !accountVerified) {
+      toast.error({ title: "Please complete all bank details before proceeding" });
       return;
     }
 
@@ -173,8 +159,21 @@ function Withdraw() {
         return;
       }
 
-      if (!validateWithdrawal(selectedAccountData, withdrawalAmount)) {
-        toast.error({ title: "Withdrawal amount exceeds available balance" });
+      if (!validateWithdrawal(withdrawalAmount)) {
+        toast.error({ title: "Withdrawal amount exceeds total available balance" });
+        setLoading(false);
+        return;
+      }
+
+      // Find the best account to withdraw from
+      // Priority: 1) Account with sufficient balance, 2) Account with highest balance
+      const suitableAccount = accounts.find(account => account.availableBalance >= withdrawalAmount) || 
+                             accounts.reduce((prev, current) => 
+                               prev.availableBalance > current.availableBalance ? prev : current
+                             );
+
+      if (!suitableAccount) {
+        toast.error({ title: "No suitable account found for withdrawal" });
         setLoading(false);
         return;
       }
@@ -251,9 +250,8 @@ function Withdraw() {
       }
       setVerifyingAccount(false);
 
-      // Process the withdrawal
+      // Process the withdrawal using the selected suitable account
       await paymentsApi.createWithdrawalRequest({
-        accountNumber: selectedAccountData.accountNumber,
         amount: withdrawalAmount,
         bankName: banks.find(bank => bank.code === selectedBank)?.name || "",
         bankCode,
@@ -349,88 +347,50 @@ function Withdraw() {
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Select Account */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Select Account
-            </label>
-            <div className="grid grid-cols-1 gap-3">
-              {accounts.map((account) => (
-                <button
-                  key={account._id}
-                  type="button"
-                  onClick={() => setSelectedAccount(account._id)}
-                  className={cn(
-                    "flex items-center justify-between p-3 border rounded-lg",
-                    selectedAccount === account._id
-                      ? "border-[#0066A1] bg-blue-50"
-                      : "border-gray-300 bg-white hover:bg-gray-50"
-                  )}
-                >
-                  <div className="flex items-center">
-                    <div className="ml-3">
-                      <p className="text-sm font-medium text-gray-900">
-                        {account.accountType.toUpperCase()} Account
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {account.accountNumber}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="text-sm font-medium text-gray-900 mr-2">
-                      ₦{account.availableBalance.toLocaleString()}
-                    </span>
-                    {selectedAccount === account._id && (
-                      <div className="bg-[#0066A1] rounded-full p-1">
-                        <Check className="h-3 w-3 text-white" />
-                      </div>
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
+          {/* Total Available Balance Display */}
+          <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
+            <h3 className="text-sm font-medium text-gray-700 mb-1">Total Available Balance</h3>
+            <p className="text-2xl font-bold text-gray-900">₦{totalAvailableBalance.toLocaleString()}</p>
+            <p className="text-xs text-gray-500 mt-1">Across {accounts.length} account{accounts.length !== 1 ? 's' : ''}</p>
           </div>
 
           {/* Amount Input */}
-          {selectedAccountData && (
-            <div>
-              <label
-                htmlFor="amount"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Amount to Withdraw
-              </label>
-              <div className="relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <span className="text-gray-500 sm:text-sm">₦</span>
-                </div>
-                <input
-                  type="number"
-                  name="amount"
-                  id="amount"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  className="focus:ring-[#0066A1] focus:border-[#0066A1] block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md py-3"
-                  placeholder="0.00"
-                  min="1"
-                  max={selectedAccountData.availableBalance}
-                />
+          <div>
+            <label
+              htmlFor="amount"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Amount to Withdraw
+            </label>
+            <div className="relative rounded-md shadow-sm">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <span className="text-gray-500 sm:text-sm">₦</span>
               </div>
-              <div className="mt-2 flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => setAmount(selectedAccountData.availableBalance.toString())}
-                  className="text-sm text-[#0066A1] font-medium hover:text-[#007DB8]"
-                >
-                  Max (₦{selectedAccountData.availableBalance.toLocaleString()})
-                </button>
-              </div>
+              <input
+                type="number"
+                name="amount"
+                id="amount"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="focus:ring-[#0066A1] focus:border-[#0066A1] block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md py-3"
+                placeholder="0.00"
+                min="1"
+                max={totalAvailableBalance}
+              />
             </div>
-          )}
+            <div className="mt-2 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setAmount(totalAvailableBalance.toString())}
+                className="text-sm text-[#0066A1] font-medium hover:text-[#007DB8]"
+              >
+                Max (₦{totalAvailableBalance.toLocaleString()})
+              </button>
+            </div>
+          </div>
 
           {/* Bank Selection */}
-          {selectedAccountData && amount && (
+          {amount && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Select Bank
@@ -509,20 +469,14 @@ function Withdraw() {
           )}
 
           {/* Withdrawal Summary */}
-          {selectedAccountData && amount && parseFloat(amount) > 0 && (
+          {amount && parseFloat(amount) > 0 && (
             <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
               <h3 className="font-medium text-gray-900 mb-3">Withdrawal Summary</h3>
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Account</span>
+                  <span className="text-gray-500">Total Available Balance</span>
                   <span className="font-medium">
-                    {selectedAccountData.accountType.toUpperCase()} ({selectedAccountData.accountNumber})
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Available Balance</span>
-                  <span className="font-medium">
-                    ₦{selectedAccountData.availableBalance.toLocaleString()}
+                    ₦{totalAvailableBalance.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -537,7 +491,7 @@ function Withdraw() {
                     ₦
                     {Math.max(
                       0,
-                      selectedAccountData.availableBalance - parseFloat(amount || "0")
+                      totalAvailableBalance - parseFloat(amount || "0")
                     ).toLocaleString()}
                   </span>
                 </div>
@@ -549,7 +503,6 @@ function Withdraw() {
           <Button
             type="button"
             disabled={
-              !selectedAccount || 
               !amount || 
               loading || 
               parseFloat(amount) <= 0 || 

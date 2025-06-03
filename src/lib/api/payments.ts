@@ -2,7 +2,6 @@ import api from './axios';
 import axios from 'axios';
 
 interface WithdrawalRequestParams {
-  accountNumber: string;
   amount: number;
   bankName: string;
   bankCode: string;
