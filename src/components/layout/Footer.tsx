@@ -92,7 +92,7 @@ function Footer() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 20 }}
                     transition={{ duration: 0.2 }}
-                    className="absolute bottom-16 -translate-x-1/2 bg-white rounded-lg shadow-lg border border-gray-200 p-2 w-48 z-50"
+                    className="absolute bottom-16 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg border border-gray-200 p-2 w-48 z-50"
                   >
                     <Link
                       to="/payments/deposit"
@@ -111,7 +111,7 @@ function Footer() {
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             strokeWidth={2}
-                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                            d="M7 10l5 5 5-5M12 15V3"
                           />
                         </svg>
                       </div>
@@ -157,7 +157,7 @@ function Footer() {
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             strokeWidth={2}
-                            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"
+                            d="M7 14l5-5 5 5M12 9v12"
                           />
                         </svg>
                       </div>
