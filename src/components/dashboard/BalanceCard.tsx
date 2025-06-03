@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { SelectAccountType } from '@/components/accounts/SelectAccountType';
 import { Account } from '@/lib/api/accounts';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface BalanceCardProps {
   balance: number;
@@ -13,6 +14,7 @@ interface BalanceCardProps {
   createAccount: (accountType: 'ds' | 'sb' | 'ibs') => void;
   isCreateAccountLoading: boolean;
   accounts?: Account[];
+  refreshBalance?: () => void;
 }
 
 export function BalanceCard({
@@ -25,6 +27,7 @@ export function BalanceCard({
   createAccount,
   isCreateAccountLoading = false,
   accounts = [],
+  refreshBalance,
 }: BalanceCardProps) {
   const [showAccountTypeModal, setShowAccountTypeModal] = useState(false);
   const [showAccountLinks, setShowAccountLinks] = useState(false);
@@ -65,16 +68,62 @@ export function BalanceCard({
             <h2 className="text-sm uppercase tracking-wider font-semibold text-blue-50">
              Available Balance
             </h2>
-            {hasAccounts && (
-              <button
-                onClick={() => setShowBalance(!showBalance)}
-                className="bg-white/20 p-1 rounded-full hover:bg-white/30 transition-colors"
-                aria-label={showBalance ? 'Hide balance' : 'Show balance'}
-              >
-                {showBalance ? (
+            <div className="flex items-center gap-1">
+              {hasAccounts && (
+                <button
+                  onClick={() => setShowBalance(!showBalance)}
+                  className="bg-white/20 p-1 rounded-full hover:bg-white/30 transition-colors"
+                  aria-label={showBalance ? 'Hide balance' : 'Show balance'}
+                >
+                  {showBalance ? (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
+                    </svg>
+                  ) : (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                      />
+                    </svg>
+                  )}
+                </button>
+              )}
+              {hasAccounts && refreshBalance && (
+                <button
+                  onClick={refreshBalance}
+                  disabled={isAccountsLoading}
+                  className="bg-white/20 p-1 rounded-full hover:bg-white/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="Refresh balance"
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4"
+                    className={`h-4 w-4 ${isAccountsLoading ? 'animate-spin' : ''}`}
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -83,37 +132,16 @@ export function BalanceCard({
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                     />
                   </svg>
-                ) : (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
-                    />
-                  </svg>
-                )}
-              </button>
-            )}
+                </button>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-2 mt-6">
             {isAccountsLoading ? (
-              <p className="text-4xl font-bold">Loading...</p>
+              <Skeleton className="h-12 w-48 bg-white/20" />
             ) : hasAccounts ? (
               showBalance ? (
                 <p className="text-4xl font-bold text-blue-50 drop-shadow-sm">
@@ -200,86 +228,54 @@ export function BalanceCard({
                     d="M12 4v16m8-8H4"
                   />
                 </svg>
-                New
+                Add
               </button>
             </div>
           )}
         </div>
       )}
-      <div className="mt-10 flex gap-4">
-        {hasAccounts ? (
-          <>
-            <Link
-              to="/payments/deposit"
-              className="flex-1 bg-gradient-to-r from-white to-blue-50 text-[#0066A1] rounded-lg py-3 font-semibold text-sm hover:from-blue-50 hover:to-white transition-all flex items-center justify-center gap-2 shadow-md border border-white/80"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
-              Deposit
-            </Link>
-            <Link
-              to="/payments/withdraw"
-              className="flex-1 border border-white/30 text-white rounded-lg py-3 font-semibold text-sm hover:bg-white/10 transition-all flex items-center justify-center gap-2 backdrop-blur-sm"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 10l7-7m0 0l7 7m-7-7v18"
-                />
-              </svg>
-              Withdraw
-            </Link>
-          </>
-        ) : (
+
+      {/* Create Account Button - Only show if no accounts exist */}
+      {!hasAccounts && !isAccountsLoading && (
+        <div className="mt-5">
           <button
             onClick={() => setShowAccountTypeModal(true)}
             disabled={isCreateAccountLoading}
-            className="w-full bg-gradient-to-r from-white to-blue-50 text-[#0066A1] rounded-lg py-3 font-semibold text-sm hover:from-blue-50 hover:to-white transition-all flex items-center justify-center gap-2 shadow-md disabled:opacity-70 disabled:cursor-not-allowed border border-white/80"
+            className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition-colors font-medium text-sm border border-white/10 backdrop-blur-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-            {isCreateAccountLoading ? 'Creating Account...' : 'Create Account'}
+            {isCreateAccountLoading ? (
+              <>
+                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                Creating...
+              </>
+            ) : (
+              <>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                Create Account
+              </>
+            )}
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Account Type Selection Modal */}
       {showAccountTypeModal && (
         <SelectAccountType
-          onSelect={handleCreateAccount}
           onCancel={() => setShowAccountTypeModal(false)}
+          onSelect={handleCreateAccount}
           isLoading={isCreateAccountLoading}
         />
       )}

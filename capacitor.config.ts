@@ -16,6 +16,11 @@ const config: CapacitorConfig = {
     },
     CapacitorHttp: {
       enabled: true
+    },
+    StatusBar: {
+      style: 'dark',
+      backgroundColor: '#0066A1',
+      overlaysWebView: false
     }
   },
   ios: {
@@ -23,7 +28,7 @@ const config: CapacitorConfig = {
     contentInset: 'automatic'
   },
   android: {
-    backgroundColor: "#ffffff"
+    backgroundColor: "#0066A1"
   }
 };
 

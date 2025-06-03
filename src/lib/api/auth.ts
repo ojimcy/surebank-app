@@ -44,22 +44,22 @@ export interface RegisterPayload {
 
 export interface VerifyPayload {
   code: string;
-  identifier?: string;
+  email?: string;
 }
 
 export interface ResetPasswordPayload {
-  identifier: string;
+  email: string;
 }
 
 export interface VerifyResetCodePayload {
   code: string;
-  identifier: string;
+  email: string;
 }
 
 export interface NewPasswordPayload {
   password: string;
   code: string;
-  identifier: string;
+  email: string;
 }
 
 export interface TokenResponse {

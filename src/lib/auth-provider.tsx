@@ -20,14 +20,14 @@ interface AuthContextType {
   resendVerificationCode: () => Promise<void>;
   logout: () => void;
   pendingVerification: boolean;
-  verificationIdentifier?: string;
+  verificationEmail?: string;
   pendingAddress?: Address;
-  requestPasswordReset: (identifier: string) => Promise<void>;
+  requestPasswordReset: (email: string) => Promise<void>;
   verifyPasswordResetCode: (code: string) => Promise<void>;
   resetPassword: (newPassword: string) => Promise<void>;
   passwordResetRequested: boolean;
   passwordResetVerified: boolean;
-  resetIdentifier?: string;
+  resetEmail?: string;
 
   // Specific loading states for different operations
   isLoginLoading: boolean;
@@ -50,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // State for verification flow
   const [pendingVerification, setPendingVerification] = React.useState(false);
-  const [verificationIdentifier, setVerificationIdentifier] = React.useState<
+  const [verificationEmail, setVerificationEmail] = React.useState<
     string | undefined
   >();
   const [pendingAddress, setPendingAddress] = React.useState<
@@ -62,9 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     React.useState(false);
   const [passwordResetVerified, setPasswordResetVerified] =
     React.useState(false);
-  const [resetIdentifier, setResetIdentifier] = React.useState<
-    string | undefined
-  >();
+  const [resetEmail, setResetEmail] = React.useState<string | undefined>();
 
   // Login wrapper to maintain backward compatibility
   const login = async (identifier: string, password: string) => {
@@ -114,7 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       await auth.register(apiParams);
 
-      setVerificationIdentifier(identifier);
+      setVerificationEmail(identifier);
       setPendingVerification(true);
     } catch (err: unknown) {
       console.error('Registration failed', err);
@@ -130,13 +128,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Verify code wrapper
   const verifyCode = async (code: string) => {
     try {
-      if (!verificationIdentifier) {
+      if (!verificationEmail) {
         throw new Error('No identifier for verification');
       }
 
       await auth.verifyCode({
         code,
-        identifier: verificationIdentifier,
+        email: verificationEmail,
       });
 
       // Show success toast
@@ -146,7 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       setPendingVerification(false);
-      setVerificationIdentifier(undefined);
+      setVerificationEmail(undefined);
       setPendingAddress(undefined);
     } catch (err: unknown) {
       console.error('Verification failed', err);
@@ -162,11 +160,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Resend verification code wrapper
   const resendVerificationCode = async () => {
     try {
-      if (!verificationIdentifier) {
+      if (!verificationEmail) {
         throw new Error('No identifier for verification');
       }
 
-      await auth.resendVerificationCode(verificationIdentifier);
+      await auth.resendVerificationCode(verificationEmail);
 
       // Show success toast
       success({
@@ -185,9 +183,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   // Request password reset wrapper
-  const requestPasswordReset = async (identifier: string) => {
+  const requestPasswordReset = async (email: string) => {
     try {
-      await auth.requestPasswordReset({ identifier });
+      await auth.requestPasswordReset({ email });
 
       // Show success toast
       success({
@@ -195,7 +193,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         description: 'A password reset code has been sent.',
       });
 
-      setResetIdentifier(identifier);
+      setResetEmail(email);
       setPasswordResetRequested(true);
     } catch (err: unknown) {
       console.error('Password reset request failed', err);
@@ -211,13 +209,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Verify password reset code wrapper
   const verifyPasswordResetCode = async (code: string) => {
     try {
-      if (!resetIdentifier) {
-        throw new Error('No identifier for password reset');
+      if (!resetEmail) {
+        throw new Error('No email for password reset');
       }
 
       await auth.verifyPasswordResetCode({
         code,
-        identifier: resetIdentifier,
+        email: resetEmail,
       });
 
       setPasswordResetVerified(true);
@@ -235,7 +233,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Reset password wrapper
   const resetPassword = async (newPassword: string) => {
     try {
-      if (!resetIdentifier || !passwordResetVerified) {
+      if (!resetEmail || !passwordResetVerified) {
         throw new Error('Password reset flow not completed');
       }
 
@@ -246,7 +244,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await auth.resetPassword({
         password: newPassword,
         code,
-        identifier: resetIdentifier,
+        email: resetEmail,
       });
 
       // Show success toast
@@ -258,7 +256,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Reset password reset flow state
       setPasswordResetRequested(false);
       setPasswordResetVerified(false);
-      setResetIdentifier(undefined);
+      setResetEmail(undefined);
     } catch (err: unknown) {
       console.error('Password reset failed', err);
       const errorMessage = extractErrorMessage(err);
@@ -286,14 +284,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     resendVerificationCode,
     logout,
     pendingVerification,
-    verificationIdentifier,
+      verificationEmail,
     pendingAddress,
     requestPasswordReset,
     verifyPasswordResetCode,
     resetPassword,
     passwordResetRequested,
     passwordResetVerified,
-    resetIdentifier,
+    resetEmail,
 
     // Add specific loading states
     isLoginLoading: auth.isLoginLoading,

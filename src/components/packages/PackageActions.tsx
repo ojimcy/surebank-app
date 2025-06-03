@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 interface PackageActionsProps {
   type: 'Daily Savings' | 'Interest-Based' | 'SB Package';
   color: string;
+  packageId?: string;
   onEditPackage: () => void;
   onClosePackage: () => void;
   onBuyProduct: () => void;
@@ -13,8 +14,8 @@ interface PackageActionsProps {
 export function PackageActions({
   type,
   color,
+  packageId,
   onEditPackage,
-  onClosePackage,
   onBuyProduct,
   onChangeProduct,
   hasMetTarget = false,
@@ -57,25 +58,6 @@ export function PackageActions({
             )}
             {hasMetTarget ? 'Buy Product' : 'Make Contribution'}
           </Button>
-          {/* <Button
-            className="flex items-center justify-center"
-            variant="outline"
-            onClick={() => navigate('/packages/withdraw')}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 mr-1"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M3 5a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V5zm11 1H6v8l4-2 4 2V6z"
-                clipRule="evenodd"
-              />
-            </svg>
-            Withdraw
-          </Button> */}
           <Button
             className="flex items-center justify-center"
             variant="outline"
@@ -111,11 +93,11 @@ export function PackageActions({
         </div>
       ) : type === 'Interest-Based' ? (
         // Interest-Based package specific actions
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3">
           <Button
             className="flex items-center justify-center"
             style={{ backgroundColor: color }}
-            onClick={() => navigate('/payments/withdraw')}
+            onClick={() => navigate(`/packages/withdraw-interest${packageId ? `?packageId=${packageId}` : ''}`)}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -129,28 +111,9 @@ export function PackageActions({
                 clipRule="evenodd"
               />
             </svg>
-            Withdraw at Maturity
+            Withdraw
           </Button>
-          <Button
-            className="flex items-center justify-center"
-            variant="outline"
-            // TODO: Implement early withdrawal functionality
-            onClick={() => navigate('/payments/withdraw')}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 mr-1"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z"
-                clipRule="evenodd"
-              />
-            </svg>
-            Early Withdrawal
-          </Button>
+         
         </div>
       ) : (
         // Daily Savings package actions
@@ -212,28 +175,6 @@ export function PackageActions({
           </Button>
         </div>
       )}
-
-      <Button
-        className="w-full mt-3 flex items-center justify-center"
-        variant={type === 'Interest-Based' ? 'outline' : 'destructive'}
-        onClick={onClosePackage}
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-5 w-5 mr-1"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-        >
-          <path
-            fillRule="evenodd"
-            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-            clipRule="evenodd"
-          />
-        </svg>
-        {type === 'Interest-Based'
-          ? 'Terminate Early (Penalty Applies)'
-          : 'Close Package'}
-      </Button>
     </div>
   );
 }

@@ -11,6 +11,7 @@ import { useAccountQueries } from '@/hooks/queries/useAccountQueries';
 import { usePackageQueries } from '@/hooks/queries/usePackageQueries';
 import { memo } from 'react';
 import { formatCurrency } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function Dashboard() {
   const { user } = useAuth();
@@ -24,6 +25,7 @@ function Dashboard() {
     createAccount,
     isCreateAccountLoading,
     accounts,
+    refetchAccounts,
   } = useAccountQueries();
 
   // Use package queries to get packages data
@@ -93,6 +95,7 @@ function Dashboard() {
         createAccount={createAccount}
         isCreateAccountLoading={isCreateAccountLoading}
         accounts={accounts}
+        refreshBalance={refetchAccounts}
       />
 
       {/* Quick Actions */}
@@ -100,8 +103,13 @@ function Dashboard() {
 
       {/* Conditional Savings Display */}
       {isPackagesLoading ? (
-        <div className="p-4 bg-white rounded-xl shadow-sm flex justify-center">
-          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+        <div className="p-6 bg-white rounded-xl shadow-sm space-y-4">
+          <Skeleton className="h-6 w-40" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-32 w-full" />
+          </div>
         </div>
       ) : activePackages.length > 0 ? (
         // Existing Savings Plans Section

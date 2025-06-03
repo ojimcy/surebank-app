@@ -128,7 +128,7 @@ export function PinPad({
           <Button
             onClick={handleSubmit}
             className="w-full bg-[#0066A1] text-white"
-            disabled={pin.length < 4}
+            disabled={pin.length < 6}
           >
             Confirm
           </Button>

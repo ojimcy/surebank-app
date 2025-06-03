@@ -1,5 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { safeAreaClasses } from '@/lib/safe-area';
+import { cn } from '@/lib/utils';
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -49,7 +51,10 @@ function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
       {/* Content Side */}
       <div className="flex-1 flex flex-col">
         {/* Mobile Banner with Background Image */}
-        <div className="md:hidden bg-[#0066A1] text-white relative overflow-hidden">
+        <div className={cn(
+          "md:hidden bg-[#0066A1] text-white relative overflow-hidden",
+          safeAreaClasses.paddingTop
+        )}>
           {/* Background Image for Mobile */}
           <div
             className="absolute inset-0 bg-cover bg-center opacity-20"
@@ -61,7 +66,7 @@ function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
           ></div>
 
           {/* Mobile Header Content */}
-          <div className="relative z-10 p-5 pt-6 pb-8">
+          <div className="relative z-10 p-5 pb-8">
             <Link to="/" className="text-2xl font-bold block mb-4">
               SureBank
             </Link>
@@ -77,7 +82,10 @@ function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col p-5 pt-8 md:justify-center">
+        <div className={cn(
+          "flex-1 flex flex-col p-5 pt-8 md:justify-center",
+          safeAreaClasses.paddingBottom
+        )}>
           <div className="max-w-md mx-auto w-full">
             <div className="mb-8">
               <h2 className="text-2xl font-bold text-[#212529]">{title}</h2>

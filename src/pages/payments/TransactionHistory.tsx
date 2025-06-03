@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTransactionQueries } from '@/hooks/queries/useTransactionQueries';
 import { TransactionFilters } from '@/lib/api/transactions';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -8,6 +9,8 @@ import { formatCurrency } from '@/lib/utils';
 type DateRangeOption = 'all' | 'today' | 'week' | 'month' | 'year' | 'custom';
 
 export default function TransactionHistory() {
+  const navigate = useNavigate();
+  
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
@@ -137,6 +140,10 @@ export default function TransactionHistory() {
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleTransactionClick = (transactionId: string) => {
+    navigate(`/payments/transaction/${transactionId}`);
   };
 
   return (
@@ -285,7 +292,8 @@ export default function TransactionHistory() {
               {formattedTransactions.map((transaction) => (
                 <div 
                   key={transaction.id}
-                  className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                  onClick={() => handleTransactionClick(transaction.id)}
+                  className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
                 >
                   {/* Mobile View */}
                   <div className="md:hidden p-4">

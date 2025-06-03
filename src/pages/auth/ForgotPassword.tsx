@@ -5,9 +5,9 @@ import { Button } from '@/components/ui/button';
 import AuthLayout from '@/components/layout/AuthLayout';
 
 function ForgotPassword() {
-  const [identifier, setIdentifier] = useState('');
+  const [email, setEmail] = useState('');
   const [errors, setErrors] = useState<{
-    identifier?: string;
+    email?: string;
     general?: string;
   }>({});
   const { requestPasswordReset, isResetRequestLoading } = useAuth();
@@ -19,12 +19,14 @@ function ForgotPassword() {
 
     // Validate fields
     const newErrors: {
-      identifier?: string;
+      email?: string;
       general?: string;
     } = {};
 
-    if (!identifier.trim()) {
-      newErrors.identifier = 'Email or phone number is required';
+    if (!email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!email.includes('@') || !email.includes('.')) {
+      newErrors.email = 'Please enter a valid email address';
     }
 
     // If there are validation errors, stop form submission
@@ -34,7 +36,7 @@ function ForgotPassword() {
     }
 
     try {
-      await requestPasswordReset(identifier);
+      await requestPasswordReset(email);
       navigate('/auth/verify-reset-code');
     } catch (error: unknown) {
       console.log('Error sending reset code', error);
@@ -51,7 +53,7 @@ function ForgotPassword() {
         errorMessage.includes('no account')
       ) {
         setErrors({
-          identifier: 'No account found with this email or phone number.',
+          email: 'No account found with this email address.',
         });
       } else if (
         errorMessage.includes('too many') ||
@@ -71,7 +73,7 @@ function ForgotPassword() {
   return (
     <AuthLayout
       title="Reset your password"
-      subtitle="Enter your email or phone number to receive a reset code"
+      subtitle="Enter your email address to receive a reset code"
     >
       {errors.general && (
         <div className="mb-6 p-3 bg-[#f8d7da] border border-[#f5c2c7] text-[#DC3545] rounded-md text-sm">
@@ -82,27 +84,27 @@ function ForgotPassword() {
       <form className="space-y-5" onSubmit={handleSubmit}>
         <div className="space-y-1">
           <label
-            htmlFor="identifier"
+            htmlFor="email"
             className="block text-sm font-medium text-[#212529]"
           >
-            Email or Phone Number
+            Email
           </label>
           <input
-            type="text"
-            id="identifier"
-            value={identifier}
-            onChange={(e) => setIdentifier(e.target.value)}
+            type="email"
+            id="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className={`block w-full rounded-md border ${
-              errors.identifier ? 'border-[#DC3545]' : 'border-[#E5E8ED]'
+              errors.email ? 'border-[#DC3545]' : 'border-[#E5E8ED]'
             } bg-white px-3 py-2 text-sm text-[#212529] placeholder:text-[#6C757D] focus:outline-none focus:ring-2 ${
-              errors.identifier
+              errors.email
                 ? 'focus:ring-[#DC3545]/30'
                 : 'focus:ring-[#0066A1]/30'
             } disabled:cursor-not-allowed disabled:opacity-50 h-12`}
-            placeholder="Enter your email or phone"
+            placeholder="Enter your email"
           />
-          {errors.identifier && (
-            <p className="mt-1 text-xs text-[#DC3545]">{errors.identifier}</p>
+          {errors.email && (
+            <p className="mt-1 text-xs text-[#DC3545]">{errors.email}</p>
           )}
         </div>
 

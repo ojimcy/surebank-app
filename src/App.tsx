@@ -23,11 +23,13 @@ import Verify from '@/pages/auth/Verify';
 import Deposit from '@/pages/payments/Contribution';
 import Withdraw from '@/pages/payments/Withdraw';
 import WithdrawFromPackage from '@/pages/packages/WithdrawFromPackage';
+import WithdrawFromIBPackage from '@/pages/packages/WithdrawFromIBPackage';
 import MergePackages from '@/pages/packages/MergePackages';
 import ChangeProduct from '@/pages/packages/ChangeProduct';
 import PaymentSuccess from '@/pages/payments/PaymentSuccess';
 import PaymentError from '@/pages/payments/PaymentError';
 import TransactionHistory from '@/pages/payments/TransactionHistory';
+import TransactionDetails from '@/pages/payments/TransactionDetails';
 import Checkout from '@/pages/checkout/Checkout';
 import OrderDetails from '@/pages/orders/OrderDetails';
 import Orders from '@/pages/orders/Orders';
@@ -90,6 +92,7 @@ function AppRoutes() {
             <Route path="/packages/new/ibs-error" element={<PaymentError />} />
             <Route path="/packages/:id" element={<PackageDetail />} />
             <Route path="/packages/withdraw" element={<WithdrawFromPackage />} />
+            <Route path="/packages/withdraw-interest" element={<WithdrawFromIBPackage />} />
             <Route path="/packages/merge" element={<MergePackages />} />
             <Route path="/packages/change-product" element={<ChangeProduct />} />
             <Route path="/products" element={<ProductCatalog />} />
@@ -112,6 +115,7 @@ function AppRoutes() {
             <Route path="/payments/success" element={<PaymentSuccess />} />
             <Route path="/payments/error" element={<PaymentError />} />
             <Route path="/payments/history" element={<TransactionHistory />} />
+            <Route path="/payments/transaction/:transactionId" element={<TransactionDetails />} />
             <Route path="/pin-lock" element={<PinLock />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

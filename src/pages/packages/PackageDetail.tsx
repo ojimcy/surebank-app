@@ -365,11 +365,11 @@ function PackageDetail() {
             totalContribution: ibPackage.principalAmount,
             compoundingFrequency: ibPackage.compoundingFrequency,
             lockPeriod: ibPackage.lockPeriod || 0,
-            interestAccrued: ibPackage.accruedInterest,
+            interestAccrued: ibPackage.interestAccrued,
             earlyWithdrawalPenalty: ibPackage.earlyWithdrawalPenalty || 0,
             currentBalance:
               ibPackage.currentBalance || ibPackage.principalAmount,
-            estimatedEarnings: ibPackage.accruedInterest,
+            estimatedEarnings: ibPackage.interestAccrued,
           };
         }
 
@@ -603,6 +603,7 @@ function PackageDetail() {
       <PackageActions
         type={packageData.type}
         color={packageData.color}
+        packageId={packageData.id}
         onEditPackage={() => setShowEditDialog(true)}
         onClosePackage={() => setShowCloseDialog(true)}
         onBuyProduct={handleBuyProduct}

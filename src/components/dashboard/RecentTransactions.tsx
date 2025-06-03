@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTransactionQueries, FormattedTransaction } from '@/hooks/queries/useTransactionQueries';
 import { Skeleton } from '../ui/skeleton';
 
@@ -7,6 +7,8 @@ interface RecentTransactionsProps {
 }
 
 export function RecentTransactions({ transactions: propTransactions }: RecentTransactionsProps) {
+  const navigate = useNavigate();
+  
   // Fetch transactions using the hook if not provided as props
   const {
     formattedTransactions = [],
@@ -15,6 +17,10 @@ export function RecentTransactions({ transactions: propTransactions }: RecentTra
   
   // Use prop transactions if provided, otherwise use fetched transactions
   const displayTransactions = propTransactions || formattedTransactions;
+
+  const handleTransactionClick = (transactionId: string) => {
+    navigate(`/payments/transaction/${transactionId}`);
+  };
 
   return (
     <div>
@@ -55,6 +61,7 @@ export function RecentTransactions({ transactions: propTransactions }: RecentTra
           {displayTransactions.slice(0, 5).map((transaction) => (
             <div
               key={transaction.id}
+              onClick={() => handleTransactionClick(transaction.id)}
               className="bg-white rounded-lg p-4 flex justify-between items-center hover:shadow-md transition-shadow cursor-pointer"
             >
               <div className="flex items-center">

@@ -130,7 +130,7 @@ export const usePackageQueries = () => {
           maturityDate: pkg.maturityDate,
           interestRate: `${pkg.interestRate}% p.a.`,
           lockPeriod: pkg.lockPeriod,
-          interestAccrued: pkg.accruedInterest,
+          interestAccrued: pkg.interestAccrued,
           status: pkg.status,
           currentBalance: pkg.currentBalance,
         };

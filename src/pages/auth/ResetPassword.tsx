@@ -19,7 +19,7 @@ function ResetPassword() {
     resetPassword,
     isResetPasswordLoading,
     passwordResetVerified,
-    resetIdentifier,
+    resetEmail,
   } = useAuth();
   const navigate = useNavigate();
 
@@ -110,27 +110,22 @@ function ResetPassword() {
     }
   };
 
-  // Format the identifier for display
-  const formatIdentifier = (identifier?: string) => {
-    if (!identifier) return '';
+  // Format the email for display
+  const formatEmail = (email?: string) => {
+    if (!email || !email.includes('@')) return '';
 
-    if (identifier.includes('@')) {
-      // For email: show first 3 chars and domain, hide the rest
-      const [username, domain] = identifier.split('@');
-      const maskedUsername =
-        username.slice(0, 3) + '*'.repeat(username.length - 3);
-      return `${maskedUsername}@${domain}`;
-    } else {
-      // For phone: show last 4 digits, hide the rest
-      return '*'.repeat(identifier.length - 4) + identifier.slice(-4);
-    }
+    // For email: show first 3 chars and domain, hide the rest
+    const [username, domain] = email.split('@');
+    const maskedUsername =
+      username.slice(0, 3) + '*'.repeat(username.length - 3);
+    return `${maskedUsername}@${domain}`;
   };
 
   return (
     <AuthLayout
       title="Set new password"
-      subtitle={`Create a new password for ${formatIdentifier(
-        resetIdentifier
+      subtitle={`Create a new password for ${formatEmail(
+        resetEmail
       )}`}
     >
       {errors.general && (

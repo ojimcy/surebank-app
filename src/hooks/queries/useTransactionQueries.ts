@@ -26,9 +26,17 @@ export function useTransactionQueries(filters: TransactionFilters = {}) {
       return 'DS Contribution';
     } else if (narration.includes('sb contribution')) {
       return 'SB Contribution';
-    } else if (narration.includes('withdrawal request')) {
-      return 'Withdrawal Request';
-    } else if (narration.includes('withdrawal')) {
+    } else if (
+      narration.includes('interest package withdrawal: Mature withdrawal') || 
+      narration.includes('interest package withdrawal: early withdrawal') || 
+      narration.includes('sb transfer')
+    ) {
+      return 'Move to Available Balance';
+    } else if (
+      narration.includes('withdrawal request') || 
+      narration.includes('self withdrawal request - ds') || 
+      narration.includes('request cash')
+    ) {
       return 'Withdrawal';
     } else if (
       narration.includes('ibs payment') || 
@@ -44,44 +52,51 @@ export function useTransactionQueries(filters: TransactionFilters = {}) {
     }
   };
 
+  // Helper function to format date for display
+  const formatTransactionDate = (date: number): { dateString: string; timeString: string } => {
+    const transactionDate = new Date(date);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    let dateString: string;
+    if (transactionDate.toDateString() === today.toDateString()) {
+      dateString = 'Today';
+    } else if (transactionDate.toDateString() === yesterday.toDateString()) {
+      dateString = 'Yesterday';
+    } else {
+      dateString = transactionDate.toLocaleDateString('en-NG', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+      });
+    }
+    
+    const timeString = transactionDate.toLocaleTimeString('en-NG', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+
+    return { dateString, timeString };
+  };
+
+  // Helper function to determine transaction type
+  const getTransactionType = (transaction: Transaction): 'deposit' | 'withdrawal' | 'other' => {
+    if (transaction.narration.toLowerCase().includes('payment for order')) {
+      return 'other';
+    }
+    return transaction.direction === 'inflow' ? 'deposit' : 'withdrawal';
+  };
+
   // Format transactions for UI display
   const formatTransactions = (transactions: Transaction[]): FormattedTransaction[] => {
     return transactions.map(transaction => {
-      // Format date and time
-      const transactionDate = new Date(transaction.date);
-      const today = new Date();
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
+      const { dateString, timeString } = formatTransactionDate(transaction.date);
       
-      let dateString: string;
-      if (transactionDate.toDateString() === today.toDateString()) {
-        dateString = 'Today';
-      } else if (transactionDate.toDateString() === yesterday.toDateString()) {
-        dateString = 'Yesterday';
-      } else {
-        dateString = transactionDate.toLocaleDateString('en-NG', {
-          day: 'numeric',
-          month: 'short',
-          year: 'numeric'
-        });
-      }
-      
-      const timeString = transactionDate.toLocaleTimeString('en-NG', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-      });
-
-      let transactionType: 'deposit' | 'withdrawal' | 'other';
-      if (transaction.narration.toLowerCase().includes('payment for order')) {
-        transactionType = 'other';
-      } else {
-        transactionType = transaction.direction === 'inflow' ? 'deposit' : 'withdrawal';
-      }
-
       return {
         id: transaction.id,
-        type: transactionType,
+        type: getTransactionType(transaction),
         category: getCategoryFromNarration(transaction),
         amount: transaction.amount,
         date: dateString,

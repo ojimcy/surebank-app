@@ -438,11 +438,11 @@ function PackageList() {
             // Add additional fields from the actual data structure
             compoundingFrequency: pkg.compoundingFrequency || 'N/A',
             lockPeriod: pkg.lockPeriod || undefined,
-            interestAccrued: pkg.accruedInterest || 0, // Note: API uses accruedInterest
+            interestAccrued: pkg.interestAccrued || 0, // Note: API uses accruedInterest
             earlyWithdrawalPenalty: pkg.earlyWithdrawalPenalty || undefined,
             currentBalance: pkg.currentBalance, // Use principal as current balance
             // Calculate estimated earnings if interest hasn't accrued yet
-            estimatedEarnings: pkg.accruedInterest,
+            estimatedEarnings: pkg.interestAccrued,
           };
         });
 

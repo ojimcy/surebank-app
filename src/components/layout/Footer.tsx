@@ -15,10 +15,17 @@ function Footer() {
     <footer
       className={cn(
         'fixed bottom-0 left-0 right-0 bg-white border-t border-[#e5e8ed] py-2 z-30 shadow-sm',
-        safeAreaClasses.paddingBottom
+        safeAreaClasses.paddingBottom,
+        safeAreaClasses.paddingLeft,
+        safeAreaClasses.paddingRight
       )}
+      style={{
+        paddingBottom: `calc(0.5rem + env(safe-area-inset-bottom, 0px))`,
+        paddingLeft: `env(safe-area-inset-left, 0px)`,
+        paddingRight: `env(safe-area-inset-right, 0px)`
+      }}
     >
-      <nav className="container mx-auto">
+      <nav className="container mx-auto px-4">
         <ul className="flex justify-around items-center">
           <li className="flex flex-col items-center">
             <NavLink
@@ -85,7 +92,7 @@ function Footer() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 20 }}
                     transition={{ duration: 0.2 }}
-                    className="absolute bottom-16 right-0 -translate-x-1/2 bg-white rounded-lg shadow-lg border border-gray-200 p-2 w-48 z-50"
+                    className="absolute bottom-16 -translate-x-1/2 bg-white rounded-lg shadow-lg border border-gray-200 p-2 w-48 z-50"
                   >
                     <Link
                       to="/payments/deposit"

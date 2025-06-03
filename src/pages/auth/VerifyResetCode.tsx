@@ -18,14 +18,14 @@ function VerifyResetCode() {
     requestPasswordReset,
     isVerifyResetLoading,
     isResetRequestLoading,
-    resetIdentifier,
+    resetEmail,
   } = useAuth();
   const navigate = useNavigate();
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // Countdown timer for resend button
   useEffect(() => {
-    if (resetIdentifier) {
+    if (resetEmail) {
       const timer =
         countdown > 0 && setInterval(() => setCountdown(countdown - 1), 1000);
       if (countdown === 0) setCanResend(true);
@@ -33,7 +33,7 @@ function VerifyResetCode() {
         if (timer) clearInterval(timer);
       };
     }
-  }, [countdown, resetIdentifier]);
+  }, [countdown, resetEmail]);
 
   // Focus first input on mount
   useEffect(() => {
@@ -100,11 +100,11 @@ function VerifyResetCode() {
   };
 
   const handleResendCode = async () => {
-    if (!resetIdentifier) return;
+    if (!resetEmail) return;
 
     setErrors({});
     try {
-      await requestPasswordReset(resetIdentifier);
+      await requestPasswordReset(resetEmail);
       setCountdown(60);
       setCanResend(false);
     } catch (error: unknown) {
@@ -160,26 +160,21 @@ function VerifyResetCode() {
     }
   };
 
-  // Format the identifier for display
-  const formatIdentifier = (identifier?: string) => {
-    if (!identifier) return '';
+  // Format the email for display
+  const formatEmail = (email?: string) => {
+    if (!email || !email.includes('@')) return '';
 
-    if (identifier.includes('@')) {
-      // For email: show first 3 chars and domain, hide the rest
-      const [username, domain] = identifier.split('@');
-      const maskedUsername =
-        username.slice(0, 3) + '*'.repeat(username.length - 3);
-      return `${maskedUsername}@${domain}`;
-    } else {
-      // For phone: show last 4 digits, hide the rest
-      return '*'.repeat(identifier.length - 4) + identifier.slice(-4);
-    }
+    // For email: show first 3 chars and domain, hide the rest
+    const [username, domain] = email.split('@');
+    const maskedUsername =
+      username.slice(0, 3) + '*'.repeat(username.length - 3);
+    return `${maskedUsername}@${domain}`;
   };
 
   return (
     <AuthLayout
       title="Verify reset code"
-      subtitle={`Enter the code sent to ${formatIdentifier(resetIdentifier)}`}
+      subtitle={`Enter the code sent to ${formatEmail(resetEmail)}`}
     >
       {errors.general && (
         <div className="mb-6 p-3 bg-[#f8d7da] border border-[#f5c2c7] text-[#DC3545] rounded-md text-sm">

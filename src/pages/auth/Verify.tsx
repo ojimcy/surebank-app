@@ -16,7 +16,7 @@ function Verify() {
     isVerifyLoading,
     isResendLoading,
     pendingVerification,
-    verificationIdentifier,
+    verificationEmail,
   } = useAuth();
   const navigate = useNavigate();
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -24,7 +24,7 @@ function Verify() {
   // Countdown timer for resend button - moved outside conditional
   useEffect(() => {
     // Only run the effect if we're in verification mode
-    if (pendingVerification && verificationIdentifier) {
+    if (pendingVerification && verificationEmail) {
       const timer =
         countdown > 0 && setInterval(() => setCountdown(countdown - 1), 1000);
       if (countdown === 0) setCanResend(true);
@@ -32,10 +32,10 @@ function Verify() {
         if (timer) clearInterval(timer);
       };
     }
-  }, [countdown, pendingVerification, verificationIdentifier]);
+  }, [countdown, pendingVerification, verificationEmail]);
 
   // Redirect if not in verification flow
-  if (!pendingVerification || !verificationIdentifier) {
+  if (!pendingVerification || !verificationEmail) {
     return <Navigate to="/auth/register" />;
   }
 
@@ -165,7 +165,7 @@ function Verify() {
     <AuthLayout
       title="Verification"
       subtitle={`Enter the 6-digit code we sent to ${maskIdentifier(
-        verificationIdentifier
+        verificationEmail
       )}`}
     >
       {error && (

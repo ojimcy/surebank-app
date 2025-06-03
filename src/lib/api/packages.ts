@@ -49,7 +49,7 @@ export interface IBPackage {
   earlyWithdrawalPenalty: number;
   status: string;
   maturityDate: string;
-  accruedInterest: number;
+  interestAccrued: number;
   createdAt: string;
   updatedAt: string;
   startDate: string;
@@ -123,6 +123,12 @@ export interface WithdrawalParams {
   target?: string;
   accountNumber?: string;
   product?: string;
+}
+
+export interface IBWithdrawalParams {
+  packageId: string;
+  amount: number;
+  isEarlyWithdrawal?: boolean;
 }
 
 // Interface for package contributions
@@ -258,7 +264,6 @@ const packagesApi = {
       payload.redirect_url = redirectUrl;
     }
     
-    console.log('API Request - IBS Payment - Payload:', payload);
     
     try {
       const response = await api.post<InitiatePaymentResponse>(
@@ -266,11 +271,11 @@ const packagesApi = {
         payload
       );
       
-      console.log('API Response - IBS Payment:', response.data);
+      
       
       // Handle nested response format if necessary
       if (response.data.data && response.data.success) {
-        console.log('API Response - IBS Payment - Nested data detected');
+        
         // If the response is nested in a 'data' property, extract it
         return {
           reference: response.data.data.reference || '',
@@ -284,7 +289,7 @@ const packagesApi = {
       
       // Ensure we always have normalized properties
       if (response.data.authorization_url && !response.data.authorizationUrl) {
-        console.log('API Response - IBS Payment - Normalizing snake_case to camelCase');
+        
         response.data.authorizationUrl = response.data.authorization_url;
       }
       
@@ -408,6 +413,17 @@ const packagesApi = {
         amount: data.amount
       };
     }
+    const response = await api.post(endpoint, payload);
+    return response.data;
+  },
+
+  // Process a withdrawal from an Interest-Based Savings package
+  requestIBWithdrawal: async (data: IBWithdrawalParams): Promise<{ success: boolean; message: string; transactionId?: string }> => {
+    const endpoint = `/interest-savings/package/${data.packageId}/request-withdrawal`;
+    const payload = {
+      amount: data.amount,
+    };
+    
     const response = await api.post(endpoint, payload);
     return response.data;
   },
