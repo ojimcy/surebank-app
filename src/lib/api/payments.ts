@@ -9,6 +9,18 @@ interface WithdrawalRequestParams {
   bankAccountName: string;
 }
 
+interface MultiAccountWithdrawalParams {
+  withdrawalAccounts: Array<{
+    accountNumber: string;
+    amount: number;
+  }>;
+  bankName: string;
+  bankCode: string;
+  bankAccountNumber: string;
+  bankAccountName: string;
+  reason?: string;
+}
+
 interface BankAccount {
   accountName: string;
   accountNumber: string;
@@ -28,6 +40,50 @@ interface Bank {
   longcode?: string;
 }
 
+interface AccountWithBalance {
+  _id: string;
+  accountNumber: string;
+  accountType: string;
+  availableBalance: number;
+  ledgerBalance: number;
+  heldAmount: number;
+  accountManager: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+  };
+  branch: {
+    _id: string;
+    name: string;
+  };
+  status: string;
+}
+
+interface MultiWithdrawalResponse {
+  withdrawalRequests: Array<{
+    _id: string;
+    userId: string;
+    accountNumber: string;
+    amount: number;
+    status: string;
+    narration: string;
+    relatedWithdrawalGroup: string;
+    date: number;
+    createdAt: string;
+  }>;
+  totalAmount: number;
+  groupId: string;
+  summary: {
+    accountsCount: number;
+    totalAmount: number;
+    bankDetails: {
+      bankName: string;
+      bankAccountNumber: string;
+      bankAccountName: string;
+    };
+  };
+}
+
 const paymentsApi = {
   /**
    * Create a withdrawal request
@@ -36,6 +92,25 @@ const paymentsApi = {
    */
   createWithdrawalRequest: async (params: WithdrawalRequestParams) => {
     const response = await api.post('/payments/withdrawal/request', params);
+    return response.data;
+  },
+
+  /**
+   * Get user accounts with balances for withdrawal selection
+   * @returns List of user accounts with balance information
+   */
+  getUserAccountsWithBalances: async (): Promise<AccountWithBalance[]> => {
+    const response = await api.get('/accounts/self/balances');
+    return response.data;
+  },
+
+  /**
+   * Create multi-account withdrawal request
+   * @param params Multi-account withdrawal parameters
+   * @returns Multi-account withdrawal response
+   */
+  createMultiAccountWithdrawalRequest: async (params: MultiAccountWithdrawalParams): Promise<MultiWithdrawalResponse> => {
+    const response = await api.post('/payments/withdrawal/multi-request', params);
     return response.data;
   },
 
@@ -98,5 +173,8 @@ const paymentsApi = {
     }
   },
 };
+
+// Export types for use in components
+export type { AccountWithBalance, MultiAccountWithdrawalParams, MultiWithdrawalResponse };
 
 export default paymentsApi;

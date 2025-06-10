@@ -40,6 +40,7 @@ import PinLock from '@/pages/auth/PinLock';
 import SetupPin from '@/pages/settings/SetupPin';
 import PinSettings from '@/pages/settings/PinSettings';
 import AccountDetail from '@/pages/dashboard/AccountDetail';
+import ManageBankAccounts from '@/pages/settings/ManageBankAccounts';
 import { ThemeProvider } from '@/lib/theme-provider';
 import { AuthProvider } from '@/lib/auth-provider';
 import { PinProvider } from '@/lib/pin-provider';
@@ -106,6 +107,7 @@ function AppRoutes() {
             <Route path="/settings/pin-settings" element={<PinSettings />} />
             <Route path="/settings/notifications" element={<Notifications />} />
             <Route path="/settings/personal-information" element={<PersonalInformation />} />
+            <Route path="/settings/manage-bank-accounts" element={<ManageBankAccounts />} />
             <Route path="/settings/kyc" element={<KycVerification />} />
             <Route path="/settings/kyc/bvn" element={<KycBvnVerification />} />
             <Route path="/settings/kyc/id" element={<KycVerification />} />

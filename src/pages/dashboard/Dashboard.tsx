@@ -1,6 +1,6 @@
 import { useAuth } from '@/hooks/useAuth';
 import { useState, useMemo } from 'react';
-import { WelcomeCard } from '@/components/dashboard/WelcomeCard';
+// import { WelcomeCard } from '@/components/dashboard/WelcomeCard';
 import { BalanceCard } from '@/components/dashboard/BalanceCard';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { SavingsPackages } from '@/components/dashboard/SavingsPackages';
@@ -12,6 +12,7 @@ import { usePackageQueries } from '@/hooks/queries/usePackageQueries';
 import { memo } from 'react';
 import { formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Announcements } from '@/components/dashboard/Announcements';
 
 function Dashboard() {
   const { user } = useAuth();
@@ -82,7 +83,7 @@ function Dashboard() {
   return (
     <div className="space-y-6">
       {/* User Welcome Card */}
-      <WelcomeCard user={user || null} />
+      {/* <WelcomeCard user={user || null} /> */}
 
       {/* Enhanced Balance Card */}
       <BalanceCard
@@ -97,6 +98,9 @@ function Dashboard() {
         accounts={accounts}
         refreshBalance={refetchAccounts}
       />
+
+      {/* Announcements */}
+      <Announcements user={user || null} />
 
       {/* Quick Actions */}
       <QuickActions />

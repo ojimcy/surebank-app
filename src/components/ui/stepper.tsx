@@ -11,12 +11,12 @@ export function Stepper({ steps, currentStep, onStepClick }: StepperProps) {
     <div className="w-full py-4">
       <div className="flex items-center justify-between">
         {steps.map((step, index) => (
-          <div key={index} className="flex flex-col items-center">
+          <div key={index} className="flex flex-col items-center relative">
             <div className="relative flex items-center">
               {/* Line before */}
               {index > 0 && (
                 <div 
-                  className={`h-0.5 w-10 md:w-20 -ml-5 md:-ml-10 ${
+                  className={`h-0.5 w-4 sm:w-8 md:w-20 -ml-2 sm:-ml-4 md:-ml-10 ${
                     index <= currentStep ? 'bg-[#0066A1]' : 'bg-gray-300'
                   }`} 
                 />
@@ -26,7 +26,7 @@ export function Stepper({ steps, currentStep, onStepClick }: StepperProps) {
               <button
                 onClick={() => onStepClick && index < currentStep && onStepClick(index)}
                 disabled={!onStepClick || index > currentStep}
-                className={`h-8 w-8 rounded-full flex items-center justify-center ${
+                className={`h-6 w-6 sm:h-8 sm:w-8 rounded-full flex items-center justify-center ${
                   index < currentStep
                     ? 'bg-[#0066A1] text-white cursor-pointer'
                     : index === currentStep
@@ -37,7 +37,7 @@ export function Stepper({ steps, currentStep, onStepClick }: StepperProps) {
                 {index < currentStep ? (
                   <svg 
                     xmlns="http://www.w3.org/2000/svg" 
-                    className="h-5 w-5" 
+                    className="h-3 w-3 sm:h-5 sm:w-5" 
                     fill="none" 
                     viewBox="0 0 24 24" 
                     stroke="currentColor"
@@ -50,14 +50,14 @@ export function Stepper({ steps, currentStep, onStepClick }: StepperProps) {
                     />
                   </svg>
                 ) : (
-                  <span>{index + 1}</span>
+                  <span className="text-xs sm:text-sm">{index + 1}</span>
                 )}
               </button>
               
               {/* Line after */}
               {index < steps.length - 1 && (
                 <div 
-                  className={`h-0.5 w-10 md:w-20 -mr-5 md:-mr-10 ${
+                  className={`h-0.5 w-4 sm:w-8 md:w-20 -mr-2 sm:-mr-4 md:-mr-10 ${
                     index < currentStep ? 'bg-[#0066A1]' : 'bg-gray-300'
                   }`} 
                 />
@@ -66,11 +66,15 @@ export function Stepper({ steps, currentStep, onStepClick }: StepperProps) {
             
             {/* Step label */}
             <span 
-              className={`mt-2 text-xs md:text-sm text-center ${
+              className={`mt-1 sm:mt-2 text-[10px] sm:text-xs md:text-sm max-w-[60px] sm:max-w-none text-center ${
                 index <= currentStep ? 'text-[#0066A1] font-medium' : 'text-gray-500'
               }`}
             >
-              {step}
+              {/* For mobile, show abbreviated text or just numbers */}
+              <span className="hidden sm:inline">{step}</span>
+              <span className="inline sm:hidden">
+                {step.length > 10 ? `${step.substring(0, 8)}...` : step}
+              </span>
             </span>
           </div>
         ))}

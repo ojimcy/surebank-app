@@ -316,13 +316,23 @@ const parseDate = (
 function PackageList() {
   const [showFabMenu, setShowFabMenu] = useState(false);
   const [activeTab, setActiveTab] = useState<'packages' | 'types'>('packages');
-  const [filteredType, setFilteredType] = useState<string>('packages');
+  const [filteredType, setFilteredType] = useState<string>('all');
+  const [filteredStatus, setFilteredStatus] = useState<string>('all');
   const [packages, setPackages] = useState<UIPackage[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [showFilterPanel, setShowFilterPanel] = useState<boolean>(false);
 
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // Available statuses for filter
+  const statusOptions = [
+    { value: 'all', label: 'All Statuses' },
+    { value: 'Active', label: 'Active' },
+    { value: 'Closed', label: 'Closed' },
+    { value: 'Pending', label: 'Pending' },
+  ];
 
   useEffect(() => {
     const fetchPackages = async () => {
@@ -518,16 +528,29 @@ function PackageList() {
     }
   };
 
-  // Filter packages by type if needed
-  const filteredPackages =
-    filteredType === 'all'
-      ? packages
-      : packages.filter((pkg) => {
-          if (filteredType === 'daily') return pkg.type === 'Daily Savings';
-          if (filteredType === 'interest') return pkg.type === 'Interest-Based';
-          if (filteredType === 'sb') return pkg.type === 'SB Package';
-          return true;
-        });
+  // Filter packages by type and status, and sort by status (active first)
+  const filteredPackages = packages
+    .filter((pkg) => {
+      // Filter by type
+      if (filteredType !== 'all') {
+        if (filteredType === 'daily' && pkg.type !== 'Daily Savings') return false;
+        if (filteredType === 'interest' && pkg.type !== 'Interest-Based') return false;
+        if (filteredType === 'sb' && pkg.type !== 'SB Package') return false;
+      }
+      
+      // Filter by status
+      if (filteredStatus !== 'all' && pkg.status !== filteredStatus) {
+        return false;
+      }
+      
+      return true;
+    })
+    .sort((a, b) => {
+      // Sort by status - Active packages first
+      if (a.status === 'Active' && b.status !== 'Active') return -1;
+      if (a.status !== 'Active' && b.status === 'Active') return 1;
+      return 0;
+    });
 
   return (
     <div className="space-y-6 pb-20 relative">
@@ -539,22 +562,16 @@ function PackageList() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <select
-            className="text-sm border border-gray-300 rounded-md p-1.5 bg-white"
-            value={filteredType}
-            onChange={(e) => setFilteredType(e.target.value)}
+        <div className="flex items-center">
+          <button 
+            className={`p-2 rounded-md relative ${showFilterPanel ? 'bg-blue-100' : 'bg-gray-100'}`} 
+            onClick={() => setShowFilterPanel(!showFilterPanel)}
             disabled={loading}
+            aria-label="Filter packages"
           >
-            <option value="all">All Types</option>
-            <option value="daily">Daily Savings</option>
-            <option value="interest">Interest-Based</option>
-            <option value="sb">SB Package</option>
-          </select>
-          <button className="bg-gray-100 p-2 rounded-md" disabled={loading}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 text-gray-600"
+              className={`h-5 w-5 ${showFilterPanel ? 'text-blue-600' : 'text-gray-600'}`}
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -566,10 +583,86 @@ function PackageList() {
                 d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
               />
             </svg>
+            {/* Show badge when filters are active */}
+            {(filteredType !== 'all' || filteredStatus !== 'all') && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                !
+              </span>
+            )}
           </button>
         </div>
       </div>
 
+      {/* Filter Panel */}
+      <AnimatePresence>
+        {showFilterPanel && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="bg-gray-50 rounded-lg p-4 mb-4 overflow-hidden"
+          >
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="typeFilter" className="block text-sm font-medium text-gray-700 mb-1">
+                  Package Type
+                </label>
+                <select
+                  id="typeFilter"
+                  className="w-full text-sm border border-gray-300 rounded-md p-2 bg-white"
+                  value={filteredType}
+                  onChange={(e) => setFilteredType(e.target.value)}
+                  disabled={loading}
+                >
+                  <option value="all">All Types</option>
+                  <option value="daily">Daily Savings</option>
+                  <option value="interest">Interest-Based</option>
+                  <option value="sb">SB Package</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="statusFilter" className="block text-sm font-medium text-gray-700 mb-1">
+                  Status
+                </label>
+                <select
+                  id="statusFilter"
+                  className="w-full text-sm border border-gray-300 rounded-md p-2 bg-white"
+                  value={filteredStatus}
+                  onChange={(e) => setFilteredStatus(e.target.value)}
+                  disabled={loading}
+                >
+                  {statusOptions.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-span-1 sm:col-span-2 mt-2 flex gap-3">
+                <button 
+                  className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-md text-sm font-medium hover:bg-gray-300 transition-colors"
+                  onClick={() => {
+                    setFilteredType('all');
+                    setFilteredStatus('all');
+                  }}
+                  disabled={loading || (filteredType === 'all' && filteredStatus === 'all')}
+                >
+                  Clear Filters
+                </button>
+                <button 
+                  className="flex-1 bg-[#0066A1] text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-[#005585] transition-colors"
+                  onClick={() => setShowFilterPanel(false)}
+                  disabled={loading}
+                >
+                  Apply Filters
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
       {/* Tabs */}
       <div className="flex border-b border-gray-200">
         <button

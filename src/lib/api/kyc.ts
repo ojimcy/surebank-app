@@ -25,7 +25,7 @@ const kycApi = {
    * Submit ID verification request
    */
   submitIdVerification: async (data: KycIdVerificationPayload): Promise<KycResponse> => {
-    const response = await api.post<KycResponse>('/kyc/submit', data);
+    const response = await api.post<KycResponse>('/kyc', data);
     return response.data;
   },
   

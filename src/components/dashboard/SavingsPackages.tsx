@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback, memo } from 'react';
+import { useEffect, useRef, useState, useCallback, memo, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { SavingsPackage } from './types';
 
@@ -15,19 +15,74 @@ export const SavingsPackages = memo(function SavingsPackages({
   const sliderRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Filter packages to show max 3 with preference for active and different types
+  const filteredPackages = useMemo(() => {
+    // If we have 3 or fewer packages, show all of them
+    if (packages.length <= 3) return packages;
+    
+    // First, prioritize active packages
+    const activePackages = packages.filter(pkg => pkg.status === 'active');
+    
+    // Get unique package types
+    const uniqueTypes = [...new Set(packages.map(pkg => pkg.type))];
+    
+    // If we have 3 or fewer unique types, get one package of each type
+    const selectedPackages: SavingsPackage[] = [];
+    
+    // Try to get one active package of each type first
+    uniqueTypes.forEach(type => {
+      if (selectedPackages.length < 3) {
+        // First look for active packages of this type
+        const activePackageOfType = activePackages.find(pkg => 
+          pkg.type === type && !selectedPackages.includes(pkg)
+        );
+        
+        if (activePackageOfType) {
+          selectedPackages.push(activePackageOfType);
+        } else {
+          // If no active package of this type, get any package of this type
+          const packageOfType = packages.find(pkg => 
+            pkg.type === type && !selectedPackages.includes(pkg)
+          );
+          if (packageOfType) selectedPackages.push(packageOfType);
+        }
+      }
+    });
+    
+    // If we still have fewer than 3 packages, add more active packages first
+    if (selectedPackages.length < 3) {
+      activePackages.forEach(pkg => {
+        if (selectedPackages.length < 3 && !selectedPackages.includes(pkg)) {
+          selectedPackages.push(pkg);
+        }
+      });
+      
+      // If still fewer than 3, add any remaining packages
+      if (selectedPackages.length < 3) {
+        packages.forEach(pkg => {
+          if (selectedPackages.length < 3 && !selectedPackages.includes(pkg)) {
+            selectedPackages.push(pkg);
+          }
+        });
+      }
+    }
+    
+    return selectedPackages;
+  }, [packages]);
+
   // Handle slide change for savings packages with useCallback
   const handleSlideChange = useCallback(
     (index: number) => {
       setActiveSlide(index);
       if (sliderRef.current) {
-        const slideWidth = sliderRef.current.scrollWidth / packages.length;
+        const slideWidth = sliderRef.current.scrollWidth / filteredPackages.length;
         sliderRef.current.scrollTo({
           left: slideWidth * index,
           behavior: 'smooth',
         });
       }
     },
-    [packages.length]
+    [filteredPackages.length]
   );
 
   // Setup and cleanup auto slide timer
@@ -38,9 +93,9 @@ export const SavingsPackages = memo(function SavingsPackages({
     }
 
     // Only set up the interval if we have packages
-    if (packages.length > 0) {
+    if (filteredPackages.length > 0) {
       intervalRef.current = setInterval(() => {
-        const nextSlide = (activeSlide + 1) % packages.length;
+        const nextSlide = (activeSlide + 1) % filteredPackages.length;
         handleSlideChange(nextSlide);
       }, 5000);
     }
@@ -52,7 +107,7 @@ export const SavingsPackages = memo(function SavingsPackages({
         intervalRef.current = null;
       }
     };
-  }, [activeSlide, packages.length, handleSlideChange]);
+  }, [activeSlide, filteredPackages.length, handleSlideChange]);
 
   return (
     <div className="py-2">
@@ -86,7 +141,7 @@ export const SavingsPackages = memo(function SavingsPackages({
         className="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory gap-4 pb-4"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
-        {packages.map((pkg) => (
+        {filteredPackages.map((pkg) => (
           <Link
             to={`/packages/${pkg.id}`}
             key={pkg.title}
@@ -209,7 +264,7 @@ export const SavingsPackages = memo(function SavingsPackages({
 
       {/* Slider pagination dots */}
       <div className="flex justify-center mt-4 gap-2">
-        {packages.map((_, index) => (
+        {filteredPackages.map((_, index) => (
           <button
             key={index}
             className={`w-2 h-2 rounded-full transition-all ${
