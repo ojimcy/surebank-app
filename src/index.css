@@ -11,7 +11,7 @@
   -moz-osx-font-smoothing: grayscale;
 
   --foreground-rgb: 0, 0, 0;
-  --background-rgb: 255, 255, 255;
+  --background-rgb: 248, 250, 252;
   
   /* Safe area inset variables with fallbacks */
   --sat: env(safe-area-inset-top, 0px);
@@ -71,4 +71,23 @@ body {
 
 .animate-accordion-up {
   animation: accordion-up 0.2s ease-out;
+}
+
+/* Override pure white backgrounds with a softer color for better eye comfort */
+.bg-white {
+  background-color: #f8fafc !important; /* Tailwind's slate-50 - softer than pure white */
+}
+
+/* For cases where we might need actual white (like for logos, icons, etc.) */
+.bg-pure-white {
+  background-color: #ffffff !important;
+}
+
+/* Also update any white overlays to be softer */
+.bg-white\/60 {
+  background-color: rgb(248 250 252 / 0.6) !important;
+}
+
+.bg-white\/80 {
+  background-color: rgb(248 250 252 / 0.8) !important;
 }

@@ -151,7 +151,7 @@ export function PackageDetailsAccordion({
                   <p>{interestRate}</p>
                 </div>
                 <div>
-                  <p className="font-medium text-gray-700">Interest Accrued</p>
+                  <p className="font-medium text-gray-700">Earned so far</p>
                   <p className="text-green-600">
                     {formatCurrency(
                       (currentBalance || 0) - (principalAmount || 0)

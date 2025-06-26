@@ -15,7 +15,7 @@ export default {
           foreground: '#FFFFFF',
         },
         card: {
-          DEFAULT: '#FFFFFF',
+          DEFAULT: '#f8fafc', // Changed from #FFFFFF to softer slate-50
           foreground: '#000000',
         },
         input: {

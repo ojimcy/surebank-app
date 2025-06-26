@@ -123,7 +123,7 @@ const authApi = {
     identifier: string
   ): Promise<{ success: boolean }> => {
     const response = await api.post<{ success: boolean }>(
-      '/auth/resend-verification',
+      '/auth/send-verification-email',
       { identifier }
     );
     return response.data;

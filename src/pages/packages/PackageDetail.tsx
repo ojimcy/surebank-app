@@ -234,7 +234,6 @@ function PackageDetail() {
 
   // Fetch contributions for a package
   const fetchContributions = async (packageId: string, limit?: number) => {
-    if (packageData?.type === 'Interest-Based') return;
     try {
       setContributionsLoading(true);
       const contributionsData = await packagesApi.getPackageContributions(packageId, limit);
@@ -379,8 +378,10 @@ function PackageDetail() {
 
         setPackageData(foundPackage as UIPackage);
 
-        // Fetch real contribution data
-        await fetchContributions(id, 7); // Fetch latest 7 contributions
+        // Fetch real contribution data if it's not an interest-based package
+        if (foundPackage.type !== 'Interest-Based') {
+          await fetchContributions(id, 7); // Fetch latest 7 contributions
+        }
       } catch (error) {
         console.error('Error fetching package details:', error);
         addToast({
