@@ -1,13 +1,56 @@
 <!DOCTYPE html>
 <html lang="en" class="light">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SureBank App -</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy"
+    content="script-src 'self' 'unsafe-inline' 'unsafe-eval'; object-src 'none'; base-uri 'self';">
+  <title>SureBank App -</title>
+
+  <script>
+    // Prevent browser extension conflicts
+    (function () {
+      // Override console.error to catch and ignore extension errors
+      const originalError = console.error;
+      console.error = function (...args) {
+        const errorString = args.join(' ');
+
+        // Ignore known extension errors
+        if (errorString.includes('chrome-extension://') ||
+          errorString.includes('Cannot read properties of null') && errorString.includes('type')) {
+          return; // Silently ignore extension errors
+        }
+
+        // Log other errors normally
+        originalError.apply(console, args);
+      };
+
+      // Prevent uncaught extension errors from breaking the app
+      window.addEventListener('error', function (event) {
+        if (event.filename && event.filename.includes('chrome-extension://')) {
+          event.preventDefault();
+          event.stopPropagation();
+          return false;
+        }
+      });
+
+      // Handle unhandled promise rejections from extensions
+      window.addEventListener('unhandledrejection', function (event) {
+        if (event.reason && event.reason.stack &&
+          event.reason.stack.includes('chrome-extension://')) {
+          event.preventDefault();
+          return false;
+        }
+      });
+    })();
+  </script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>

@@ -467,11 +467,11 @@ function PackageList() {
     filteredType === 'all'
       ? packages
       : packages.filter((pkg) => {
-          if (filteredType === 'daily') return pkg.type === 'Daily Savings';
-          if (filteredType === 'interest') return pkg.type === 'Interest-Based';
-          if (filteredType === 'sb') return pkg.type === 'SB Package';
-          return true;
-        });
+        if (filteredType === 'daily') return pkg.type === 'Daily Savings';
+        if (filteredType === 'interest') return pkg.type === 'Interest-Based';
+        if (filteredType === 'sb') return pkg.type === 'SB Package';
+        return true;
+      });
 
   return (
     <div className="space-y-6 pb-20 relative">
@@ -517,22 +517,20 @@ function PackageList() {
       {/* Tabs */}
       <div className="flex border-b border-gray-200">
         <button
-          className={`py-2 px-4 text-sm font-medium ${
-            activeTab === 'packages'
+          className={`py-2 px-4 text-sm font-medium ${activeTab === 'packages'
               ? 'text-[#0066A1] border-b-2 border-[#0066A1]'
               : 'text-gray-500 hover:text-gray-700'
-          }`}
+            }`}
           onClick={() => setActiveTab('packages')}
           disabled={loading}
         >
           My Packages
         </button>
         <button
-          className={`py-2 px-4 text-sm font-medium ${
-            activeTab === 'types'
+          className={`py-2 px-4 text-sm font-medium ${activeTab === 'types'
               ? 'text-[#0066A1] border-b-2 border-[#0066A1]'
               : 'text-gray-500 hover:text-gray-700'
-          }`}
+            }`}
           onClick={() => setActiveTab('types')}
           disabled={loading}
         >

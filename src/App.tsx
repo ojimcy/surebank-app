@@ -32,6 +32,7 @@ import { LoaderProvider } from '@/lib/loader-provider';
 import { setupSafeArea } from '@/lib/safe-area';
 import AuthGuard from '@/components/auth/AuthGuard';
 import PinGuard from '@/components/auth/PinGuard';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 // Auth routes don't need the main layout
 function AuthRoutes() {
@@ -122,20 +123,22 @@ function App() {
   }, []);
 
   return (
-    // Order matters - innermost context is first
-    <ThemeProvider>
-      <QueryProvider>
-        <ToastProvider>
-          <AuthProvider>
-            <PinProvider>
-              <LoaderProvider>
-                <MainRoutes />
-              </LoaderProvider>
-            </PinProvider>
-          </AuthProvider>
-        </ToastProvider>
-      </QueryProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      {/* Order matters - innermost context is first */}
+      <ThemeProvider>
+        <QueryProvider>
+          <ToastProvider>
+            <AuthProvider>
+              <PinProvider>
+                <LoaderProvider>
+                  <MainRoutes />
+                </LoaderProvider>
+              </PinProvider>
+            </AuthProvider>
+          </ToastProvider>
+        </QueryProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 
