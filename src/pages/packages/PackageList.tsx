@@ -333,31 +333,65 @@ function PackageList() {
         }));
 
         // Process IB packages
-        const ibPackagesProcessed = ibPackages.map((pkg) => ({
-          id: pkg.id || pkg._id,
-          title: pkg.name || 'Interest Savings',
-          type: 'Interest-Based' as const,
-          icon: 'trending-up',
-          progress:
-            pkg.targetAmount && pkg.targetAmount > 0
-              ? Math.floor(
-                ((pkg.totalContribution || pkg.principalAmount) / pkg.targetAmount) * 100
-              )
-              : 100, // Default to 100% if no target amount is set
-          current: pkg.totalContribution || (pkg.principalAmount + pkg.accruedInterest),
-          target: pkg.targetAmount || pkg.principalAmount,
-          color: '#28A745',
-          statusColor: getStatusColor(pkg.status),
-          status: formatStatus(pkg.status),
-          accountNumber: pkg.accountNumber || 'N/A',
-          interestRate: `${pkg.interestRate}% p.a.`,
-          maturityDate: formatDate(pkg.maturityDate),
-          lastContribution: 'Not available',
-          nextContribution: 'Not available',
-          startDate: pkg.startDate || formatDate(pkg.createdAt),
-          endDate: pkg.endDate || formatDate(pkg.maturityDate),
-          productImage: getRandomPackageImage('Interest-Based'),
-        }));
+        const ibPackagesProcessed = ibPackages.map((pkg) => {
+          // Calculate time-based progress for IBS packages
+          const calculateTimeProgress = (startDate: string | number, maturityDate: string | number): number => {
+            const parseDate = (dateValue: string | number): Date => {
+              if (typeof dateValue === 'string' && /^\d+$/.test(dateValue)) {
+                const timestamp = parseInt(dateValue);
+                return new Date(timestamp < 1000000000000 ? timestamp * 1000 : timestamp);
+              }
+              return new Date(dateValue);
+            };
+
+            const start = parseDate(startDate);
+            const maturity = parseDate(maturityDate);
+            const current = new Date();
+
+            if (isNaN(start.getTime()) || isNaN(maturity.getTime())) {
+              return 100; // Default if dates are invalid
+            }
+
+            const totalDuration = maturity.getTime() - start.getTime();
+            const elapsedDuration = current.getTime() - start.getTime();
+
+            // If package hasn't started yet
+            if (elapsedDuration < 0) return 0;
+
+            // If package has matured
+            if (current >= maturity) return 100;
+
+            // Calculate time-based progress
+            if (totalDuration <= 0) return 100;
+
+            const progress = Math.min(100, Math.max(0, (elapsedDuration / totalDuration) * 100));
+            return Math.floor(progress);
+          };
+
+          return {
+            id: pkg.id || pkg._id,
+            title: pkg.name || 'Interest Savings',
+            type: 'Interest-Based' as const,
+            icon: 'trending-up',
+            progress: calculateTimeProgress(
+              pkg.startDate || pkg.createdAt,
+              pkg.maturityDate
+            ),
+            current: pkg.totalContribution || (pkg.principalAmount + pkg.accruedInterest),
+            target: pkg.targetAmount || pkg.principalAmount,
+            color: '#28A745',
+            statusColor: getStatusColor(pkg.status),
+            status: formatStatus(pkg.status),
+            accountNumber: pkg.accountNumber || 'N/A',
+            interestRate: `${pkg.interestRate}% p.a.`,
+            maturityDate: formatDate(pkg.maturityDate),
+            lastContribution: 'Not available',
+            nextContribution: 'Not available',
+            startDate: pkg.startDate || formatDate(pkg.createdAt),
+            endDate: pkg.endDate || formatDate(pkg.maturityDate),
+            productImage: getRandomPackageImage('Interest-Based'),
+          };
+        });
 
         // Combine all packages
         setPackages([

@@ -1,211 +1,156 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/lib/toast-provider';
 import packagesApi from '@/lib/api/packages';
-import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
-import { PackageHeader } from '@/components/packages/PackageHeader';
-import { PackageOverview } from '@/components/packages/PackageOverview';
-import { PackageActions } from '@/components/packages/PackageActions';
-import { ContributionTimeline } from '@/components/packages/ContributionTimeline';
-import { PackageDetailsAccordion } from '@/components/packages/PackageDetailsAccordion';
-
-// Unified package interface for the UI
-interface UIPackage {
-  id: string;
-  title: string;
-  type: 'Daily Savings' | 'Interest-Based' | 'SB Package';
-  icon: string;
-  progress: number;
-  current: number;
-  target: number;
-  color: string;
-  statusColor: string;
-  status: string;
-  accountNumber: string;
-  lastContribution?: string;
-  nextContribution?: string;
-  interestRate?: string;
-  maturityDate?: string;
-  productImage?: string;
-  totalContribution: number;
-  amountPerDay: number;
-  startDate: string;
-  endDate?: string;
-}
-
-// Contribution interface
-interface Contribution {
-  id: string;
-  amount: number;
-  date: string;
-  status: string;
-}
-
-// Get random image based on package type
-const getRandomPackageImage = (
-  packageType: string,
-  target?: string,
-  productImage?: string
-): string => {
-  // Default fallback images by package type
-  const fallbackImages = {
-    'Daily Savings':
-      'https://images.unsplash.com/photo-1579621970590-9d624316904b?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3',
-    'Interest-Based':
-      'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3',
-    'SB Package':
-      'https://images.unsplash.com/photo-1607863680198-23d4b2565a5f?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3',
-  };
-
-  return (
-    productImage ||
-    fallbackImages[packageType as keyof typeof fallbackImages] ||
-    fallbackImages['Daily Savings']
-  );
-};
+import { DSPackageData, SBPackageData, IBSPackageData, PackageUtilities, Contribution } from '@/components/packages/shared/types';
+import { DSPackageDetail } from './DSPackageDetail';
+import { SBPackageDetail } from './SBPackageDetail';
+import { IBSPackageDetail } from './IBSPackageDetail';
 
 function PackageDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { addToast } = useToast();
 
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [packageData, setPackageData] = useState<UIPackage | null>(null);
+  const [packageData, setPackageData] = useState<DSPackageData | SBPackageData | IBSPackageData | null>(null);
   const [contributions, setContributions] = useState<Contribution[]>([]);
-  const [showAddDialog, setShowAddDialog] = useState<boolean>(false);
-  const [showEditDialog, setShowEditDialog] = useState<boolean>(false);
-  const [showCloseDialog, setShowCloseDialog] = useState<boolean>(false);
-  const [showMergeDialog, setShowMergeDialog] = useState<boolean>(false);
-  const [showChangeProductDialog, setShowChangeProductDialog] =
-    useState<boolean>(false);
-  const [showBuyDialog, setShowBuyDialog] = useState<boolean>(false);
-  const [showWithdrawDialog, setShowWithdrawDialog] = useState<boolean>(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Format currency
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  // Format date
-  const formatDate = (dateString: string): string => {
-    if (!dateString) return 'N/A';
-
-    try {
-      // Handle numeric timestamps (milliseconds since epoch)
-      const timestamp = parseInt(dateString);
-      if (!isNaN(timestamp)) {
-        const date = new Date(timestamp);
-        return date.toLocaleDateString('en-NG', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-        });
-      }
-
-      // Handle string dates
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) {
-        return 'Invalid date';
-      }
-
-      return date.toLocaleDateString('en-NG', {
-        year: 'numeric',
-        month: 'short',
+  // Utility functions
+  const utilities: PackageUtilities = {
+    formatCurrency: (amount: number) => {
+      return new Intl.NumberFormat('en-NG', {
+        style: 'currency',
+        currency: 'NGN',
+        minimumFractionDigits: 2,
+      }).format(amount);
+    },
+    formatDate: (date: string) => {
+      return new Date(date).toLocaleDateString('en-NG', {
         day: 'numeric',
+        month: 'short',
+        year: 'numeric',
       });
-    } catch (error) {
-      console.error('Error formatting date:', error);
-      return 'Invalid date';
-    }
+    },
+    formatStatus: (status: string) => {
+      return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+    },
   };
 
-  // Get status color
+  // Helper functions
+  const safeParseNumber = (value: string | number | null | undefined): number => {
+    if (value === null || value === undefined) return 0;
+
+    // Handle string values
+    if (typeof value === 'string') {
+      // Remove any non-numeric characters except decimal point and negative sign
+      const cleaned = value.replace(/[^0-9.-]/g, '');
+      const parsed = parseFloat(cleaned);
+      return isNaN(parsed) ? 0 : parsed;
+    }
+
+    // Handle numeric values
+    if (typeof value === 'number') {
+      return isNaN(value) ? 0 : value;
+    }
+
+    return 0;
+  };
+
   const getStatusColor = (status: string): string => {
     switch (status.toLowerCase()) {
-      case 'open':
+      case 'active':
         return 'bg-green-500';
-      case 'closed':
-        return 'bg-red-500';
       case 'pending':
         return 'bg-yellow-500';
       case 'completed':
         return 'bg-blue-500';
+      case 'closed':
+        return 'bg-gray-500';
       default:
-        return 'bg-blue-500';
+        return 'bg-gray-500';
     }
   };
 
-  // Format status
-  const formatStatus = (status: string): string => {
-    switch (status.toLowerCase()) {
-      case 'open':
-        return 'Active';
-      case 'closed':
-        return 'Closed';
-      case 'pending':
-        return 'Pending';
-      case 'completed':
-        return 'Completed';
-      default:
-        return status;
+  const getRandomPackageImage = (packageType: string): string => {
+    const fallbackImages = {
+      'Daily Savings': 'https://images.unsplash.com/photo-1579621970590-9d624316904b?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3',
+      'Interest-Based': 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3',
+      'SB Package': 'https://images.unsplash.com/photo-1607863680198-23d4b2565a5f?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3',
+    };
+    return fallbackImages[packageType as keyof typeof fallbackImages] || fallbackImages['Daily Savings'];
+  };
+
+  // Generate mock contributions for demo purposes
+  const generateMockContributions = (totalAmount: number): Contribution[] => {
+    const safeTotal = safeParseNumber(totalAmount);
+    if (safeTotal <= 0) return [];
+
+    const numContributions = Math.floor(Math.random() * 6) + 3;
+    const mockContributions: Contribution[] = [];
+    const avgContribution = safeTotal / numContributions;
+
+    for (let i = 0; i < numContributions; i++) {
+      const date = new Date();
+      date.setMonth(date.getMonth() - Math.floor(Math.random() * 6));
+
+      mockContributions.push({
+        id: `contrib-${i}`,
+        amount: Math.round(avgContribution * (0.75 + Math.random() * 0.5)),
+        date: date.toISOString(),
+        status: Math.random() > 0.1 ? 'completed' : 'pending',
+      });
     }
+
+    return mockContributions.sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
   };
 
   useEffect(() => {
     if (!id || !user?.id) {
-      setError('Invalid package or user not authenticated');
+      setError('Invalid package ID or user not authenticated');
       setLoading(false);
       return;
     }
 
     const fetchPackageDetail = async () => {
-      setLoading(true);
       try {
-        // Fetch all packages and find the specific one by ID
-        const { dailySavings, sbPackages, ibPackages } =
-          await packagesApi.getAllPackages(user.id);
+        setLoading(true);
+        setError(null);
 
-        // Check in daily savings
+        const { dailySavings, sbPackages, ibPackages } = await packagesApi.getAllPackages(user.id);
+
+        // Check in DS packages
         const dsPackage = dailySavings.find((pkg) => pkg.id === id);
         if (dsPackage) {
-          setPackageData({
+          const totalContribution = safeParseNumber(dsPackage.totalContribution);
+          const targetAmount = safeParseNumber(dsPackage.targetAmount);
+          const amountPerDay = safeParseNumber(dsPackage.amountPerDay);
+
+          const packageData: DSPackageData = {
             id: dsPackage.id,
             title: dsPackage.target || 'Savings Goal',
             type: 'Daily Savings',
-            icon: 'home',
-            progress:
-              dsPackage.targetAmount > 0
-                ? Math.floor(
-                  (dsPackage.totalContribution / dsPackage.targetAmount) * 100
-                )
-                : 0,
-            current: dsPackage.totalContribution,
-            target: dsPackage.targetAmount,
-            color: '#0066A1',
-            statusColor: getStatusColor(dsPackage.status),
-            status: formatStatus(dsPackage.status),
             accountNumber: dsPackage.accountNumber,
-            lastContribution: formatDate(dsPackage.updatedAt),
-            nextContribution: 'Not available',
+            status: utilities.formatStatus(dsPackage.status),
+            statusColor: getStatusColor(dsPackage.status),
+            color: '#0066A1',
             startDate: dsPackage.startDate,
             endDate: dsPackage.endDate,
-            totalContribution: dsPackage.totalContribution,
-            amountPerDay: dsPackage.amountPerDay,
-            productImage: getRandomPackageImage(
-              'Daily Savings',
-              dsPackage.target
-            ),
-          });
+            productImage: getRandomPackageImage('Daily Savings'),
+            totalContribution,
+            progress: targetAmount > 0 ? Math.floor((totalContribution / targetAmount) * 100) : 0,
+            current: totalContribution,
+            target: targetAmount,
+            amountPerDay,
+            nextContribution: 'Tomorrow',
+            lastContribution: utilities.formatDate(dsPackage.updatedAt),
+          };
 
-          // Mock contributions data for demo
-          generateMockContributions(dsPackage.totalContribution);
+          setPackageData(packageData);
+          setContributions(generateMockContributions(totalContribution));
           setLoading(false);
           return;
         }
@@ -213,36 +158,30 @@ function PackageDetail() {
         // Check in SB packages
         const sbPackage = sbPackages.find((pkg) => pkg._id === id);
         if (sbPackage) {
-          setPackageData({
+          const totalContribution = safeParseNumber(sbPackage.totalContribution);
+          const targetAmount = safeParseNumber(sbPackage.targetAmount);
+
+          const packageData: SBPackageData = {
             id: sbPackage._id,
             title: sbPackage.product?.name || 'Product Package',
             type: 'SB Package',
-            icon: 'laptop',
-            progress:
-              sbPackage.targetAmount > 0
-                ? Math.floor(
-                  (sbPackage.totalContribution / sbPackage.targetAmount) * 100
-                )
-                : 0,
-            current: sbPackage.totalContribution,
-            target: sbPackage.targetAmount,
-            color: '#7952B3',
+            accountNumber: sbPackage.accountNumber || 'N/A',
+            status: utilities.formatStatus(sbPackage.status),
             statusColor: getStatusColor(sbPackage.status),
-            status: formatStatus(sbPackage.status),
-            accountNumber: sbPackage.accountNumber,
-            lastContribution: 'Not available',
-            nextContribution: 'Not available',
+            color: '#7952B3',
             startDate: sbPackage.startDate,
             endDate: sbPackage.endDate,
-            totalContribution: sbPackage.totalContribution,
-            amountPerDay: 0,
-            productImage:
-              sbPackage.product?.images?.[0] ||
-              getRandomPackageImage('SB Package', sbPackage.product?.name),
-          });
+            productImage: sbPackage.product?.images?.[0] || getRandomPackageImage('SB Package'),
+            totalContribution,
+            progress: targetAmount > 0 ? Math.floor((totalContribution / targetAmount) * 100) : 0,
+            current: totalContribution,
+            target: targetAmount,
+            productName: sbPackage.product?.name,
+            productPrice: targetAmount,
+          };
 
-          // Mock contributions data for demo
-          generateMockContributions(sbPackage.totalContribution);
+          setPackageData(packageData);
+          setContributions(generateMockContributions(totalContribution));
           setLoading(false);
           return;
         }
@@ -250,36 +189,103 @@ function PackageDetail() {
         // Check in IB packages
         const ibPackage = ibPackages.find((pkg) => pkg.id === id || pkg._id === id);
         if (ibPackage) {
-          setPackageData({
+          // Use API data directly - don't recalculate what the backend already calculated
+          const principalAmount = safeParseNumber(ibPackage.principalAmount) || 0;
+          const interestRate = safeParseNumber(ibPackage.interestRate) || 0;
+          const lockPeriod = safeParseNumber(ibPackage.lockPeriod) || 0;
+
+          // Use the API's calculated values directly
+          const accruedInterest = safeParseNumber(ibPackage.interestAccrued || ibPackage.accruedInterest) || 0;
+          const currentBalance = safeParseNumber(ibPackage.currentBalance) || principalAmount;
+
+
+
+
+
+          // Calculate progress based on time elapsed (not funding)
+          const calculateTimeProgress = (): number => {
+            // Handle timestamp conversion properly
+            const parseDate = (dateValue: string | number | null | undefined): Date => {
+              if (!dateValue) return new Date();
+
+              // If it's a timestamp (number as string)
+              if (typeof dateValue === 'string' && /^\d+$/.test(dateValue)) {
+                const timestamp = parseInt(dateValue);
+                return new Date(timestamp < 1000000000000 ? timestamp * 1000 : timestamp);
+              }
+
+              // If it's already a date string
+              return new Date(dateValue);
+            };
+
+            const startDate = parseDate(ibPackage.startDate || ibPackage.createdAt);
+            const maturityDate = parseDate(ibPackage.maturityDate);
+            const currentDate = new Date();
+
+
+
+            if (isNaN(startDate.getTime()) || isNaN(maturityDate.getTime())) {
+              return 100; // Default to 100% if dates are invalid
+            }
+
+            const totalDuration = maturityDate.getTime() - startDate.getTime();
+            const elapsedDuration = currentDate.getTime() - startDate.getTime();
+
+            // If package hasn't started yet
+            if (elapsedDuration < 0) return 0;
+
+            // If package has matured
+            if (currentDate >= maturityDate) {
+              return 100;
+            }
+
+            // Calculate time-based progress
+            if (totalDuration <= 0) return 100;
+
+            const progress = Math.min(100, Math.max(0, (elapsedDuration / totalDuration) * 100));
+            return Math.floor(progress);
+          };
+
+          // Handle dates properly
+          const formatDateSafely = (dateValue: string | number | null | undefined): string => {
+            if (!dateValue) return new Date().toISOString();
+
+            // If it's a timestamp (number as string)
+            if (typeof dateValue === 'string' && /^\d+$/.test(dateValue)) {
+              const timestamp = parseInt(dateValue);
+              return new Date(timestamp < 1000000000000 ? timestamp * 1000 : timestamp).toISOString();
+            }
+
+            // If it's already a valid date string
+            const date = new Date(dateValue);
+            return isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
+          };
+
+          const packageData: IBSPackageData = {
             id: ibPackage.id || ibPackage._id,
             title: ibPackage.name || 'Interest Savings',
             type: 'Interest-Based',
-            icon: 'trending-up',
-            progress:
-              ibPackage.targetAmount && ibPackage.targetAmount > 0
-                ? Math.floor(
-                  ((ibPackage.totalContribution || ibPackage.principalAmount) / ibPackage.targetAmount) * 100
-                )
-                : 100, // Default to 100% if no target amount is set
-            current: ibPackage.totalContribution || (ibPackage.principalAmount + ibPackage.accruedInterest),
-            target: ibPackage.targetAmount || ibPackage.principalAmount,
-            color: '#28A745',
-            statusColor: getStatusColor(ibPackage.status),
-            status: formatStatus(ibPackage.status),
             accountNumber: ibPackage.accountNumber || 'N/A',
-            interestRate: `${ibPackage.interestRate}% p.a.`,
-            maturityDate: formatDate(ibPackage.maturityDate),
-            lastContribution: 'Not available',
-            nextContribution: 'Not available',
-            startDate: ibPackage.startDate || formatDate(ibPackage.createdAt),
-            endDate: ibPackage.endDate || formatDate(ibPackage.maturityDate),
-            totalContribution: ibPackage.totalContribution || ibPackage.principalAmount,
-            amountPerDay: 0,
+            status: utilities.formatStatus(ibPackage.status),
+            statusColor: getStatusColor(ibPackage.status),
+            color: '#28A745',
+            startDate: formatDateSafely(ibPackage.startDate || ibPackage.createdAt),
+            endDate: formatDateSafely(ibPackage.endDate || ibPackage.maturityDate),
             productImage: getRandomPackageImage('Interest-Based'),
-          });
+            totalContribution: currentBalance,
+            progress: calculateTimeProgress(),
+            current: currentBalance,
+            target: principalAmount,
+            interestRate: interestRate > 0 ? `${interestRate}% p.a.` : 'N/A',
+            maturityDate: formatDateSafely(ibPackage.maturityDate),
+            accruedInterest,
+            principalAmount,
+            lockPeriod,
+            compoundingFrequency: ibPackage.compoundingFrequency,
+            daysToMaturity: Math.max(0, Math.ceil((new Date(ibPackage.maturityDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))),
+          };
 
-          // Mock contributions data for demo
-          generateMockContributions(ibPackage.totalContribution || ibPackage.principalAmount);
+          setPackageData(packageData);
           setLoading(false);
           return;
         }
@@ -294,262 +300,92 @@ function PackageDetail() {
       }
     };
 
-    // Function to generate mock contributions for demo purposes
-    const generateMockContributions = (totalAmount: number) => {
-      // Generate between 3 and 8 contributions
-      const numContributions = Math.floor(Math.random() * 6) + 3;
-      const mockContributions: Contribution[] = [];
-
-      // Calculate a reasonable average contribution
-      const avgContribution = totalAmount / numContributions;
-
-      // Generate contributions with some variance
-      for (let i = 0; i < numContributions; i++) {
-        // Create a date between 6 months ago and now
-        const date = new Date();
-        date.setMonth(date.getMonth() - Math.floor(Math.random() * 6));
-
-        // Create the contribution with some variance in amount
-        mockContributions.push({
-          id: `contrib-${i}`,
-          amount: Math.round(avgContribution * (0.75 + Math.random() * 0.5)),
-          date: date.toISOString(),
-          status: Math.random() > 0.1 ? 'completed' : 'pending',
-        });
-      }
-
-      // Sort by date (newest first)
-      mockContributions.sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-      );
-
-      setContributions(mockContributions);
-    };
-
     fetchPackageDetail();
   }, [id, user]);
 
-  // Handle adding a contribution
-  const handleAddContribution = () => {
-    // Would normally make API call here
-    addToast({
-      title: 'Contribution added',
-      description: 'Your contribution has been successfully added.',
-      variant: 'success',
-    });
-    setShowAddDialog(false);
-  };
-
-  // Handle editing package
-  const handleEditPackage = () => {
-    // Would normally make API call here
-    addToast({
-      title: 'Package updated',
-      description: 'Your package has been successfully updated.',
-      variant: 'success',
-    });
-    setShowEditDialog(false);
-  };
-
-  // Handle closing package
-  const handleClosePackage = () => {
-    // Would normally make API call here
-    addToast({
-      title: 'Package closed',
-      description: 'Your package has been successfully closed.',
-      variant: 'destructive',
-    });
-    setShowCloseDialog(false);
-    navigate('/packages');
-  };
-
-  // Handle merge package
-  const handleMergePackage = () => {
-    addToast({
-      title: 'Merge initiated',
-      description: 'Your package merge has been initiated.',
-      variant: 'success',
-    });
-    setShowMergeDialog(false);
-  };
-
-  // Handle change product
-  const handleChangeProduct = () => {
-    addToast({
-      title: 'Product changed',
-      description: 'Your product has been successfully changed.',
-      variant: 'success',
-    });
-    setShowChangeProductDialog(false);
-  };
-
-  // Handle buy product
-  const handleBuyProduct = () => {
-    addToast({
-      title: 'Purchase initiated',
-      description: 'Your purchase has been initiated.',
-      variant: 'success',
-    });
-    setShowBuyDialog(false);
-  };
-
-  // Handle withdraw
-  const handleWithdraw = () => {
-    addToast({
-      title: 'Withdrawal initiated',
-      description: 'Your withdrawal has been initiated.',
-      variant: 'success',
-    });
-    setShowWithdrawDialog(false);
-  };
-
+  // Loading state
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
+      <div className="flex justify-center items-center py-20">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#0066A1]"></div>
       </div>
     );
   }
 
-  if (error || !packageData) {
+  // Error state
+  if (error) {
     return (
-      <div className="p-4">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mt-4">
-          <p>{error || 'Package not found'}</p>
+      <div className="p-4 max-w-3xl mx-auto">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+          <p>{error}</p>
           <button
             className="mt-2 text-sm font-medium underline"
             onClick={() => navigate('/packages')}
           >
-            Return to packages
+            Back to Packages
           </button>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="p-4 max-w-3xl mx-auto">
-      {/* Package Header */}
-      <PackageHeader
-        title={packageData.title}
-        type={packageData.type}
-        accountNumber={packageData.accountNumber}
-        status={packageData.status}
-        statusColor={packageData.statusColor}
-        color={packageData.color}
-      />
-
-      {/* Package Overview */}
-      <PackageOverview
-        current={packageData.current}
-        target={packageData.target}
-        progress={packageData.progress}
-        color={packageData.color}
-        startDate={packageData.startDate}
-        endDate={packageData.endDate}
-        interestRate={packageData.interestRate}
-        maturityDate={packageData.maturityDate}
-        nextContribution={packageData.nextContribution}
-        productImage={packageData.productImage}
-        type={packageData.type}
-        totalContribution={packageData.totalContribution}
-        amountPerDay={packageData.amountPerDay}
-        formatCurrency={formatCurrency}
-        formatDate={formatDate}
-      />
-
-      {/* Action Buttons */}
-      <PackageActions
-        type={packageData.type}
-        color={packageData.color}
-        onAddContribution={() => setShowAddDialog(true)}
-        onEditPackage={() => setShowEditDialog(true)}
-        onClosePackage={() => setShowCloseDialog(true)}
-        onBuyProduct={() => setShowBuyDialog(true)}
-        onWithdraw={() => setShowWithdrawDialog(true)}
-        onMerge={() => setShowMergeDialog(true)}
-        onChangeProduct={() => setShowChangeProductDialog(true)}
-      />
-
-      {/* Contribution History */}
-      <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-        <h2 className="text-lg font-semibold mb-4">Contribution History</h2>
-        <ContributionTimeline
-          contributions={contributions}
-          formatCurrency={formatCurrency}
-          formatDate={formatDate}
-          formatStatus={formatStatus}
-        />
+  // No package data
+  if (!packageData) {
+    return (
+      <div className="p-4 max-w-3xl mx-auto">
+        <div className="text-center py-12">
+          <p className="text-gray-500">Package not found</p>
+          <button
+            className="mt-2 text-sm font-medium underline text-[#0066A1]"
+            onClick={() => navigate('/packages')}
+          >
+            Back to Packages
+          </button>
+        </div>
       </div>
+    );
+  }
 
-      {/* Package Details Accordion */}
-      <PackageDetailsAccordion
-        type={packageData.type}
-        status={packageData.status}
-        accountNumber={packageData.accountNumber}
-        startDate={packageData.startDate}
-        endDate={packageData.endDate}
-        lastContribution={packageData.lastContribution}
-        formatDate={formatDate}
-        formatStatus={formatStatus}
-      />
-
-      <ConfirmationDialog
-        open={showEditDialog}
-        onOpenChange={setShowEditDialog}
-        title="Edit Package"
-        description="Edit this package details."
-        confirmText="Save Changes"
-        onConfirm={handleEditPackage}
-      />
-
-      <ConfirmationDialog
-        open={showCloseDialog}
-        onOpenChange={setShowCloseDialog}
-        title="Close Package"
-        description="Are you sure you want to close this package? This action cannot be undone."
-        confirmText="Close Package"
-        destructive
-        onConfirm={handleClosePackage}
-      />
-
-      <ConfirmationDialog
-        open={showMergeDialog}
-        onOpenChange={setShowMergeDialog}
-        title="Merge Package"
-        description="Merge this package with another one. This will combine your contributions."
-        confirmText="Merge Packages"
-        onConfirm={handleMergePackage}
-      />
-
-      <ConfirmationDialog
-        open={showChangeProductDialog}
-        onOpenChange={setShowChangeProductDialog}
-        title="Change Product"
-        description="Change the product associated with this package."
-        confirmText="Change Product"
-        onConfirm={handleChangeProduct}
-      />
-
-      <ConfirmationDialog
-        open={showBuyDialog}
-        onOpenChange={setShowBuyDialog}
-        title="Buy Product"
-        description="Complete your purchase for this product package."
-        confirmText="Proceed to Payment"
-        onConfirm={handleBuyProduct}
-      />
-
-      <ConfirmationDialog
-        open={showWithdrawDialog}
-        onOpenChange={setShowWithdrawDialog}
-        title="Withdraw Funds"
-        description="Withdraw your contributed amount to your available balance."
-        confirmText="Withdraw"
-        onConfirm={handleWithdraw}
-      />
-    </div>
-  );
+  // Render appropriate detail component based on package type
+  switch (packageData.type) {
+    case 'Daily Savings':
+      return (
+        <DSPackageDetail
+          packageData={packageData as DSPackageData}
+          contributions={contributions}
+          utilities={utilities}
+        />
+      );
+    case 'SB Package':
+      return (
+        <SBPackageDetail
+          packageData={packageData as SBPackageData}
+          contributions={contributions}
+          utilities={utilities}
+        />
+      );
+    case 'Interest-Based':
+      return (
+        <IBSPackageDetail
+          packageData={packageData as IBSPackageData}
+          utilities={utilities}
+        />
+      );
+    default:
+      return (
+        <div className="p-4 max-w-3xl mx-auto">
+          <div className="text-center py-12">
+            <p className="text-gray-500">Unknown package type</p>
+            <button
+              className="mt-2 text-sm font-medium underline text-[#0066A1]"
+              onClick={() => navigate('/packages')}
+            >
+              Back to Packages
+            </button>
+          </div>
+        </div>
+      );
+  }
 }
 
 export default PackageDetail;

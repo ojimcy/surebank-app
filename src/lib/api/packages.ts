@@ -49,6 +49,9 @@ export interface IBPackage {
   totalContribution?: number;
   startDate?: string;
   endDate?: string;
+  // API calculated values
+  interestAccrued?: number;
+  currentBalance?: number;
 }
 
 // Package creation interfaces
