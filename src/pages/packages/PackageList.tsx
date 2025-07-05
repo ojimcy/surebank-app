@@ -334,26 +334,28 @@ function PackageList() {
 
         // Process IB packages
         const ibPackagesProcessed = ibPackages.map((pkg) => ({
-          id: pkg.id,
-          title: 'Interest Savings',
+          id: pkg.id || pkg._id,
+          title: pkg.name || 'Interest Savings',
           type: 'Interest-Based' as const,
           icon: 'trending-up',
           progress:
-            pkg.targetAmount > 0
-              ? Math.floor((pkg.totalContribution / pkg.targetAmount) * 100)
-              : 0,
-          current: pkg.totalContribution,
-          target: pkg.targetAmount,
+            pkg.targetAmount && pkg.targetAmount > 0
+              ? Math.floor(
+                ((pkg.totalContribution || pkg.principalAmount) / pkg.targetAmount) * 100
+              )
+              : 100, // Default to 100% if no target amount is set
+          current: pkg.totalContribution || (pkg.principalAmount + pkg.accruedInterest),
+          target: pkg.targetAmount || pkg.principalAmount,
           color: '#28A745',
           statusColor: getStatusColor(pkg.status),
           status: formatStatus(pkg.status),
-          accountNumber: pkg.accountNumber,
+          accountNumber: pkg.accountNumber || 'N/A',
           interestRate: `${pkg.interestRate}% p.a.`,
           maturityDate: formatDate(pkg.maturityDate),
           lastContribution: 'Not available',
           nextContribution: 'Not available',
-          startDate: pkg.startDate,
-          endDate: pkg.endDate,
+          startDate: pkg.startDate || formatDate(pkg.createdAt),
+          endDate: pkg.endDate || formatDate(pkg.maturityDate),
           productImage: getRandomPackageImage('Interest-Based'),
         }));
 
@@ -518,8 +520,8 @@ function PackageList() {
       <div className="flex border-b border-gray-200">
         <button
           className={`py-2 px-4 text-sm font-medium ${activeTab === 'packages'
-              ? 'text-[#0066A1] border-b-2 border-[#0066A1]'
-              : 'text-gray-500 hover:text-gray-700'
+            ? 'text-[#0066A1] border-b-2 border-[#0066A1]'
+            : 'text-gray-500 hover:text-gray-700'
             }`}
           onClick={() => setActiveTab('packages')}
           disabled={loading}
@@ -528,8 +530,8 @@ function PackageList() {
         </button>
         <button
           className={`py-2 px-4 text-sm font-medium ${activeTab === 'types'
-              ? 'text-[#0066A1] border-b-2 border-[#0066A1]'
-              : 'text-gray-500 hover:text-gray-700'
+            ? 'text-[#0066A1] border-b-2 border-[#0066A1]'
+            : 'text-gray-500 hover:text-gray-700'
             }`}
           onClick={() => setActiveTab('types')}
           disabled={loading}

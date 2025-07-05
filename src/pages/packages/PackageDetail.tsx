@@ -183,8 +183,8 @@ function PackageDetail() {
             progress:
               dsPackage.targetAmount > 0
                 ? Math.floor(
-                    (dsPackage.totalContribution / dsPackage.targetAmount) * 100
-                  )
+                  (dsPackage.totalContribution / dsPackage.targetAmount) * 100
+                )
                 : 0,
             current: dsPackage.totalContribution,
             target: dsPackage.targetAmount,
@@ -221,8 +221,8 @@ function PackageDetail() {
             progress:
               sbPackage.targetAmount > 0
                 ? Math.floor(
-                    (sbPackage.totalContribution / sbPackage.targetAmount) * 100
-                  )
+                  (sbPackage.totalContribution / sbPackage.targetAmount) * 100
+                )
                 : 0,
             current: sbPackage.totalContribution,
             target: sbPackage.targetAmount,
@@ -248,38 +248,38 @@ function PackageDetail() {
         }
 
         // Check in IB packages
-        const ibPackage = ibPackages.find((pkg) => pkg.id === id);
+        const ibPackage = ibPackages.find((pkg) => pkg.id === id || pkg._id === id);
         if (ibPackage) {
           setPackageData({
-            id: ibPackage.id,
-            title: 'Interest Savings',
+            id: ibPackage.id || ibPackage._id,
+            title: ibPackage.name || 'Interest Savings',
             type: 'Interest-Based',
             icon: 'trending-up',
             progress:
-              ibPackage.targetAmount > 0
+              ibPackage.targetAmount && ibPackage.targetAmount > 0
                 ? Math.floor(
-                    (ibPackage.totalContribution / ibPackage.targetAmount) * 100
-                  )
-                : 0,
-            current: ibPackage.totalContribution,
-            target: ibPackage.targetAmount,
+                  ((ibPackage.totalContribution || ibPackage.principalAmount) / ibPackage.targetAmount) * 100
+                )
+                : 100, // Default to 100% if no target amount is set
+            current: ibPackage.totalContribution || (ibPackage.principalAmount + ibPackage.accruedInterest),
+            target: ibPackage.targetAmount || ibPackage.principalAmount,
             color: '#28A745',
             statusColor: getStatusColor(ibPackage.status),
             status: formatStatus(ibPackage.status),
-            accountNumber: ibPackage.accountNumber,
+            accountNumber: ibPackage.accountNumber || 'N/A',
             interestRate: `${ibPackage.interestRate}% p.a.`,
             maturityDate: formatDate(ibPackage.maturityDate),
             lastContribution: 'Not available',
             nextContribution: 'Not available',
-            startDate: ibPackage.startDate,
-            endDate: ibPackage.endDate,
-            totalContribution: ibPackage.totalContribution,
+            startDate: ibPackage.startDate || formatDate(ibPackage.createdAt),
+            endDate: ibPackage.endDate || formatDate(ibPackage.maturityDate),
+            totalContribution: ibPackage.totalContribution || ibPackage.principalAmount,
             amountPerDay: 0,
             productImage: getRandomPackageImage('Interest-Based'),
           });
 
           // Mock contributions data for demo
-          generateMockContributions(ibPackage.totalContribution);
+          generateMockContributions(ibPackage.totalContribution || ibPackage.principalAmount);
           setLoading(false);
           return;
         }
@@ -492,16 +492,6 @@ function PackageDetail() {
         lastContribution={packageData.lastContribution}
         formatDate={formatDate}
         formatStatus={formatStatus}
-      />
-
-      {/* Dialogs */}
-      <ConfirmationDialog
-        open={showAddDialog}
-        onOpenChange={setShowAddDialog}
-        title="Add Contribution"
-        description="Add a contribution to this package."
-        confirmText="Add"
-        onConfirm={handleAddContribution}
       />
 
       <ConfirmationDialog

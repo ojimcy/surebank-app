@@ -31,6 +31,7 @@ export interface SBPackage {
 
 export interface IBPackage {
   _id: string;
+  id?: string; // Alternative ID field for compatibility
   name: string;
   userId: string;
   principalAmount: number;
@@ -42,6 +43,12 @@ export interface IBPackage {
   accruedInterest: number;
   createdAt: string;
   updatedAt: string;
+  // Additional properties needed for UI compatibility
+  accountNumber?: string;
+  targetAmount?: number;
+  totalContribution?: number;
+  startDate?: string;
+  endDate?: string;
 }
 
 // Package creation interfaces
@@ -95,9 +102,9 @@ const packagesApi = {
   },
 
   // Get Interest-Based packages for a user
-  getIBPackages: async (userId: string): Promise<IBPackage[]> => {
+  getIBPackages: async (): Promise<IBPackage[]> => {
     const response = await api.get<IBPackage[]>(
-      `/interest-package/package?userId=${userId}`
+      `/interest-savings/package`
     );
     return response.data;
   },
@@ -113,7 +120,7 @@ const packagesApi = {
     const [dsResponse, sbResponse, ibResponse] = await Promise.all([
       packagesApi.getDailySavings(userId),
       packagesApi.getSBPackages(userId),
-      packagesApi.getIBPackages(userId),
+      packagesApi.getIBPackages(),
     ]);
 
     return {

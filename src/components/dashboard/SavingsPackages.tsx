@@ -35,7 +35,7 @@ export function SavingsPackages({
 
     return () => clearInterval(interval);
   }, [activeSlide, packages.length]);
-  console.log(packages);
+
   return (
     <div className="py-2">
       <div className="flex justify-between items-center mb-4">

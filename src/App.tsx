@@ -23,6 +23,8 @@ import PinLock from '@/pages/auth/PinLock';
 import SetupPin from '@/pages/settings/SetupPin';
 import PinSettings from '@/pages/settings/PinSettings';
 import AccountDetail from '@/pages/dashboard/AccountDetail';
+import ManageCards from '@/pages/cards/ManageCards';
+import ScheduledContributions from '@/pages/scheduled-contributions/ScheduledContributions';
 import { ThemeProvider } from '@/lib/theme-provider';
 import { AuthProvider } from '@/lib/auth-provider';
 import { PinProvider } from '@/lib/pin-provider';
@@ -82,6 +84,8 @@ function AppRoutes() {
             <Route path="/packages/:id" element={<PackageDetail />} />
             <Route path="/products" element={<ProductCatalog />} />
             <Route path="/accounts/:accountType" element={<AccountDetail />} />
+            <Route path="/cards" element={<ManageCards />} />
+            <Route path="/scheduled-contributions" element={<ScheduledContributions />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/settings/setup-pin" element={<SetupPin />} />
             <Route path="/settings/pin-settings" element={<PinSettings />} />
