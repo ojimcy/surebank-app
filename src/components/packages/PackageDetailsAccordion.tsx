@@ -6,7 +6,11 @@ interface PackageDetailsAccordionProps {
   type: string;
   status: string;
   startDate: string;
+  endDate?: string;
+  accountNumber?: string;
+  lastContribution?: string;
   formatStatus: (status: string) => string;
+  formatDate?: (date: string) => string;
   // Additional fields for different package types
   totalCount?: number;
   amountPerDay?: number;
@@ -35,7 +39,11 @@ export function PackageDetailsAccordion({
   type,
   status,
   startDate,
+  endDate,
+  accountNumber,
+  lastContribution,
   formatStatus,
+  formatDate,
   totalCount,
   amountPerDay,
   productDetails,
@@ -57,6 +65,14 @@ export function PackageDetailsAccordion({
     }).format(amount);
   };
 
+  // Use formatDate if provided, otherwise use formatDateTime
+  const formatDateHelper = (date: string) => {
+    if (formatDate) {
+      return formatDate(date);
+    }
+    return formatDateTime(date);
+  };
+
   return (
     <Accordion.Root type="single" collapsible className="mb-8">
       <Accordion.Item
@@ -69,6 +85,36 @@ export function PackageDetailsAccordion({
         </Accordion.Trigger>
         <Accordion.Content className="bg-white px-4 pb-4 pt-0 data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
           <div className="text-sm text-gray-600 space-y-4">
+            {/* Common Package Details */}
+            <div className="grid grid-cols-2 gap-4 pb-4 border-b">
+              {accountNumber && (
+                <div>
+                  <p className="font-medium text-gray-700">Account Number</p>
+                  <p>{accountNumber}</p>
+                </div>
+              )}
+              <div>
+                <p className="font-medium text-gray-700">Status</p>
+                <p>{formatStatus(status)}</p>
+              </div>
+              <div>
+                <p className="font-medium text-gray-700">Start Date</p>
+                <p>{formatDateHelper(startDate)}</p>
+              </div>
+              {endDate && (
+                <div>
+                  <p className="font-medium text-gray-700">End Date</p>
+                  <p>{formatDateHelper(endDate)}</p>
+                </div>
+              )}
+              {lastContribution && (
+                <div>
+                  <p className="font-medium text-gray-700">Last Contribution</p>
+                  <p>{formatDateHelper(lastContribution)}</p>
+                </div>
+              )}
+            </div>
+
             {/* Daily Savings Package Details */}
             {type === 'Daily Savings' && (
               <div className="grid grid-cols-2 gap-4">
@@ -79,14 +125,6 @@ export function PackageDetailsAccordion({
                 <div>
                   <p className="font-medium text-gray-700">Amount Per Day</p>
                   <p>{formatCurrency(amountPerDay || 0)}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-gray-700">Start Date</p>
-                  <p>{formatDateTime(startDate)}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-gray-700">Status</p>
-                  <p>{formatStatus(status)}</p>
                 </div>
               </div>
             )}
@@ -112,10 +150,6 @@ export function PackageDetailsAccordion({
                   <p className="font-medium text-gray-700">Remaining Balance</p>
                   <p>{formatCurrency(remainingBalance || 0)}</p>
                 </div>
-                <div>
-                  <p className="font-medium text-gray-700">Start Date</p>
-                  <p>{formatDateTime(startDate)}</p>
-                </div>
               </div>
             )}
 
@@ -139,12 +173,8 @@ export function PackageDetailsAccordion({
                   <p>{lockPeriod} days</p>
                 </div>
                 <div>
-                  <p className="font-medium text-gray-700">Start Date</p>
-                  <p>{formatDateTime(startDate)}</p>
-                </div>
-                <div>
                   <p className="font-medium text-gray-700">Maturity Date</p>
-                  <p>{formatDateTime(maturityDate || '')}</p>
+                  <p>{formatDateHelper(maturityDate || '')}</p>
                 </div>
                 <div>
                   <p className="font-medium text-gray-700">Interest Rate</p>
@@ -157,10 +187,6 @@ export function PackageDetailsAccordion({
                       (currentBalance || 0) - (principalAmount || 0)
                     )}
                   </p>
-                </div>
-                <div>
-                  <p className="font-medium text-gray-700">Status</p>
-                  <p>{formatStatus(status)}</p>
                 </div>
               </div>
             )}

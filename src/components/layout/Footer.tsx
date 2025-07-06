@@ -31,10 +31,9 @@ function Footer() {
             <NavLink
               to="/"
               className={({ isActive }) =>
-                `p-2 flex flex-col items-center transition-all duration-200 ${
-                  isActive
-                    ? 'text-[#0066A1]'
-                    : 'text-[#6c757d] hover:text-[#0066A1] hover:scale-110'
+                `p-2 flex flex-col items-center transition-all duration-200 ${isActive
+                  ? 'text-[#0066A1]'
+                  : 'text-[#6c757d] hover:text-[#0066A1] hover:scale-110'
                 }`
               }
             >
@@ -59,10 +58,9 @@ function Footer() {
             <NavLink
               to="/packages"
               className={({ isActive }) =>
-                `p-2 flex flex-col items-center transition-all duration-200 ${
-                  isActive
-                    ? 'text-[#0066A1]'
-                    : 'text-[#6c757d] hover:text-[#0066A1] hover:scale-110'
+                `p-2 flex flex-col items-center transition-all duration-200 ${isActive
+                  ? 'text-[#0066A1]'
+                  : 'text-[#6c757d] hover:text-[#0066A1] hover:scale-110'
                 }`
               }
             >
@@ -92,7 +90,7 @@ function Footer() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 20 }}
                     transition={{ duration: 0.2 }}
-                    className="absolute bottom-16 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg border border-gray-200 p-2 w-48 z-50"
+                    className="absolute bottom-16 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg border border-gray-200 p-2 w-52 z-50"
                   >
                     <Link
                       to="/payments/deposit"
@@ -163,6 +161,53 @@ function Footer() {
                       </div>
                       <span className="text-sm font-medium">Withdraw</span>
                     </Link>
+                    {/* <div className="w-full h-px bg-gray-200 my-1"></div>
+                    <Link
+                      to="/cards"
+                      className="flex items-center gap-3 p-2 hover:bg-gray-100 rounded-md"
+                      onClick={() => setShowFabMenu(false)}
+                    >
+                      <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4 text-yellow-600"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                          />
+                        </svg>
+                      </div>
+                      <span className="text-sm font-medium">My Cards</span>
+                    </Link>
+                    <Link
+                      to="/schedules"
+                      className="flex items-center gap-3 p-2 hover:bg-gray-100 rounded-md"
+                      onClick={() => setShowFabMenu(false)}
+                    >
+                      <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4 text-indigo-600"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                      </div>
+                      <span className="text-sm font-medium">Schedules</span>
+                    </Link> */}
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -196,10 +241,9 @@ function Footer() {
             <NavLink
               to="/packages/new/sb"
               className={({ isActive }) =>
-                `p-2 flex flex-col items-center transition-all duration-200 ${
-                  isActive
-                    ? 'text-[#0066A1]'
-                    : 'text-[#6c757d] hover:text-[#0066A1] hover:scale-110'
+                `p-2 flex flex-col items-center transition-all duration-200 ${isActive
+                  ? 'text-[#0066A1]'
+                  : 'text-[#6c757d] hover:text-[#0066A1] hover:scale-110'
                 }`
               }
             >
@@ -224,10 +268,9 @@ function Footer() {
             <NavLink
               to="/settings"
               className={({ isActive }) =>
-                `p-2 flex flex-col items-center transition-all duration-200 ${
-                  isActive
-                    ? 'text-[#0066A1]'
-                    : 'text-[#6c757d] hover:text-[#0066A1] hover:scale-110'
+                `p-2 flex flex-col items-center transition-all duration-200 ${isActive
+                  ? 'text-[#0066A1]'
+                  : 'text-[#6c757d] hover:text-[#0066A1] hover:scale-110'
                 }`
               }
             >

@@ -6,6 +6,7 @@ interface PackageHeaderProps {
   status: string;
   statusColor: string;
   color: string;
+  accountNumber?: string;
 }
 
 export function PackageHeader({
@@ -14,6 +15,7 @@ export function PackageHeader({
   status,
   statusColor,
   color,
+  accountNumber,
 }: PackageHeaderProps) {
   const navigate = useNavigate();
 
@@ -47,7 +49,7 @@ export function PackageHeader({
       <div className="flex justify-between items-start mb-6">
         <div>
           <h1 className="text-2xl font-bold">{title}</h1>
-          <div className="flex items-center mt-1">
+          <div className="flex items-center mt-1 gap-2">
             <span
               className="px-2 py-1 text-xs rounded-full"
               style={{
@@ -57,6 +59,11 @@ export function PackageHeader({
             >
               {type}
             </span>
+            {accountNumber && (
+              <span className="text-xs text-gray-500">
+                Acc: {accountNumber}
+              </span>
+            )}
           </div>
         </div>
         <div

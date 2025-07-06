@@ -40,7 +40,7 @@ function Settings() {
             </h2>
             <p className="text-gray-500">{user?.email || 'No email'}</p>
           </div>
-          <button 
+          <button
             onClick={() => navigate('/settings/personal-information')}
             className="ml-auto bg-[#0066A1] text-white rounded-md px-4 py-2 text-sm"
           >
@@ -56,7 +56,7 @@ function Settings() {
           <h3 className="font-bold text-lg mb-3">Account Settings</h3>
           <ul className="space-y-3">
             <li>
-              <button 
+              <button
                 onClick={() => navigate('/settings/personal-information')}
                 className="w-full flex items-center justify-between py-2 cursor-pointer"
               >
@@ -102,7 +102,7 @@ function Settings() {
             </li>
 
             <li>
-              <button 
+              <button
                 onClick={() => navigate('/settings/kyc')}
                 className="w-full flex items-center justify-between py-2 cursor-pointer"
               >
@@ -203,7 +203,7 @@ function Settings() {
             </li>
 
             <li>
-              <button 
+              <button
                 onClick={() => navigate('/auth/forgot-password')}
                 className="w-full flex items-center justify-between py-2 cursor-pointer"
               >
@@ -384,6 +384,141 @@ function Settings() {
             </li>
           </ul>
         </div>
+
+        {/* Payment Management */}
+        {/* <div className="p-4">
+          <h3 className="font-bold text-lg mb-3">Payment Management</h3>
+          <ul className="space-y-3">
+            <li>
+              <button className="w-full flex items-center justify-between py-2 cursor-pointer" onClick={() => navigate('/cards')}>
+                <div className="flex text-left">
+                  <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 text-[#0066A1]"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <span className="block">Stored Cards</span>
+                    <span className="text-xs text-gray-500">
+                      Manage your saved payment cards
+                    </span>
+                  </div>
+                </div>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </button>
+            </li>
+
+            <li>
+              <button className="w-full flex items-center justify-between py-2 cursor-pointer" onClick={() => navigate('/schedules')}>
+                <div className="flex text-left">
+                  <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 text-[#0066A1]"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <span className="block">Scheduled Contributions</span>
+                    <span className="text-xs text-gray-500">
+                      Manage your recurring payments
+                    </span>
+                  </div>
+                </div>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </button>
+            </li>
+
+            <li>
+              <button className="w-full flex items-center justify-between py-2 cursor-pointer" onClick={() => navigate('/settings/manage-bank-accounts')}>
+                <div className="flex text-left">
+                  <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 text-[#0066A1]"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <span className="block">Bank Accounts</span>
+                    <span className="text-xs text-gray-500">
+                      Manage your linked bank accounts
+                    </span>
+                  </div>
+                </div>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </button>
+            </li>
+          </ul>
+        </div> */}
 
         {/* App Preferences */}
         <div className="p-4">

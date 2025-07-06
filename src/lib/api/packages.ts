@@ -8,7 +8,6 @@ export interface DailySavingsPackage {
   target: string;
   targetAmount: number;
   totalContribution: number;
-  totalCount?: number;
   status: string;
   startDate: string;
   createdAt: string;
@@ -18,7 +17,6 @@ export interface DailySavingsPackage {
 
 export interface SBPackage {
   _id: string;
-  id: string;
   accountNumber: string;
   targetAmount: number;
   totalContribution: number;
@@ -26,44 +24,31 @@ export interface SBPackage {
   startDate: string;
   endDate?: string;
   product?: {
-    id: string;
     name: string;
-    description?: string;
-    costPrice?: number;
-    sellingPrice?: number;
-    discount?: number;
-    quantity?: number;
     images?: string[];
   };
 }
 
 export interface IBPackage {
   _id: string;
+  id?: string; // Alternative ID field for compatibility
   name: string;
   userId: string;
-  accountNumber: string;
   principalAmount: number;
   interestRate: number;
   lockPeriod: number;
   compoundingFrequency: string;
-  earlyWithdrawalPenalty: number;
   status: string;
   maturityDate: string;
-  interestAccrued: number;
+  accruedInterest: number;
   createdAt: string;
   updatedAt: string;
-  startDate: string;
-  endDate: string;
-  totalContribution: number;
-  currentBalance: number;
-}
-
-export interface InterestRateOption {
-  id: string;
-  rate: number;
-  minLockPeriod: number;
-  maxLockPeriod: number;
-  description?: string;
+  // Additional properties needed for UI compatibility
+  accountNumber?: string;
+  targetAmount?: number;
+  totalContribution?: number;
+  startDate?: string;
+  endDate?: string;
 }
 
 // Package creation interfaces
@@ -77,92 +62,25 @@ export interface CreateSBPackageParams {
   targetAmount?: number;
 }
 
-export interface InitiateIBSPackageParams {
+export interface InitiateIBPackageParams {
   name: string;
   principalAmount: number;
-  interestRate?: number;
+  interestRate: number;
   lockPeriod: number;
-  earlyWithdrawalPenalty?: number;
-  redirectUrl?: string;
-  callbackUrl?: string;
+  compoundingFrequency?: string;
 }
 
-export interface CreateIBSPackageParams extends InitiateIBSPackageParams {
+export interface CreateIBPackageParams extends InitiateIBPackageParams {
   paymentReference: string;
 }
 
-export interface InitiatePaymentResponse {
+export interface InitiateIBPackageResponse {
   reference: string;
   authorization_url: string;
-  access_code?: string;
-  authorizationUrl?: string;
-  accessCode?: string;
-  principalAmount?: number;
-  interestRate?: number;
-  lockPeriod?: number;
-  success?: boolean;
-  data?: {
-    reference?: string;
-    authorization_url?: string;
-    access_code?: string;
-  };
-}
-
-// Interface for initializing a contribution through Paystack
-export interface InitiateContributionParams {
-  packageId: string;
-  amount: number;
-  packageType: 'ds' | 'sb';
-  redirect_url?: string;
-}
-
-// Interface for withdrawal request
-export interface WithdrawalParams {
-  packageId: string;
-  amount: number;
-  target?: string;
-  accountNumber?: string;
-  product?: string;
-}
-
-export interface IBWithdrawalParams {
-  packageId: string;
-  amount: number;
-  isEarlyWithdrawal?: boolean;
-}
-
-// Interface for package contributions
-export interface PackageContribution {
-  paymentMethod: string;
-  amount: number;
-  accountNumber: string;
-  packageId: string;
-  count: number;
-  totalCount: number;
-  date: number;
-  narration: string;
-  paystackReference: string;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  id: string;
-}
-
-// Package change product interface
-export interface ChangeProductParams {
-  newProductId: string;
-}
-
-// Add payment status interface
-export interface PaymentStatus {
-  reference: string;
-  status: 'pending' | 'success' | 'failed' | 'abandoned';
-  amount: number;
-  packageId?: string;
-  packageType?: 'ds' | 'sb' | 'ibs';
-  createdAt: string;
-  updatedAt: string;
-  metadata?: Record<string, unknown>;
+  access_code: string;
+  principalAmount: number;
+  interestRate: number;
+  lockPeriod: number;
 }
 
 // Packages API functions
@@ -183,32 +101,10 @@ const packagesApi = {
     return response.data;
   },
 
-  // Get SureBank package by ID
-  getSBPackageById: async (id: string): Promise<SBPackage> => {
-    const response = await api.get<SBPackage>(
-      `/daily-savings/sb/package/${id}`
-    );
-    return response.data;
-  },
-
   // Get Interest-Based packages for a user
   getIBPackages: async (): Promise<IBPackage[]> => {
-    const response = await api.get<IBPackage[]>(`/interest-savings/package`);
-    return response.data;
-  },
-
-  // Get Interest-Based package by ID
-  getIBPackageById: async (id: string): Promise<IBPackage> => {
-    const response = await api.get<IBPackage>(
-      `/interest-savings/package/${id}`
-    );
-    return response.data;
-  },
-
-  // Get Interest-Based package by payment reference
-  getIBPackageByReference: async (reference: string): Promise<IBPackage> => {
-    const response = await api.get<IBPackage>(
-      `/interest-savings/package/reference?reference=${reference}`
+    const response = await api.get<IBPackage[]>(
+      `/interest-savings/package`
     );
     return response.data;
   },
@@ -254,67 +150,28 @@ const packagesApi = {
     return response.data;
   },
 
-  // Initiate payment for an Interest-Based Savings package
-  initiateIBSPackagePayment: async (
-    data: InitiateIBSPackageParams
-  ): Promise<InitiatePaymentResponse> => {
-    const { redirectUrl, ...restData } = data;
-    const payload: Omit<InitiateIBSPackageParams, 'redirectUrl'> & { redirect_url?: string } = { ...restData };
-    if (redirectUrl) {
-      payload.redirect_url = redirectUrl;
-    }
-    
-    
-    try {
-      const response = await api.post<InitiatePaymentResponse>(
-        '/interest-savings/package/init-payment',
-        payload
-      );
-      
-      
-      
-      // Handle nested response format if necessary
-      if (response.data.data && response.data.success) {
-        
-        // If the response is nested in a 'data' property, extract it
-        return {
-          reference: response.data.data.reference || '',
-          authorization_url: response.data.data.authorization_url || '',
-          access_code: response.data.data.access_code || '',
-          // Add normalized camelCase properties for easier use
-          authorizationUrl: response.data.data.authorization_url || '',
-          accessCode: response.data.data.access_code || '',
-        };
-      }
-      
-      // Ensure we always have normalized properties
-      if (response.data.authorization_url && !response.data.authorizationUrl) {
-        
-        response.data.authorizationUrl = response.data.authorization_url;
-      }
-      
-      return response.data;
-    } catch (error) {
-      console.error('API Error - IBS Payment:', error);
-      throw error;
-    }
+  // Initiate payment for Interest-Based package
+  initiateIBPackagePayment: async (
+    data: InitiateIBPackageParams
+  ): Promise<InitiateIBPackageResponse> => {
+    const response = await api.post<InitiateIBPackageResponse>(
+      '/interest-package/package/initiate-payment',
+      data
+    );
+    return response.data;
   },
 
-  // Create a new Interest-Based Savings package after payment
-  createIBSPackage: async (
-    data: CreateIBSPackageParams
-  ): Promise<IBPackage> => {
+  // Create a new Interest-Based package
+  createIBPackage: async (data: CreateIBPackageParams): Promise<IBPackage> => {
     const response = await api.post<IBPackage>(
-      '/interest-savings/package',
+      '/interest-package/package',
       data
     );
     return response.data;
   },
 
   // Check if user has required account type
-  checkAccountType: async (
-    accountType: 'ds' | 'sb' | 'ibs'
-  ): Promise<boolean> => {
+  checkAccountType: async (accountType: 'ds' | 'sb'): Promise<boolean> => {
     try {
       const response = await api.get(
         `/self-accounts?accountType=${accountType}`
@@ -324,140 +181,6 @@ const packagesApi = {
       console.error('Error checking account type:', error);
       return false;
     }
-  },
-
-  // Get available interest rates
-  getInterestRateOptions: async (): Promise<InterestRateOption[]> => {
-    const response = await api.get<InterestRateOption[]>(
-      '/interest-savings/rate-options'
-    );
-    return response.data;
-  },
-
-  // Initialize a contribution payment
-  initializeContribution: async (
-    data: InitiateContributionParams
-  ): Promise<InitiatePaymentResponse> => {
-    // Map package type to contribution type for API
-    const contributionType = 
-      data.packageType === 'ds' 
-        ? 'daily_savings' 
-        : 'savings_buying';
-
-    // Create payload with correct parameters
-    const payloadData = {
-      packageId: data.packageId,
-      amount: data.amount,
-      contributionType,
-      redirect_url: data.redirect_url,
-    };
-
-    try {
-      const response = await api.post<InitiatePaymentResponse>(
-        '/payments/init-contribution',
-        payloadData
-      );
-      
-      // Handle nested response format if necessary
-      if (response.data.data && response.data.success) {
-        // If the response is nested in a 'data' property, extract it
-        const extractedData = {
-          reference: response.data.data.reference || '',
-          authorization_url: response.data.data.authorization_url || '',
-          access_code: response.data.data.access_code || '',
-          // Add normalized camelCase properties for easier use
-          authorizationUrl: response.data.data.authorization_url || '',
-          accessCode: response.data.data.access_code || '',
-        };
-        return extractedData;
-      }
-      
-      // Ensure we always have normalized properties
-      if (response.data.authorization_url && !response.data.authorizationUrl) {
-        response.data.authorizationUrl = response.data.authorization_url;
-      }
-      
-      return response.data;
-    } catch (error) {
-      console.error('API Error:', error);
-      if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as { response?: { status: number; data: unknown } };
-        if (axiosError.response) {
-          console.error('API Error - Status:', axiosError.response.status);
-          console.error('API Error - Data:', JSON.stringify(axiosError.response.data));
-        }
-      }
-      throw error;
-    }
-  },
-
-  // Process a withdrawal from a package
-  withdrawFromPackage: async (data: WithdrawalParams, packageType: 'ds' | 'sb'): Promise<{ success: boolean; message: string }> => {
-    let endpoint = '';
-    let payload = {};
-    
-    if (packageType === 'ds') {
-      // Daily Savings withdrawal
-      endpoint = `/daily-savings/withdraw/?packageId=${data.packageId}`;
-      payload = {
-        target: data.target,
-        accountNumber: data.accountNumber,
-        amount: data.amount
-      };
-    } else {
-      // SB Package withdrawal
-      endpoint = `/daily-savings/sb/withdraw/?packageId=${data.packageId}`;
-      payload = {
-        product: data.target, // Using target as product ID
-        accountNumber: data.accountNumber,
-        amount: data.amount
-      };
-    }
-    const response = await api.post(endpoint, payload);
-    return response.data;
-  },
-
-  // Process a withdrawal from an Interest-Based Savings package
-  requestIBWithdrawal: async (data: IBWithdrawalParams): Promise<{ success: boolean; message: string; transactionId?: string }> => {
-    const endpoint = `/interest-savings/package/${data.packageId}/request-withdrawal`;
-    const payload = {
-      amount: data.amount,
-    };
-    
-    const response = await api.post(endpoint, payload);
-    return response.data;
-  },
-
-  // Get contributions for a package
-  getPackageContributions: async (packageId: string, limit?: number): Promise<PackageContribution[]> => {
-    const endpoint = `/payments/packages/${packageId}/contributions`;
-    const params = limit ? `?limit=${limit}` : '';
-    const response = await api.get<PackageContribution[]>(`${endpoint}${params}`);
-    return response.data;
-  },
-  
-  // Change product for an SB package
-  changeProduct: async (packageId: string, data: ChangeProductParams): Promise<SBPackage> => {
-    const response = await api.patch<SBPackage>(
-      `/daily-savings/sb/package/${packageId}`,
-      data
-    );
-    return response.data;
-  },
-
-  // Merge SB packages
-  mergePackages: async (packageFromId: string, packageToId: string): Promise<SBPackage> => {
-    const response = await api.post('/daily-savings/sb/package/merge', {
-      packageFromId,
-      packageToId,
-    });
-    return response.data;
-  },
-
-  // Check payment status by reference
-  checkPaymentStatus: async (reference: string): Promise<PaymentStatus> => {
-    const response = await api.get<PaymentStatus>(`/payments/status/${reference}`);
-    return response.data;
   },
 };
 

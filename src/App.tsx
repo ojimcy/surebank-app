@@ -41,6 +41,12 @@ import SetupPin from '@/pages/settings/SetupPin';
 import PinSettings from '@/pages/settings/PinSettings';
 import AccountDetail from '@/pages/dashboard/AccountDetail';
 import ManageBankAccounts from '@/pages/settings/ManageBankAccounts';
+import CardsList from '@/pages/cards/CardsList';
+import AddCard from '@/pages/cards/AddCard';
+import CardDetail from '@/pages/cards/CardDetail';
+import SchedulesList from '@/pages/schedules/SchedulesList';
+import CreateSchedule from '@/pages/schedules/CreateSchedule';
+import ScheduleDetail from '@/pages/schedules/ScheduleDetail';
 import { ThemeProvider } from '@/lib/theme-provider';
 import { AuthProvider } from '@/lib/auth-provider';
 import { PinProvider } from '@/lib/pin-provider';
@@ -118,6 +124,12 @@ function AppRoutes() {
             <Route path="/payments/error" element={<PaymentError />} />
             <Route path="/payments/history" element={<TransactionHistory />} />
             <Route path="/payments/transaction/:transactionId" element={<TransactionDetails />} />
+            <Route path="/cards" element={<CardsList />} />
+            <Route path="/cards/add" element={<AddCard />} />
+            <Route path="/cards/:id" element={<CardDetail />} />
+            <Route path="/schedules" element={<SchedulesList />} />
+            <Route path="/schedules/create" element={<CreateSchedule />} />
+            <Route path="/schedules/:id" element={<ScheduleDetail />} />
             <Route path="/pin-lock" element={<PinLock />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

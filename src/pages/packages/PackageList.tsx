@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-import packagesApi, { IBPackage as APIIBPackage } from '@/lib/api/packages';
-import { formatDateTime } from '@/lib/utils';
+import packagesApi from '@/lib/api/packages';
 
 // Unified package interface for the UI
 interface UIPackage {
@@ -27,16 +26,6 @@ interface UIPackage {
   startDate: string;
   endDate?: string;
   amountPerDay?: number;
-  estimatedEarnings?: number;
-  totalCount?: number;
-  totalContribution?: number;
-  // Add IBS-specific fields
-  compoundingFrequency?: string;
-  lockPeriod?: number;
-  interestAccrued?: number;
-  earlyWithdrawalPenalty?: number;
-  currentBalance?: number;
-  principalAmount?: number;
 }
 
 // Available package types
@@ -266,73 +255,16 @@ const getRandomPackageImage = (
   );
 };
 
-// Unified date handling functions
-const isTimestamp = (value: string | number): boolean => {
-  const numberValue = typeof value === 'string' ? Number(value) : value;
-  return !isNaN(numberValue) && numberValue > 1000000000000; // Simple check for unix timestamp (in ms)
-};
-
-const parseDate = (
-  dateInput: string | number | Date | undefined
-): Date | null => {
-  if (!dateInput) return null;
-
-  try {
-    // Already a Date object
-    if (dateInput instanceof Date) return dateInput;
-
-    // Handle numeric timestamps (milliseconds since epoch)
-    if (isTimestamp(dateInput)) {
-      return new Date(Number(dateInput));
-    }
-
-    // Try to parse as ISO date string
-    const date = new Date(dateInput);
-    if (!isNaN(date.getTime())) {
-      return date;
-    }
-
-    // If it's a formatted date string (e.g., "1st May, 2026"),
-    // log warning and return null - we should avoid this case
-    if (
-      typeof dateInput === 'string' &&
-      (dateInput.includes('st ') ||
-        dateInput.includes('nd ') ||
-        dateInput.includes('rd ') ||
-        dateInput.includes('th '))
-    ) {
-      console.warn('Attempting to parse an already formatted date:', dateInput);
-      return null;
-    }
-
-    console.error('Failed to parse date:', dateInput);
-    return null;
-  } catch (error) {
-    console.error('Error parsing date:', error, dateInput);
-    return null;
-  }
-};
-
 function PackageList() {
   const [showFabMenu, setShowFabMenu] = useState(false);
   const [activeTab, setActiveTab] = useState<'packages' | 'types'>('packages');
-  const [filteredType, setFilteredType] = useState<string>('all');
-  const [filteredStatus, setFilteredStatus] = useState<string>('all');
+  const [filteredType, setFilteredType] = useState<string>('packages');
   const [packages, setPackages] = useState<UIPackage[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [showFilterPanel, setShowFilterPanel] = useState<boolean>(false);
 
   const { user } = useAuth();
   const navigate = useNavigate();
-
-  // Available statuses for filter
-  const statusOptions = [
-    { value: 'all', label: 'All Statuses' },
-    { value: 'Active', label: 'Active' },
-    { value: 'Closed', label: 'Closed' },
-    { value: 'Pending', label: 'Pending' },
-  ];
 
   useEffect(() => {
     const fetchPackages = async () => {
@@ -358,17 +290,16 @@ function PackageList() {
           type: 'Daily Savings' as const,
           icon: 'home',
           progress:
-          pkg.totalCount
-            ? Math.floor((pkg.totalCount / 30) * 100)
-            : 0,
-          current: pkg.amountPerDay,
+            pkg.targetAmount > 0
+              ? Math.floor((pkg.totalContribution / pkg.targetAmount) * 100)
+              : 0,
+          current: pkg.totalContribution,
           target: pkg.targetAmount,
-          totalContribution: pkg.totalContribution,
           color: '#0066A1',
           statusColor: getStatusColor(pkg.status),
           status: formatStatus(pkg.status),
           accountNumber: pkg.accountNumber,
-          lastContribution: pkg.updatedAt,
+          lastContribution: formatDate(pkg.updatedAt),
           nextContribution: calculateNextContribution(pkg.amountPerDay),
           amountPerDay: pkg.amountPerDay,
           startDate: pkg.startDate,
@@ -388,7 +319,6 @@ function PackageList() {
               : 0,
           current: pkg.totalContribution,
           target: pkg.targetAmount,
-          totalContribution: pkg.totalContribution,
           color: '#7952B3',
           statusColor: getStatusColor(pkg.status),
           status: formatStatus(pkg.status),
@@ -403,58 +333,31 @@ function PackageList() {
         }));
 
         // Process IB packages
-        const ibPackagesProcessed = ibPackages.map((pkg: APIIBPackage) => {
-          // Use our parse function to ensure proper date handling
-          const startDate = parseDate(pkg.startDate);
-          const maturityDate = parseDate(pkg.maturityDate);
-          const currentDate = new Date();
-
-          // Calculate time-based progress for IBP
-          let timeProgress = 0;
-
-          if (startDate && maturityDate) {
-            // Calculate progress as percentage of time elapsed
-            const totalDuration = maturityDate.getTime() - startDate.getTime();
-            const elapsedDuration = currentDate.getTime() - startDate.getTime();
-            timeProgress =
-              totalDuration > 0
-                ? Math.min(
-                    100,
-                    Math.floor((elapsedDuration / totalDuration) * 100)
-                  )
-                : 0;
-          }
-
-          return {
-            id: pkg._id,
-            title: pkg.name || 'Interest Savings',
-            type: 'Interest-Based' as const,
-            icon: 'trending-up',
-            progress: timeProgress, // Time-based progress instead of amount-based
-            current: pkg.currentBalance,
-            target: pkg.principalAmount,
-            totalContribution: pkg.totalContribution,
-            color: '#28A745',
-            statusColor: getStatusColor(pkg.status),
-            status: formatStatus(pkg.status),
-            accountNumber: pkg.accountNumber,
-            interestRate: `${pkg.interestRate}% p.a.`,
-            maturityDate: pkg.maturityDate,
-            lastContribution: 'Not available',
-            nextContribution: 'Not available',
-            startDate: pkg.startDate,
-            endDate: pkg.maturityDate,
-            productImage: getRandomPackageImage('Interest-Based'),
-            // Add additional fields from the actual data structure
-            compoundingFrequency: pkg.compoundingFrequency || 'N/A',
-            lockPeriod: pkg.lockPeriod || undefined,
-            interestAccrued: pkg.interestAccrued || 0, // Note: API uses accruedInterest
-            earlyWithdrawalPenalty: pkg.earlyWithdrawalPenalty || undefined,
-            currentBalance: pkg.currentBalance, // Use principal as current balance
-            // Calculate estimated earnings if interest hasn't accrued yet
-            estimatedEarnings: pkg.interestAccrued,
-          };
-        });
+        const ibPackagesProcessed = ibPackages.map((pkg) => ({
+          id: pkg.id || pkg._id,
+          title: pkg.name || 'Interest Savings',
+          type: 'Interest-Based' as const,
+          icon: 'trending-up',
+          progress:
+            pkg.targetAmount && pkg.targetAmount > 0
+              ? Math.floor(
+                ((pkg.totalContribution || pkg.principalAmount) / pkg.targetAmount) * 100
+              )
+              : 100, // Default to 100% if no target amount is set
+          current: pkg.totalContribution || (pkg.principalAmount + pkg.accruedInterest),
+          target: pkg.targetAmount || pkg.principalAmount,
+          color: '#28A745',
+          statusColor: getStatusColor(pkg.status),
+          status: formatStatus(pkg.status),
+          accountNumber: pkg.accountNumber || 'N/A',
+          interestRate: `${pkg.interestRate}% p.a.`,
+          maturityDate: formatDate(pkg.maturityDate),
+          lastContribution: 'Not available',
+          nextContribution: 'Not available',
+          startDate: pkg.startDate || formatDate(pkg.createdAt),
+          endDate: pkg.endDate || formatDate(pkg.maturityDate),
+          productImage: getRandomPackageImage('Interest-Based'),
+        }));
 
         // Combine all packages
         setPackages([
@@ -476,6 +379,7 @@ function PackageList() {
   const toggleFabMenu = () => {
     setShowFabMenu(!showFabMenu);
   };
+
   // Helper functions
   const getStatusColor = (status: string): string => {
     switch (status.toLowerCase()) {
@@ -500,6 +404,38 @@ function PackageList() {
         return 'Pending';
       default:
         return status;
+    }
+  };
+
+  const formatDate = (dateString: string): string => {
+    if (!dateString) return 'N/A';
+
+    try {
+      // Handle numeric timestamps (milliseconds since epoch)
+      const timestamp = parseInt(dateString);
+      if (!isNaN(timestamp)) {
+        const date = new Date(timestamp);
+        return date.toLocaleDateString('en-NG', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+        });
+      }
+
+      // Handle string dates
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return 'Invalid date';
+      }
+
+      return date.toLocaleDateString('en-NG', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Invalid date';
     }
   };
 
@@ -528,29 +464,16 @@ function PackageList() {
     }
   };
 
-  // Filter packages by type and status, and sort by status (active first)
-  const filteredPackages = packages
-    .filter((pkg) => {
-      // Filter by type
-      if (filteredType !== 'all') {
-        if (filteredType === 'daily' && pkg.type !== 'Daily Savings') return false;
-        if (filteredType === 'interest' && pkg.type !== 'Interest-Based') return false;
-        if (filteredType === 'sb' && pkg.type !== 'SB Package') return false;
-      }
-      
-      // Filter by status
-      if (filteredStatus !== 'all' && pkg.status !== filteredStatus) {
-        return false;
-      }
-      
-      return true;
-    })
-    .sort((a, b) => {
-      // Sort by status - Active packages first
-      if (a.status === 'Active' && b.status !== 'Active') return -1;
-      if (a.status !== 'Active' && b.status === 'Active') return 1;
-      return 0;
-    });
+  // Filter packages by type if needed
+  const filteredPackages =
+    filteredType === 'all'
+      ? packages
+      : packages.filter((pkg) => {
+        if (filteredType === 'daily') return pkg.type === 'Daily Savings';
+        if (filteredType === 'interest') return pkg.type === 'Interest-Based';
+        if (filteredType === 'sb') return pkg.type === 'SB Package';
+        return true;
+      });
 
   return (
     <div className="space-y-6 pb-20 relative">
@@ -562,16 +485,22 @@ function PackageList() {
           </p>
         </div>
 
-        <div className="flex items-center">
-          <button 
-            className={`p-2 rounded-md relative ${showFilterPanel ? 'bg-blue-100' : 'bg-gray-100'}`} 
-            onClick={() => setShowFilterPanel(!showFilterPanel)}
+        <div className="flex items-center gap-2">
+          <select
+            className="text-sm border border-gray-300 rounded-md p-1.5 bg-white"
+            value={filteredType}
+            onChange={(e) => setFilteredType(e.target.value)}
             disabled={loading}
-            aria-label="Filter packages"
           >
+            <option value="all">All Types</option>
+            <option value="daily">Daily Savings</option>
+            <option value="interest">Interest-Based</option>
+            <option value="sb">SB Package</option>
+          </select>
+          <button className="bg-gray-100 p-2 rounded-md" disabled={loading}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className={`h-5 w-5 ${showFilterPanel ? 'text-blue-600' : 'text-gray-600'}`}
+              className="h-5 w-5 text-gray-600"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -583,105 +512,27 @@ function PackageList() {
                 d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
               />
             </svg>
-            {/* Show badge when filters are active */}
-            {(filteredType !== 'all' || filteredStatus !== 'all') && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                !
-              </span>
-            )}
           </button>
         </div>
       </div>
 
-      {/* Filter Panel */}
-      <AnimatePresence>
-        {showFilterPanel && (
-          <motion.div 
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
-            className="bg-gray-50 rounded-lg p-4 mb-4 overflow-hidden"
-          >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label htmlFor="typeFilter" className="block text-sm font-medium text-gray-700 mb-1">
-                  Package Type
-                </label>
-                <select
-                  id="typeFilter"
-                  className="w-full text-sm border border-gray-300 rounded-md p-2 bg-white"
-                  value={filteredType}
-                  onChange={(e) => setFilteredType(e.target.value)}
-                  disabled={loading}
-                >
-                  <option value="all">All Types</option>
-                  <option value="daily">Daily Savings</option>
-                  <option value="interest">Interest-Based</option>
-                  <option value="sb">SB Package</option>
-                </select>
-              </div>
-              <div>
-                <label htmlFor="statusFilter" className="block text-sm font-medium text-gray-700 mb-1">
-                  Status
-                </label>
-                <select
-                  id="statusFilter"
-                  className="w-full text-sm border border-gray-300 rounded-md p-2 bg-white"
-                  value={filteredStatus}
-                  onChange={(e) => setFilteredStatus(e.target.value)}
-                  disabled={loading}
-                >
-                  {statusOptions.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="col-span-1 sm:col-span-2 mt-2 flex gap-3">
-                <button 
-                  className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-md text-sm font-medium hover:bg-gray-300 transition-colors"
-                  onClick={() => {
-                    setFilteredType('all');
-                    setFilteredStatus('all');
-                  }}
-                  disabled={loading || (filteredType === 'all' && filteredStatus === 'all')}
-                >
-                  Clear Filters
-                </button>
-                <button 
-                  className="flex-1 bg-[#0066A1] text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-[#005585] transition-colors"
-                  onClick={() => setShowFilterPanel(false)}
-                  disabled={loading}
-                >
-                  Apply Filters
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      
       {/* Tabs */}
       <div className="flex border-b border-gray-200">
         <button
-          className={`py-2 px-4 text-sm font-medium ${
-            activeTab === 'packages'
-              ? 'text-[#0066A1] border-b-2 border-[#0066A1]'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
+          className={`py-2 px-4 text-sm font-medium ${activeTab === 'packages'
+            ? 'text-[#0066A1] border-b-2 border-[#0066A1]'
+            : 'text-gray-500 hover:text-gray-700'
+            }`}
           onClick={() => setActiveTab('packages')}
           disabled={loading}
         >
           My Packages
         </button>
         <button
-          className={`py-2 px-4 text-sm font-medium ${
-            activeTab === 'types'
-              ? 'text-[#0066A1] border-b-2 border-[#0066A1]'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
+          className={`py-2 px-4 text-sm font-medium ${activeTab === 'types'
+            ? 'text-[#0066A1] border-b-2 border-[#0066A1]'
+            : 'text-gray-500 hover:text-gray-700'
+            }`}
           onClick={() => setActiveTab('types')}
           disabled={loading}
         >
@@ -733,7 +584,7 @@ function PackageList() {
             You haven't created any savings packages yet.
           </p>
           <button
-            onClick={() => navigate('/packages/new')}
+            onClick={() => setShowFabMenu(true)}
             className="bg-[#0066A1] text-white px-4 py-2 rounded-md"
           >
             Create your first package
@@ -893,7 +744,12 @@ function PackageList() {
                         <h3 className="font-semibold text-base">{pkg.title}</h3>
                         <p className="text-sm text-gray-600">
                           {pkg.type}
-                          {pkg.type === 'Daily Savings' }
+                          {pkg.type === 'Daily Savings' &&
+                            pkg.nextContribution && (
+                              <span className="ml-1">
+                                ({pkg.nextContribution})
+                              </span>
+                            )}
                         </p>
                       </div>
                     </div>
@@ -924,87 +780,52 @@ function PackageList() {
                       </div>
                     </div>
 
-                    {/* Show these sections only for non-IB packages */}
-                    {pkg.type !== 'Interest-Based' && (
-                      <div className="space-y-2">
-                        {pkg.type === 'SB Package' && (
-                          <div className="flex justify-between">
-                            <span className="text-gray-600 text-sm">
-                              Target Amount:
-                            </span>
-                            <span className="font-medium">
-                              ₦{pkg.target?.toLocaleString() || '0'}
-                            </span>
-                          </div>
-                        )}
-                        {pkg.type === 'Daily Savings' && (
-                          <div className="flex justify-between">
-                            <span className="text-gray-600 text-sm">
-                              Daily Amount:
-                            </span>
-                            <span className="font-medium">
-                              ₦{pkg.current?.toLocaleString() || '0'}
-                            </span>
-                          </div>
-                        )}
-                        <div className="flex justify-between">
-                          <span className="text-gray-600 text-sm">
-                            Total Contribution:
-                          </span>
-                          <span className="font-medium">
-                            ₦{pkg.totalContribution?.toLocaleString() || '0'}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600 text-sm">
-                            Start Date:
-                          </span>
-                          <span className="font-medium">
-                            {formatDateTime(pkg.startDate)}
-                          </span>
-                        </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 text-sm">Amount:</span>
+                      <span className="font-medium">
+                        ₦{pkg.target?.toLocaleString() || '0'}
+                      </span>
+                    </div>
+                    {pkg.type === 'Daily Savings' && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 text-sm">
+                          Daily Amount:
+                        </span>
+                        <span className="font-medium">
+                          ₦{pkg.current?.toLocaleString() || '0'}
+                        </span>
                       </div>
                     )}
-
-                    {/* Show these sections only for IB packages */}
-                    {pkg.type === 'Interest-Based' && (
-                      <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600 text-sm">
-                            Principal Amount:
-                          </span>
-                          <span className="font-medium">
-                            ₦{pkg.target?.toLocaleString() || '0'}
-                          </span>
-                        </div>
-                        {pkg.interestRate && (
-                          <div className="flex justify-between">
-                            <span className="text-gray-600 text-sm">
-                              Interest Rate:
-                            </span>
-                            <span className="font-medium">
-                              {pkg.interestRate}
-                            </span>
-                          </div>
-                        )}
-                        {pkg.currentBalance && (
-                          <div className="flex justify-between">
-                            <span className="text-gray-600 text-sm">
-                              Current Balance:
-                            </span>
-                            <span className="font-medium">
-                              ₦{pkg.currentBalance?.toLocaleString() || '0'}
-                            </span>
-                          </div>
-                        )}
-                        <div className="flex justify-between">
-                          <span className="text-gray-600 text-sm">
-                            Maturity:
-                          </span>
-                          <span className="font-medium">
-                            {formatDateTime(pkg.maturityDate || '')}
-                          </span>
-                        </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 text-sm">Start Date:</span>
+                      <span className="font-medium">
+                        {formatDate(pkg.startDate)}
+                      </span>
+                    </div>
+                    {pkg.type === 'SB Package' && pkg.endDate && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 text-sm">End Date:</span>
+                        <span className="font-medium">
+                          {formatDate(pkg.endDate)}
+                        </span>
+                      </div>
+                    )}
+                    {pkg.type === 'Daily Savings' && pkg.nextContribution && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 text-sm">
+                          Next Contribution:
+                        </span>
+                        <span className="font-medium text-primary">
+                          {pkg.nextContribution}
+                        </span>
+                      </div>
+                    )}
+                    {pkg.type === 'Interest-Based' && pkg.interestRate && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 text-sm">
+                          Interest Rate:
+                        </span>
+                        <span className="font-medium">{pkg.interestRate}</span>
                       </div>
                     )}
                   </div>
