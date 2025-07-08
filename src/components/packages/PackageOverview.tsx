@@ -1,7 +1,6 @@
-import React from 'react';
-
 interface PackageOverviewProps {
   current: number;
+  principalAmount: number;
   totalContribution: number;
   amountPerDay: number;
   target: number;
@@ -20,6 +19,7 @@ interface PackageOverviewProps {
 
 export function PackageOverview({
   current,
+  principalAmount,
   totalContribution,
   amountPerDay,
   target,
@@ -104,11 +104,15 @@ export function PackageOverview({
                     <div className="text-sm text-gray-500">
                       {type === 'Daily Savings'
                         ? 'Amount Per Day'
+                        : type === 'Interest-Based'
+                        ? 'Principal Amount'
                         : 'Target Balance'}
                     </div>
                     <div className="font-bold text-xl">
                       {type === 'Daily Savings'
                         ? formatCurrency(amountPerDay)
+                        : type === 'Interest-Based'
+                        ? formatCurrency(principalAmount)
                         : formatCurrency(target)}
                     </div>
                   </div>

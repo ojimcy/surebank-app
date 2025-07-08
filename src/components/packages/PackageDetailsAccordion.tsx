@@ -72,7 +72,6 @@ export function PackageDetailsAccordion({
     }
     return formatDateTime(date);
   };
-
   return (
     <Accordion.Root type="single" collapsible className="mb-8">
       <Accordion.Item

@@ -40,7 +40,7 @@ export interface IBPackage {
   compoundingFrequency: string;
   status: string;
   maturityDate: string;
-  accruedInterest: number;
+  interestAccrued: number;
   createdAt: string;
   updatedAt: string;
   // Additional properties needed for UI compatibility
@@ -49,6 +49,7 @@ export interface IBPackage {
   totalContribution?: number;
   startDate?: string;
   endDate?: string;
+  currentBalance?: number;
 }
 
 // Package creation interfaces

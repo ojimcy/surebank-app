@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/lib/toast-provider';
-import packagesApi, { IBPackage } from '@/lib/api/packages';
+import packagesApi from '@/lib/api/packages';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { PackageHeader } from '@/components/packages/PackageHeader';
 import { PackageOverview } from '@/components/packages/PackageOverview';
 import { PackageActions } from '@/components/packages/PackageActions';
-import { ContributionTimeline } from '@/components/packages/ContributionTimeline';
 import { PackageDetailsAccordion } from '@/components/packages/PackageDetailsAccordion';
+import { formatDateTime } from '@/lib/utils';
 
 // Interest-Based Package specific UI interface
 interface IBPackageUIPackage {
@@ -19,7 +19,7 @@ interface IBPackageUIPackage {
     current: number;
     target: number;
     principalAmount: number;
-    accruedInterest: number;
+    interestAccrued: number;
     interestRate: number;
     lockPeriod: number;
     status: string;
@@ -32,13 +32,7 @@ interface IBPackageUIPackage {
     compoundingFrequency: string;
 }
 
-// Contribution interface
-interface Contribution {
-    id: string;
-    amount: number;
-    date: string;
-    status: string;
-}
+
 
 // Interest-Based Package default image
 const ibPackageImage = 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3';
@@ -52,7 +46,6 @@ function IBPackageDetail() {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [packageData, setPackageData] = useState<IBPackageUIPackage | null>(null);
-    const [contributions, setContributions] = useState<Contribution[]>([]);
     const [showEditDialog, setShowEditDialog] = useState<boolean>(false);
     const [showCloseDialog, setShowCloseDialog] = useState<boolean>(false);
     const [showWithdrawDialog, setShowWithdrawDialog] = useState<boolean>(false);
@@ -76,34 +69,20 @@ function IBPackageDetail() {
         }).format(safeAmount);
     };
 
-    // Format date
-    const formatDate = (dateString: string): string => {
-        if (!dateString || dateString === '0' || dateString === 'null' || dateString === 'undefined') {
-            return 'N/A';
-        }
-
-        try {
-            const date = new Date(dateString);
-            if (isNaN(date.getTime()) || date.getFullYear() < 1971) {
-                return 'N/A';
-            }
-
-            return date.toLocaleDateString('en-NG', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-            });
-        } catch (error) {
-            console.error('Error formatting date:', error);
-            return 'N/A';
-        }
-    };
-
     // Calculate days until maturity
-    const calculateDaysUntilMaturity = (maturityDate: string): number => {
+    const calculateDaysUntilMaturity = (maturityDate: string | undefined | null): number => {
+        if (!maturityDate) {
+            return 0;
+        }
+
         try {
             const today = new Date();
             const maturity = new Date(maturityDate);
+
+            if (isNaN(maturity.getTime())) {
+                return 0;
+            }
+
             const diffTime = maturity.getTime() - today.getTime();
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             return diffDays > 0 ? diffDays : 0;
@@ -160,7 +139,7 @@ function IBPackageDetail() {
             setLoading(true);
             try {
                 const ibPackages = await packagesApi.getIBPackages();
-                const ibPackage = ibPackages.find((pkg) => pkg.id === id || pkg._id === id);
+                const ibPackage = ibPackages.find((pkg) => pkg._id === id || pkg.id === id);
 
                 if (!ibPackage) {
                     setError('Interest-Based Package not found');
@@ -168,35 +147,43 @@ function IBPackageDetail() {
                     return;
                 }
 
-                const principalAmount = safeParseNumber(ibPackage.principalAmount);
-                const accruedInterest = safeParseNumber(ibPackage.accruedInterest);
-                const interestRate = safeParseNumber(ibPackage.interestRate);
-                const currentBalance = principalAmount + accruedInterest;
-                const targetAmount = safeParseNumber(ibPackage.targetAmount) || principalAmount;
+                const currentBalance = safeParseNumber(ibPackage.currentBalance || (ibPackage.principalAmount + ibPackage.interestAccrued));
+                const targetAmount = safeParseNumber(ibPackage.targetAmount) || currentBalance;
 
+                // Calculate progress based on time elapsed towards maturity date
+                const today = new Date();
+                const startDate = Number(ibPackage.startDate || ibPackage.createdAt);
+                const maturityDate = Number(ibPackage.maturityDate);
+                const totalDuration = maturityDate - startDate;
+                const elapsedTime = today.getTime() - startDate;
+
+                // Calculate percentage of days elapsed out of total duration
+                const timeProgress = totalDuration > 0
+                    ? Math.min(Math.max((elapsedTime / totalDuration) * 100, 0), 100)
+                    : 0;
+
+                const progress = Math.floor(timeProgress);
                 setPackageData({
-                    id: ibPackage.id || ibPackage._id,
+                    id: ibPackage._id,
                     title: ibPackage.name || 'Interest Savings',
                     accountNumber: ibPackage.accountNumber || 'N/A',
-                    progress: targetAmount > 0 ? Math.floor((currentBalance / targetAmount) * 100) : 100,
+                    progress: progress,
                     current: currentBalance,
                     target: targetAmount,
-                    principalAmount: principalAmount,
-                    accruedInterest: accruedInterest,
-                    interestRate: interestRate,
-                    lockPeriod: ibPackage.lockPeriod,
+                    principalAmount: ibPackage.principalAmount,
+                    interestAccrued: ibPackage.interestAccrued,
+                    interestRate: ibPackage.interestRate,
+                    lockPeriod: safeParseNumber(ibPackage.lockPeriod),
                     status: formatStatus(ibPackage.status),
                     statusColor: getStatusColor(ibPackage.status),
-                    startDate: ibPackage.startDate || formatDate(ibPackage.createdAt),
-                    endDate: ibPackage.endDate || formatDate(ibPackage.maturityDate),
-                    maturityDate: formatDate(ibPackage.maturityDate),
-                    lastContribution: 'N/A',
+                    startDate: formatDateTime(ibPackage.createdAt),
+                    endDate: formatDateTime(ibPackage.maturityDate),
+                    maturityDate: formatDateTime(ibPackage.maturityDate),
+                    lastContribution: formatDateTime(ibPackage.createdAt),
                     productImage: ibPackageImage,
                     compoundingFrequency: ibPackage.compoundingFrequency || 'Annual',
                 });
 
-                // Generate mock interest accrual history for demo
-                generateMockContributions(principalAmount, accruedInterest, ibPackage.createdAt);
                 setLoading(false);
             } catch (err) {
                 console.error('Error fetching IB package details:', err);
@@ -205,54 +192,8 @@ function IBPackageDetail() {
             }
         };
 
-        // Function to generate mock interest accrual history
-        const generateMockContributions = (principal: number, totalInterest: number, createdAt: string) => {
-            const safePrincipal = safeParseNumber(principal);
-            const safeTotalInterest = safeParseNumber(totalInterest);
-
-            if (safePrincipal <= 0) {
-                setContributions([]);
-                return;
-            }
-
-            const mockContributions: Contribution[] = [];
-            const startDate = new Date(createdAt);
-            const today = new Date();
-            const monthsDiff = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
-
-            // Initial principal deposit
-            mockContributions.push({
-                id: 'initial-deposit',
-                amount: safePrincipal,
-                date: startDate.toISOString(),
-                status: 'completed',
-            });
-
-            // Monthly interest accruals
-            const monthlyInterest = safeTotalInterest / Math.max(monthsDiff, 1);
-            for (let i = 1; i <= monthsDiff; i++) {
-                const date = new Date(startDate);
-                date.setMonth(startDate.getMonth() + i);
-
-                mockContributions.push({
-                    id: `interest-${i}`,
-                    amount: monthlyInterest,
-                    date: date.toISOString(),
-                    status: 'completed',
-                });
-            }
-
-            // Sort by date (newest first)
-            mockContributions.sort(
-                (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-            );
-
-            setContributions(mockContributions);
-        };
-
         fetchIBPackageDetail();
     }, [id, user]);
-
     // Handle editing package
     const handleEditPackage = () => {
         addToast({
@@ -311,7 +252,6 @@ function IBPackageDetail() {
     const ibColor = '#28A745';
     const daysUntilMaturity = calculateDaysUntilMaturity(packageData.maturityDate);
     const isMatured = daysUntilMaturity <= 0;
-
     return (
         <div className="p-4 max-w-3xl mx-auto">
             {/* Package Header */}
@@ -337,9 +277,10 @@ function IBPackageDetail() {
                 productImage={packageData.productImage}
                 type="Interest-Based"
                 totalContribution={packageData.current}
+                principalAmount={packageData.principalAmount}
                 amountPerDay={0}
                 formatCurrency={formatCurrency}
-                formatDate={formatDate}
+                formatDate={formatDateTime}
             />
 
             {/* Interest-Based Package specific info */}
@@ -351,7 +292,7 @@ function IBPackageDetail() {
                         <div className="text-sm text-gray-600">Principal Amount</div>
                     </div>
                     <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-600">{formatCurrency(packageData.accruedInterest)}</div>
+                        <div className="text-2xl font-bold text-blue-600">{formatCurrency(packageData.interestAccrued)}</div>
                         <div className="text-sm text-gray-600">Interest Earned</div>
                     </div>
                     <div className="text-center">
@@ -406,16 +347,7 @@ function IBPackageDetail() {
                 onChangeProduct={() => { }} // Not used for IB
             />
 
-            {/* Interest Accrual History */}
-            <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-                <h2 className="text-lg font-semibold mb-4">Interest Accrual History</h2>
-                <ContributionTimeline
-                    contributions={contributions}
-                    formatCurrency={formatCurrency}
-                    formatDate={formatDate}
-                    formatStatus={formatStatus}
-                />
-            </div>
+
 
             {/* Package Details Accordion */}
             <PackageDetailsAccordion
@@ -430,8 +362,8 @@ function IBPackageDetail() {
                 maturityDate={packageData.maturityDate}
                 lockPeriod={packageData.lockPeriod}
                 interestRate={`${packageData.interestRate}% p.a.`}
-                interestAccrued={packageData.accruedInterest}
-                formatDate={formatDate}
+                interestAccrued={packageData.interestAccrued}
+                formatDate={formatDateTime}
                 formatStatus={formatStatus}
             />
 

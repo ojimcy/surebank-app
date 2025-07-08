@@ -333,31 +333,39 @@ function PackageList() {
         }));
 
         // Process IB packages
-        const ibPackagesProcessed = ibPackages.map((pkg) => ({
-          id: pkg.id || pkg._id,
-          title: pkg.name || 'Interest Savings',
-          type: 'Interest-Based' as const,
-          icon: 'trending-up',
-          progress:
-            pkg.targetAmount && pkg.targetAmount > 0
-              ? Math.floor(
-                ((pkg.totalContribution || pkg.principalAmount) / pkg.targetAmount) * 100
-              )
-              : 100, // Default to 100% if no target amount is set
-          current: pkg.totalContribution || (pkg.principalAmount + pkg.accruedInterest),
-          target: pkg.targetAmount || pkg.principalAmount,
-          color: '#28A745',
-          statusColor: getStatusColor(pkg.status),
-          status: formatStatus(pkg.status),
-          accountNumber: pkg.accountNumber || 'N/A',
-          interestRate: `${pkg.interestRate}% p.a.`,
-          maturityDate: formatDate(pkg.maturityDate),
-          lastContribution: 'Not available',
-          nextContribution: 'Not available',
-          startDate: pkg.startDate || formatDate(pkg.createdAt),
-          endDate: pkg.endDate || formatDate(pkg.maturityDate),
-          productImage: getRandomPackageImage('Interest-Based'),
-        }));
+        const ibPackagesProcessed = ibPackages.map((pkg) => {
+          // Calculate time-based progress for IB packages
+          const startDate = Number(pkg.startDate || pkg.createdAt);
+          const maturityDate = Number(pkg.maturityDate);
+          const today = new Date();
+          const totalDuration = maturityDate - startDate;
+          const elapsedTime = today.getTime() - startDate;
+
+          const timeProgress = totalDuration > 0
+            ? Math.min(Math.max((elapsedTime / totalDuration) * 100, 0), 100)
+            : 0;
+
+          return {
+            id: pkg.id || pkg._id,
+            title: pkg.name || 'Interest Savings',
+            type: 'Interest-Based' as const,
+            icon: 'trending-up',
+            progress: Math.floor(timeProgress),
+            current: pkg.totalContribution || pkg.principalAmount || 0,
+            target: pkg.targetAmount || pkg.principalAmount || 0,
+            color: '#28A745',
+            statusColor: getStatusColor(pkg.status),
+            status: formatStatus(pkg.status),
+            accountNumber: pkg.accountNumber || 'N/A',
+            interestRate: `${pkg.interestRate}% p.a.`,
+            maturityDate: formatDate(pkg.maturityDate),
+            lastContribution: 'Not available',
+            nextContribution: 'Not available',
+            startDate: pkg.startDate || formatDate(pkg.createdAt),
+            endDate: pkg.endDate || formatDate(pkg.maturityDate),
+            productImage: getRandomPackageImage('Interest-Based'),
+          };
+        });
 
         // Combine all packages
         setPackages([
