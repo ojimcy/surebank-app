@@ -3,7 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import packagesApi, {
   DailySavingsPackage,
   SBPackage,
-  InitiateContributionParams,
+  InitializeContributionParams,
   PaymentStatus,
 } from '@/lib/api/packages';
 import { Button } from '@/components/ui/button';
@@ -126,7 +126,7 @@ function Contribution() {
     }
 
     const contributionAmount = parseFloat(amount);
-    
+
     // Validate DS contribution if needed
     if (
       selectedPackageData.type === 'Daily Savings' &&
@@ -143,7 +143,7 @@ function Contribution() {
       // Log platform info for debugging
       const platformInfo = getPlatformInfo();
       contributionLogger.info('Platform info:', platformInfo);
-      
+
       // Add headers for platform detection
       if (isMobile()) {
         // Make sure the API knows this is a mobile request
@@ -153,14 +153,14 @@ function Contribution() {
       }
 
       // Initialize payment through Paystack
-      const paymentData: InitiateContributionParams = {
+      const paymentData: InitializeContributionParams = {
         packageId: selectedPackage,
         amount: contributionAmount,
-        packageType: selectedType,
+        contributionType: selectedType === 'ds' ? 'daily_savings' : 'savings_buying',
       };
-      
+
       // Add redirect URL for both web and mobile
-      const successPath = `/payments/success?success=true&type=${selectedType === 'ds' ? 'daily_savings' : 'surebank'}&packageId=${selectedPackage}`;
+      const successPath = `/payments/success?success=true&type=${selectedType === 'ds' ? 'daily_savings' : 'savings_buying'}&packageId=${selectedPackage}`;
       const redirectUrl = getRedirectUrl(successPath);
       if (redirectUrl) {
         paymentData.redirect_url = redirectUrl;
@@ -174,26 +174,26 @@ function Contribution() {
         packageId: selectedPackage,
         packageName: selectedPackageData.name,
         amount: contributionAmount,
-        packageType: selectedType,
+        contributionType: paymentData.contributionType,
         redirectUrl: paymentData.redirect_url
       });
-      
+
       contributionLogger.info('Initializing contribution with data:', paymentData);
-      
+
       const response = await packagesApi.initializeContribution(paymentData);
       paymentLogger.logApiResponse('/payments/init-contribution', response);
-      
+
       const paymentReference = response.reference;
       contributionLogger.info('Payment reference:', paymentReference);
-      
+
       // Get the authorization URL (supporting both snake_case and camelCase)
       const authorizationUrl = response.authorization_url || response.authorizationUrl;
-      
+
       if (!authorizationUrl) {
         paymentLogger.logError('Missing authorization URL', response);
         throw new Error('No authorization URL received from payment initialization');
       }
-      
+
       paymentLogger.logStatus(paymentReference, 'initialized', {
         authorizationUrl
       });
@@ -206,7 +206,7 @@ function Contribution() {
             packageId: selectedPackage,
             packageName: selectedPackageData.name,
             amount: contributionAmount,
-            packageType: selectedType,
+            contributionType: paymentData.contributionType,
             paymentReference,
             authorizationUrl,
           })
@@ -259,7 +259,7 @@ function Contribution() {
         reference: paymentReference,
         isMobile: isMobile()
       });
-      
+
       // Use setTimeout to ensure logs are processed before redirect
       setTimeout(() => {
         // Use window.location.assign which is better for redirects than href
@@ -396,8 +396,8 @@ function Contribution() {
               {selectedType === 'ds'
                 ? 'Daily Savings'
                 : selectedType === 'sb'
-                ? 'SureBank'
-                : 'Interest-Based Savings'}{' '}
+                  ? 'SureBank'
+                  : 'Interest-Based Savings'}{' '}
               packages found
             </p>
           </div>

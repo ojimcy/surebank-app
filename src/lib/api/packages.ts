@@ -84,6 +84,44 @@ export interface InitiateIBPackageResponse {
   lockPeriod: number;
 }
 
+export interface InitializeContributionParams {
+  // Package ID is required for daily_savings and savings_buying contributions
+  packageId?: string;
+  amount: number;
+  // Contribution type expected by the backend validation schema
+  contributionType: 'daily_savings' | 'savings_buying' | 'interest_package';
+  // Optional redirect/callback URLs (snake_case to match backend)
+  redirect_url?: string;
+  callbackUrl?: string;
+  // Additional optional fields for interest_package creation
+  name?: string;
+  principalAmount?: number;
+  lockPeriod?: number;
+  earlyWithdrawalPenalty?: number;
+  interestRate?: number;
+}
+
+export interface InitializeContributionResponse {
+  reference: string;
+  authorization_url: string;
+  // Some older responses may return camelCase – include for TS safety
+  authorizationUrl?: string;
+  access_code: string;
+}
+
+// Generic payment status returned from /payments/status/:reference
+export interface PaymentStatus {
+  reference: string;
+  status: 'pending' | 'success' | 'failed' | 'abandoned' | string;
+  amount: number;
+  packageId?: string;
+  packageType?: string;
+  contributionType?: string;
+  createdAt: string;
+  updatedAt: string;
+  [key: string]: unknown;
+}
+
 // Packages API functions
 const packagesApi = {
   // Get daily savings packages for a user
@@ -159,6 +197,30 @@ const packagesApi = {
       '/interest-package/package/initiate-payment',
       data
     );
+    return response.data;
+  },
+
+  // initialize contributions
+  initializeContribution: async (
+    data: InitializeContributionParams
+  ): Promise<InitializeContributionResponse & { [key: string]: unknown }> => {
+    const response = await api.post(
+      '/payments/init-contribution',
+      data
+    );
+
+    // Some endpoints may wrap the actual payload inside a `data` field.
+    // Normalize so callers always receive the raw initialization object.
+    const payload = response.data && typeof response.data === 'object' && 'data' in response.data
+      ? (response.data as { data: unknown }).data
+      : response.data;
+
+    return payload as InitializeContributionResponse & { [key: string]: unknown };
+  },
+
+  // Get payment status by reference
+  checkPaymentStatus: async (reference: string): Promise<PaymentStatus> => {
+    const response = await api.get<PaymentStatus>(`/payments/status/${reference}`);
     return response.data;
   },
 
