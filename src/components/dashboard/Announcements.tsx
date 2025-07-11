@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { User } from '@/lib/api/auth';
 import { AnnouncementCard } from './AnnouncementCard';
-import {  MailWarning, ShieldAlert } from 'lucide-react';
+import { MailWarning, ShieldAlert } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/lib/toast-provider';
 import { useNavigate } from 'react-router-dom';
@@ -46,6 +46,7 @@ export function Announcements({ user }: AnnouncementsProps) {
       toast.success({
         title: 'Verification email sent!',
       });
+      navigate('/auth/verify-email');
     } catch {
       toast.error({
         title: 'Failed to send verification email.',
@@ -66,9 +67,9 @@ export function Announcements({ user }: AnnouncementsProps) {
 
   const announcements: Announcement[] = [
     {
-      id: 'verify-kyc',
-      title: 'Complete Your KYC Verification',
-      description: 'Please complete your KYC verification to unlock all features.',
+      id: 'verify-email',
+      title: 'Verify Your Email Address',
+      description: 'Please complete your email verification to unlock all features.',
       icon: <MailWarning className="text-yellow-600" size={24} />,
       condition: (user: User) => !user.isEmailVerified,
       cta: {
@@ -87,7 +88,7 @@ export function Announcements({ user }: AnnouncementsProps) {
         text: 'Complete KYC Now',
         onClick: () => {
           navigate('/settings/kyc');
-        }, 
+        },
       },
     },
     // {
@@ -106,7 +107,7 @@ export function Announcements({ user }: AnnouncementsProps) {
     // },
   ];
 
-  const activeAnnouncements = user 
+  const activeAnnouncements = user
     ? announcements.filter((ann) => !dismissed.includes(ann.id) && ann.condition(user))
     : [];
 
@@ -177,7 +178,7 @@ export function Announcements({ user }: AnnouncementsProps) {
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {activeAnnouncements.map((ann) => (
-          <div 
+          <div
             key={ann.id}
             className="min-w-[100%] md:min-w-[90%] lg:min-w-[80%] flex-shrink-0 snap-center"
           >
@@ -200,9 +201,8 @@ export function Announcements({ user }: AnnouncementsProps) {
           {activeAnnouncements.map((_, index) => (
             <button
               key={index}
-              className={`w-2 h-2 rounded-full transition-all ${
-                activeSlide === index ? 'bg-blue-600 w-6' : 'bg-gray-300'
-              }`}
+              className={`w-2 h-2 rounded-full transition-all ${activeSlide === index ? 'bg-blue-600 w-6' : 'bg-gray-300'
+                }`}
               onClick={() => handleSlideChange(index)}
               aria-label={`Go to announcement ${index + 1}`}
             />

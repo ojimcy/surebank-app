@@ -106,7 +106,7 @@ const authApi = {
   verifyAccount: async (payload: VerifyPayload): Promise<User> => {
     const response = await api.post<{ user: User; tokens: TokenResponse }>(
       '/auth/verify-email',
-      payload
+      { otp: payload.code }
     );
 
     // Store tokens using cross-platform storage
@@ -124,7 +124,7 @@ const authApi = {
   ): Promise<{ success: boolean }> => {
     const response = await api.post<{ success: boolean }>(
       '/auth/send-verification-email',
-      { identifier }
+      { email: identifier }
     );
     return response.data;
   },

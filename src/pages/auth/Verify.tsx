@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth-provider';
 import { Button } from '@/components/ui/button';
 import AuthLayout from '@/components/layout/AuthLayout';
@@ -34,10 +34,10 @@ function Verify() {
     }
   }, [countdown, pendingVerification, verificationEmail]);
 
-  // Redirect if not in verification flow
-  if (!pendingVerification || !verificationEmail) {
-    return <Navigate to="/auth/register" />;
-  }
+  // // Redirect if not in verification flow
+  // if (!pendingVerification || !verificationEmail) {
+  //   return <Navigate to="/auth/register" />;
+  // }
 
   // Focus next input after entering a digit
   const handleChange = (

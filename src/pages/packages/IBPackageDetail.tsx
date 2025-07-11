@@ -347,8 +347,6 @@ function IBPackageDetail() {
                 onChangeProduct={() => { }} // Not used for IB
             />
 
-
-
             {/* Package Details Accordion */}
             <PackageDetailsAccordion
                 type="Interest-Based"

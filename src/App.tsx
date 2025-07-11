@@ -20,6 +20,7 @@ import KycSuccess from '@/pages/settings/KycSuccess';
 import Login from '@/pages/auth/Login';
 import Register from '@/pages/auth/Register';
 import Verify from '@/pages/auth/Verify';
+import { VerifyEmailPage } from '@/pages/auth/VerifyEmailPage';
 import Deposit from '@/pages/payments/Contribution';
 import Withdraw from '@/pages/payments/Withdraw';
 import WithdrawFromPackage from '@/pages/packages/WithdrawFromPackage';
@@ -65,6 +66,7 @@ function AuthRoutes() {
       <Route path="/auth/login" element={<Login />} />
       <Route path="/auth/register" element={<Register />} />
       <Route path="/auth/verify" element={<Verify />} />
+      <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
       <Route path="/auth/forgot-password" element={<ForgotPassword />} />
       <Route path="/auth/verify-reset-code" element={<VerifyResetCode />} />
       <Route path="/auth/reset-password" element={<ResetPassword />} />
