@@ -5,13 +5,13 @@ import packagesApi, { IBPackage, IBWithdrawalParams } from "@/lib/api/packages";
 import { Button } from "@/components/ui/button";
 import { toast } from "react-hot-toast";
 import { cn } from "@/lib/utils";
-import { 
-  Check, 
-  Loader2, 
-  Wallet, 
-  AlertTriangle, 
-  ArrowRight, 
-  CheckCircle2, 
+import {
+  Check,
+  Loader2,
+  Wallet,
+  AlertTriangle,
+  ArrowRight,
+  CheckCircle2,
 } from "lucide-react";
 
 interface PackageOption {
@@ -23,7 +23,6 @@ interface PackageOption {
   interestAccrued: number;
   currentBalance: number;
   maturityDate: string;
-  earlyWithdrawalPenalty: number;
   status: string;
   accountNumber: string;
 }
@@ -60,7 +59,7 @@ function IBWithdrawal() {
     try {
       const today = Date.now(); // Use timestamp for comparison
       let maturityTimestamp: number;
-      
+
       // Check if it's a number or numeric string (Unix timestamp)
       if (!isNaN(Number(maturityDate))) {
         // Convert to number (already in milliseconds)
@@ -69,13 +68,13 @@ function IBWithdrawal() {
         // Try as regular date string and convert to timestamp
         maturityTimestamp = new Date(maturityDate).getTime();
       }
-      
+
       // Check if the timestamp is valid
       if (isNaN(maturityTimestamp)) {
         console.error("Invalid maturity date:", maturityDate);
         return false;
       }
-      
+
 
       return today >= maturityTimestamp;
     } catch (error) {
@@ -83,7 +82,7 @@ function IBWithdrawal() {
       return false;
     }
   };
-  
+
   // Calculate penalty for early withdrawal
   const calculatePenalty = (packageData: PackageOption): number => {
     // 50% penalty on accrued interest for early withdrawal
@@ -105,7 +104,7 @@ function IBWithdrawal() {
           });
         }
       }
-      
+
       // Fall back to trying as date string
       const date = new Date(dateStr);
       if (!isNaN(date.getTime())) {
@@ -115,7 +114,7 @@ function IBWithdrawal() {
           year: 'numeric'
         });
       }
-      
+
       return "Invalid date";
     } catch (error) {
       console.error("Error formatting maturity date:", error);
@@ -126,7 +125,7 @@ function IBWithdrawal() {
   // Fetch Interest Based Savings packages
   const fetchUserPackages = async () => {
     if (!user?.id) return;
-    
+
     setFetchingPackages(true);
     try {
       const ibPackages = await packagesApi.getIBPackages();
@@ -134,18 +133,13 @@ function IBWithdrawal() {
         ibPackages
           .filter((pkg: IBPackage) => {
             // Filter out packages that cannot be withdrawn from
-            const isActive = pkg.status && 
-              pkg.status.toLowerCase() !== "closed" && 
-              pkg.status.toLowerCase() !== "terminated" && 
+            const isActive = pkg.status &&
+              pkg.status.toLowerCase() !== "closed" &&
+              pkg.status.toLowerCase() !== "terminated" &&
               pkg.status.toLowerCase() !== "inactive";
-            
+
             const hasBalance = pkg.currentBalance && pkg.currentBalance > 0;
-            
-            // Log filtered out packages for debugging
-            if (!isActive || !hasBalance) {
-              console.log(`Filtering out package ${pkg.name}: status=${pkg.status}, balance=${pkg.currentBalance}`);
-            }
-            
+
             return isActive && hasBalance;
           })
           .map((pkg: IBPackage) => {
@@ -162,7 +156,6 @@ function IBWithdrawal() {
                 interestAccrued: pkg.interestAccrued || 0,
                 currentBalance: pkg.currentBalance || 0,
                 maturityDate: maturityDateStr,
-                earlyWithdrawalPenalty: pkg.earlyWithdrawalPenalty || 0,
                 status: pkg.status || "unknown",
                 accountNumber: pkg.accountNumber || "",
               };
@@ -178,7 +171,6 @@ function IBWithdrawal() {
                 interestAccrued: 0,
                 currentBalance: 0,
                 maturityDate: "",
-                earlyWithdrawalPenalty: 0,
                 status: "unknown",
                 accountNumber: "",
               };
@@ -217,12 +209,12 @@ function IBWithdrawal() {
     if (selectedPackage) {
       const packageData = packages.find((pkg) => pkg.id === selectedPackage);
       setSelectedPackageData(packageData || null);
-      
+
       if (packageData) {
         // Check if package is matured
         const matured = checkMaturity(packageData.maturityDate);
         setIsMatured(matured);
-        
+
         // Calculate penalty if it's early withdrawal
         if (!matured) {
           const penalty = calculatePenalty(packageData);
@@ -256,7 +248,7 @@ function IBWithdrawal() {
     // First set all the withdrawal success data
     setWithdrawnAmount(amount);
     setWithdrawnPackageName(packageName);
-    
+
     // Then set withdrawal success to true to trigger the UI change
     setTimeout(() => {
       setWithdrawalSuccess(true);
@@ -273,13 +265,13 @@ function IBWithdrawal() {
       // Save withdrawal details before processing
       const withdrawalAmount = parseFloat(amount);
       const packageName = selectedPackageData.name;
-      
+
       // Create withdrawal data
       const withdrawalData: IBWithdrawalParams = {
         packageId: selectedPackage,
         amount: withdrawalAmount,
       };
-      
+
       // Use the API function for IB package withdrawal
       await packagesApi.requestIBWithdrawal(withdrawalData);
 
@@ -295,13 +287,13 @@ function IBWithdrawal() {
 
       // Reload packages to reflect the update
       await fetchUserPackages();
-      
+
       // Reset form and show success screen
       resetForm();
-      
+
       // Show success screen with the withdrawal amount and package name
       showSuccessScreen(withdrawableAmount.toLocaleString(), packageName);
-      
+
     } catch (error) {
       console.error("Withdrawal error:", error);
       toast.error("Failed to process withdrawal request. Please try again.", {
@@ -360,7 +352,7 @@ function IBWithdrawal() {
           <div className="py-1 px-3 bg-green-100 text-green-800 rounded-full inline-block mb-6">
             Available in your balance
           </div>
-          
+
           <div className="bg-gray-50 rounded-lg p-4 mb-6 border border-gray-200">
             <p className="text-sm text-gray-500 mb-2">Transfer Details</p>
             <div className="flex justify-between mb-2">
@@ -386,14 +378,14 @@ function IBWithdrawal() {
               <span className="font-medium text-green-600">Completed</span>
             </div>
           </div>
-          
+
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6">
             <p className="text-sm text-blue-700">
               💡 <strong>Next step:</strong> To withdraw to your bank account, go to your main balance and select "Withdraw to Bank".
             </p>
           </div>
-          
-          <Button 
+
+          <Button
             onClick={startNewWithdrawal}
             className="w-full bg-[#0066A1] text-white rounded-md py-4 font-semibold hover:bg-[#007DB8] transition-colors h-auto"
           >
@@ -621,7 +613,7 @@ function IBWithdrawal() {
             <div>
               <h4 className="font-medium text-amber-800">Early Withdrawal Warning</h4>
               <p className="text-amber-700 text-sm mt-1">
-                This package has not yet reached its maturity date. Withdrawing now will result in a 50% penalty 
+                This package has not yet reached its maturity date. Withdrawing now will result in a 50% penalty
                 on your accrued interest of ₦{selectedPackageData?.interestAccrued.toLocaleString()}.
               </p>
               <div className="bg-white rounded-lg p-3 mt-2 border border-amber-200">

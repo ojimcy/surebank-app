@@ -48,7 +48,6 @@ function IBPackageDetail() {
     const [packageData, setPackageData] = useState<IBPackageUIPackage | null>(null);
     const [showEditDialog, setShowEditDialog] = useState<boolean>(false);
     const [showCloseDialog, setShowCloseDialog] = useState<boolean>(false);
-    const [showWithdrawDialog, setShowWithdrawDialog] = useState<boolean>(false);
 
     // Helper function to safely parse numbers
     const safeParseNumber = (value: string | number | null | undefined, defaultValue: number = 0): number => {
@@ -217,12 +216,8 @@ function IBPackageDetail() {
 
     // Handle withdraw
     const handleWithdraw = () => {
-        addToast({
-            title: 'Withdrawal initiated',
-            description: 'Your withdrawal has been initiated.',
-            variant: 'success',
-        });
-        setShowWithdrawDialog(false);
+        if (!packageData) return;
+        navigate(`/packages/withdraw-interest?packageId=${packageData.id}`);
     };
 
     if (loading) {
@@ -342,7 +337,7 @@ function IBPackageDetail() {
                 onEditPackage={() => setShowEditDialog(true)}
                 onClosePackage={() => setShowCloseDialog(true)}
                 onBuyProduct={() => { }} // Not used for IB
-                onWithdraw={() => setShowWithdrawDialog(true)}
+                onWithdraw={handleWithdraw}
                 onMerge={() => { }} // Not used for IB
                 onChangeProduct={() => { }} // Not used for IB
             />
@@ -383,15 +378,6 @@ function IBPackageDetail() {
                 confirmText="Close Package"
                 destructive
                 onConfirm={handleClosePackage}
-            />
-
-            <ConfirmationDialog
-                open={showWithdrawDialog}
-                onOpenChange={setShowWithdrawDialog}
-                title="Withdraw Funds"
-                description={`Withdraw your ${isMatured ? 'matured' : 'current'} balance to your available balance.`}
-                confirmText="Withdraw"
-                onConfirm={handleWithdraw}
             />
         </div>
     );

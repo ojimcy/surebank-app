@@ -122,6 +122,11 @@ export interface PaymentStatus {
   [key: string]: unknown;
 }
 
+export interface IBWithdrawalParams {
+  packageId: string;
+  amount: number;
+}
+
 // Packages API functions
 const packagesApi = {
   // Get daily savings packages for a user
@@ -229,6 +234,18 @@ const packagesApi = {
     const response = await api.post<IBPackage>(
       '/interest-package/package',
       data
+    );
+    return response.data;
+  },
+
+  // Request withdrawal from an Interest-Based package
+  requestIBWithdrawal: async (
+    data: IBWithdrawalParams
+  ): Promise<{ message: string }> => {
+    const { packageId, amount } = data;
+    const response = await api.post<{ message: string }>(
+      `/interest-savings/package/${packageId}/request-withdrawal`,
+      { amount }
     );
     return response.data;
   },
