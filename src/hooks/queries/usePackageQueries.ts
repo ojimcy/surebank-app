@@ -98,7 +98,7 @@ export const usePackageQueries = () => {
     const ibMappedPackages: SavingsPackage[] = ibPackages.map(
       (pkg: IBPackage) => {
         // Calculate time-based progress
-        const start = new Date(pkg.startDate).getTime();
+        const start = new Date(pkg.startDate || pkg.createdAt).getTime();
         const end = new Date(pkg.maturityDate).getTime();
         const now = Date.now();
 
@@ -120,19 +120,19 @@ export const usePackageQueries = () => {
           type: 'Interest-Based',
           icon: 'trending-up',
           progress: timeProgress,
-          current: pkg.currentBalance,
+          current: pkg.currentBalance || 0,
           target: 0, // no applicable
           color: getPackageColor('Interest-Based'),
           amountPerDay: 0, // IB packages don't have amountPerDay
           totalContribution: 0, // no applicable
-          startDate: pkg.startDate,
+          startDate: pkg.startDate || pkg.createdAt,
           endDate: pkg.maturityDate,
           maturityDate: pkg.maturityDate,
           interestRate: `${pkg.interestRate}% p.a.`,
           lockPeriod: pkg.lockPeriod,
           interestAccrued: pkg.interestAccrued,
           status: pkg.status,
-          currentBalance: pkg.currentBalance,
+          currentBalance: pkg.currentBalance || 0,
         };
       }
     );

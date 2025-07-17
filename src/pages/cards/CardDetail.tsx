@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useCardQueries } from '@/hooks/queries/useCardQueries';
 import { StoredCard } from '@/lib/api/cards';
-import { formatDate } from '@/lib/utils';
+
 import {
     CreditCard,
     ArrowLeft,
@@ -207,7 +207,7 @@ function CardDetail() {
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center space-x-4">
                             <div className="flex items-center justify-center w-16 h-16 bg-[#0066A1] bg-opacity-10 rounded-xl">
-                                {getCardTypeIcon(card.cardType)}
+                                {getCardTypeIcon()}
                             </div>
                             <div>
                                 <div className="flex items-center space-x-2">
@@ -270,7 +270,7 @@ function CardDetail() {
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-500">Added On</p>
-                                    <p className="font-medium">{formatDate(card.createdAt)}</p>
+                                    <p className="font-medium">{new Date(card.createdAt).toLocaleDateString()}</p>
                                 </div>
                             </div>
                         </div>

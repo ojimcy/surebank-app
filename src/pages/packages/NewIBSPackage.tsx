@@ -3,8 +3,8 @@ import { useAuth } from '@/lib/auth-provider';
 import { useToast } from '@/lib/toast-provider';
 import { useLoader } from '@/lib/loader-provider';
 import packagesApi, {
-  InitiateIBSPackageParams,
-  InterestRateOption,
+  InitiateIBPackageParams,
+  InitiateIBPackageResponse,
 } from '@/lib/api/packages';
 import { StyledButton } from '@/components/ui/styled-button';
 import { getUserAccountByType, createAccount } from '@/lib/api/accounts';
@@ -28,6 +28,15 @@ const lockPeriodOptions = [
 ];
 
 const IBS_PACKAGE_DATA_KEY = 'ibsPackageData';
+
+interface InterestRateOption {
+  id: string;
+  name: string;
+  rate: number;
+  lockPeriod: number;
+  minLockPeriod?: number;
+  maxLockPeriod?: number;
+}
 
 function NewIBSPackage() {
   const toast = useToast();
@@ -69,26 +78,19 @@ function NewIBSPackage() {
   useEffect(() => {
     const fetchInterestRates = async () => {
       try {
-        loader.showLoader('Loading interest rates...');
-        const rates = await packagesApi.getInterestRateOptions();
-        setInterestRates(rates);
-        // Set default rate if available
-        if (rates.length > 0) {
-          setFormData((prev) => ({
-            ...prev,
-            interestRate: rates[0].rate,
-          }));
-        }
+        // Mock interest rates since the API doesn't have this endpoint
+        const mockRates = [
+          { id: '1', name: '10% Annual', rate: 10, lockPeriod: 365 },
+          { id: '2', name: '12% Annual', rate: 12, lockPeriod: 365 },
+          { id: '3', name: '15% Annual', rate: 15, lockPeriod: 365 },
+        ];
+        setInterestRates(mockRates);
       } catch (error) {
-        console.error('Failed to fetch interest rates:', error);
-        toast.error({ title: 'Failed to load interest rates' });
-      } finally {
-        loader.hideLoader();
+        console.error('Error fetching interest rates:', error);
       }
     };
 
     fetchInterestRates();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Handle input change
@@ -106,9 +108,8 @@ function NewIBSPackage() {
 
       // If lock period changed, update the interest rate
       if (name === 'lockPeriod' && newValue > 0) {
-        const matchingRate = interestRates.find(
-          (rate) =>
-            newValue >= rate.minLockPeriod && newValue <= rate.maxLockPeriod
+        const matchingRate = interestRates.find(() =>
+          isValidLockPeriod(newValue)
         );
 
         if (matchingRate) {
@@ -131,14 +132,28 @@ function NewIBSPackage() {
   const getCurrentInterestRate = () => {
     if (!formData.lockPeriod) return null;
 
-    return interestRates.find(
-      (rate) =>
-        formData.lockPeriod >= rate.minLockPeriod &&
-        formData.lockPeriod <= rate.maxLockPeriod
-    );
+    return getSelectedRate();
   };
 
   const currentRate = getCurrentInterestRate();
+
+  const isValidLockPeriod = (newValue: number): boolean => {
+    const selectedRate = interestRates.find(rate => rate.rate === formData.interestRate);
+    if (!selectedRate) return true;
+
+    const minPeriod = selectedRate.minLockPeriod || selectedRate.lockPeriod;
+    const maxPeriod = selectedRate.maxLockPeriod || selectedRate.lockPeriod;
+
+    return newValue >= minPeriod && newValue <= maxPeriod;
+  };
+
+  const getSelectedRate = (): InterestRateOption | null => {
+    return interestRates.find(rate =>
+      rate.rate === formData.interestRate &&
+      formData.lockPeriod >= (rate.minLockPeriod || rate.lockPeriod) &&
+      formData.lockPeriod <= (rate.maxLockPeriod || rate.lockPeriod)
+    ) || null;
+  };
 
   // Validate form
   const validateForm = () => {
@@ -180,28 +195,29 @@ function NewIBSPackage() {
 
     try {
       loader.showLoader('Initiating payment...');
-      
+
       // Log platform info for debugging
       const platformInfo = getPlatformInfo();
       ibsLogger.info('Platform info:', platformInfo);
-      
-      const paymentData: InitiateIBSPackageParams = {
+
+      const paymentData: InitiateIBPackageParams = {
         name: formData.name,
         principalAmount: formData.principalAmount,
+        interestRate: formData.interestRate,
         lockPeriod: formData.lockPeriod,
-        redirectUrl: getPaymentSuccessUrl(),
+
       };
-      
+
       // Log payment initialization
       paymentLogger.logInitialize({
         name: formData.name,
         principalAmount: formData.principalAmount,
         lockPeriod: formData.lockPeriod,
-        redirectUrl: paymentData.redirectUrl
+        redirectUrl: getPaymentSuccessUrl()
       });
 
       // Initiate payment
-      const response = await packagesApi.initiateIBSPackagePayment(paymentData);
+      const response: InitiateIBPackageResponse = await packagesApi.initiateIBPackagePayment(paymentData);
       console.log('Payment initiation response:', response);
       paymentLogger.logApiResponse('/interest-savings/package/init-payment', response);
 
@@ -216,7 +232,7 @@ function NewIBSPackage() {
       ibsLogger.info('IBS package data stored successfully');
 
       // Get the correct authorization URL (supporting both snake_case and camelCase formats)
-      const paymentUrl = response.authorization_url || response.authorizationUrl;
+      const paymentUrl = response.authorization_url;
 
       if (!paymentUrl) {
         paymentLogger.logError('No payment URL received', response);
@@ -227,13 +243,13 @@ function NewIBSPackage() {
       paymentLogger.logStatus(response.reference, 'initialized', {
         authorizationUrl: paymentUrl
       });
-      
+
       paymentLogger.logRedirect(paymentUrl, {
         reference: response.reference
       });
-      
+
       console.log('Redirecting to payment page:', paymentUrl);
-      
+
       // Redirect to payment gateway - using a small timeout to ensure logs are processed
       setTimeout(() => {
         ibsLogger.info('Executing redirect now...');
@@ -316,9 +332,8 @@ function NewIBSPackage() {
               value={formData.name}
               onChange={handleChange}
               placeholder="e.g. Retirement Fund"
-              className={`w-full p-2 border rounded-md ${
-                formErrors.name ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full p-2 border rounded-md ${formErrors.name ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {formErrors.name && (
               <p className="text-red-500 text-xs">{formErrors.name}</p>
@@ -342,11 +357,10 @@ function NewIBSPackage() {
               value={formData.principalAmount}
               onChange={handleChange}
               placeholder="10000"
-              className={`w-full p-2 border rounded-md ${
-                formErrors.principalAmount
-                  ? 'border-red-500'
-                  : 'border-gray-300'
-              }`}
+              className={`w-full p-2 border rounded-md ${formErrors.principalAmount
+                ? 'border-red-500'
+                : 'border-gray-300'
+                }`}
             />
             {formErrors.principalAmount && (
               <p className="text-red-500 text-xs">
@@ -367,9 +381,8 @@ function NewIBSPackage() {
               name="lockPeriod"
               value={formData.lockPeriod}
               onChange={handleChange}
-              className={`w-full p-2 border rounded-md ${
-                formErrors.lockPeriod ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full p-2 border rounded-md ${formErrors.lockPeriod ? 'border-red-500' : 'border-gray-300'
+                }`}
             >
               <option value="">Select lock period</option>
               {lockPeriodOptions.map((option) => (

@@ -72,7 +72,7 @@ function CardsList() {
         deactivateCard(cardId);
     };
 
-    const getCardTypeIcon = (cardType: string) => {
+    const getCardTypeIcon = () => {
         return <CreditCard className="h-6 w-6" />;
     };
 
@@ -173,7 +173,7 @@ function CardsList() {
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center space-x-4">
                                         <div className="flex items-center justify-center w-12 h-12 bg-[#0066A1] bg-opacity-10 rounded-lg">
-                                            {getCardTypeIcon(card.cardType)}
+                                            {getCardTypeIcon()}
                                         </div>
                                         <div>
                                             <div className="flex items-center space-x-2">

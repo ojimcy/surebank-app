@@ -35,9 +35,9 @@ export const safeAreaClasses = {
   paddingLeft: 'pl-[var(--sal)]',
 
   // Combined padding utilities
-  paddingX: 'px-[var(--sal)] px-[var(--sar)]',
-  paddingY: 'py-[var(--sat)] py-[var(--sab)]',
+  paddingX: 'pl-[var(--sal)] pr-[var(--sar)]',
+  paddingY: 'pt-[var(--sat)] pb-[var(--sab)]',
 
   // All sides
-  padding: 'p-[var(--sat)] p-[var(--sar)] p-[var(--sab)] p-[var(--sal)]',
+  padding: 'pt-[var(--sat)] pr-[var(--sar)] pb-[var(--sab)] pl-[var(--sal)]',
 };

@@ -45,7 +45,8 @@ function Header() {
     <header
       className={cn(
         'sticky top-0 z-40 bg-[#0066A1] text-white py-3 px-4 shadow-md',
-        safeAreaClasses.paddingTop
+        safeAreaClasses.paddingTop,
+        safeAreaClasses.paddingX
       )}
     >
       <div className="container mx-auto flex justify-between items-center">

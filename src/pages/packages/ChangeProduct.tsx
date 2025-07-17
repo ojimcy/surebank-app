@@ -19,7 +19,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import Spinner from '@/components/ui/Spinner';
-import productsApi, { Product } from '@/lib/api/products';
+import { Product } from '@/lib/api/products';
+import api from '@/lib/api/axios';
 import packagesApi from '@/lib/api/packages';
 import { formatCurrency } from '@/lib/utils';
 
@@ -38,22 +39,24 @@ function ChangeProduct() {
   const [productDetails, setProductDetails] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const navigate = useNavigate();
   const location = useLocation();
   const packageData = location.state as LocationState;
-  
+
   // Fetch products when component mounts
   useEffect(() => {
     fetchProducts();
   }, []);
-  
+
   // Fetch available products
   const fetchProducts = async () => {
     try {
       setIsLoading(true);
-      const response = await productsApi.getSBProducts();
-      setProducts(response.results);
+      const response = await api.get('products/catalogue');
+      // Extract products from the results array in the response
+      const productsData = response.data?.results || [];
+      setProducts(productsData);
     } catch (error) {
       console.error('Error fetching products:', error);
       toast.error('Failed to load products');
@@ -61,49 +64,68 @@ function ChangeProduct() {
       setIsLoading(false);
     }
   };
-  
+
   // Handle product selection
   const handleProductSelection = (value: string) => {
     setSelectedProductId(value);
     const selectedProductDetails = products.find(
       (product) => product._id === value
     );
-    
+
     if (selectedProductDetails) {
       setProductDetails(selectedProductDetails);
+    } else {
+      setProductDetails(null);
     }
   };
-  
+
   // Handle form submission
   const handleSubmit = async () => {
     if (!selectedProductId) {
       toast.error('Please select a product');
       return;
     }
-    
+
     if (!packageData?.packageId) {
       toast.error('Package information is missing');
       return;
     }
 
+    // Check if selected product is different from current product
+    if (packageData.currentProduct?.id === selectedProductId) {
+      toast.error('Please select a different product');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
-      await packagesApi.changeProduct(packageData.packageId, {
+
+      console.log('Submitting product change:', {
+        packageId: packageData.packageId,
+        newProductId: selectedProductId,
+        selectedProduct: productDetails
+      });
+
+      const response = await packagesApi.changeProduct(packageData.packageId, {
         newProductId: selectedProductId
       });
-      
+
+      console.log('Product change response:', response);
+
       toast.success('Product changed successfully!');
       navigate(`/packages/${packageData.packageId}`);
     } catch (error) {
+      console.error('Error changing product:', error);
+
       if (
-        error && 
-        typeof error === 'object' && 
-        'response' in error && 
-        error.response && 
-        typeof error.response === 'object' && 
-        'data' in error.response && 
-        error.response.data && 
-        typeof error.response.data === 'object' && 
+        error &&
+        typeof error === 'object' &&
+        'response' in error &&
+        error.response &&
+        typeof error.response === 'object' &&
+        'data' in error.response &&
+        error.response.data &&
+        typeof error.response.data === 'object' &&
         'message' in error.response.data
       ) {
         // Backend error with a specific error message
@@ -117,7 +139,7 @@ function ChangeProduct() {
       setIsSubmitting(false);
     }
   };
-  
+
   // If no package data was passed, redirect back
   useEffect(() => {
     if (!packageData?.packageId) {
@@ -125,7 +147,7 @@ function ChangeProduct() {
       navigate('/packages');
     }
   }, [packageData, navigate]);
-  
+
   return (
     <div className="container max-w-md mx-auto p-4">
       <Card>
@@ -135,15 +157,15 @@ function ChangeProduct() {
             Select a new product for your SureBank package
           </CardDescription>
         </CardHeader>
-        
+
         <CardContent className="space-y-4">
           {packageData?.currentProduct && (
             <div className="space-y-2 bg-gray-50 p-3 rounded-md">
               <h3 className="text-sm font-medium">Current Product</h3>
               <div className="font-medium">{packageData.currentProduct.name}</div>
               <div className="text-sm text-gray-500">
-                Price: {packageData.currentProduct.sellingPrice 
-                  ? formatCurrency(packageData.currentProduct.sellingPrice) 
+                Price: {packageData.currentProduct.sellingPrice
+                  ? formatCurrency(packageData.currentProduct.sellingPrice)
                   : 'N/A'}
               </div>
             </div>
@@ -162,7 +184,7 @@ function ChangeProduct() {
               <SelectContent>
                 {products.map((product) => (
                   <SelectItem key={product._id} value={product._id}>
-                    {product.name}
+                    {product.name} - {formatCurrency(product.sellingPrice || 0)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -175,17 +197,22 @@ function ChangeProduct() {
           </div>
 
           {productDetails && (
-            <div className="bg-gray-100 p-3 rounded-md text-center">
+            <div className="bg-gray-100 p-3 rounded-md text-center border border-gray-200">
               <div className="font-medium">{productDetails.name}</div>
               <div className="text-lg font-bold">
                 {productDetails.sellingPrice
                   ? formatCurrency(productDetails.sellingPrice)
                   : 'Price not available'}
               </div>
+              {productDetails.description && (
+                <div className="text-sm text-gray-600 mt-2">
+                  {productDetails.description}
+                </div>
+              )}
             </div>
           )}
         </CardContent>
-        
+
         <CardFooter className="flex flex-col gap-4">
           <Button
             className="w-full"

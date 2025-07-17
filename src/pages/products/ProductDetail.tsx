@@ -31,7 +31,7 @@ function ProductDetail() {
     const fetchProductDetails = async () => {
       try {
         setLoading(true);
-        
+
         // In a real implementation, you would fetch the product details from an API
         // For now, we'll use the data passed via state or fetch from the package if packageId is provided
         if (packageId) {
@@ -40,12 +40,12 @@ function ProductDetail() {
           console.log(response);
           if (response && response.product) {
             setProduct({
-              id: response.product.id,
+              id: response._id,
               name: response.product.name,
-              description: response.product.description || 'No description available',
-              sellingPrice: response.product.sellingPrice || 0,
-              discount: response.product.discount || 0,
-              quantity: response.product.quantity || 1,
+              description: 'No description available',
+              sellingPrice: 0,
+              discount: 0,
+              quantity: 1,
               images: response.product.images || [],
               packageId: packageId
             });
@@ -80,23 +80,23 @@ function ProductDetail() {
 
   const handleBuyNow = async () => {
     if (!product) return;
-    
+
     try {
       setPaymentInitiated(true);
-      
+
       // Add the product to cart
       await cartApi.addToCart({
         productCatalogueId: product.id,
         quantity: 1,
         ...(product.packageId ? { packageId: product.packageId } : {}),
       });
-      
+
       addToast({
         title: 'Product added to cart',
         description: 'Redirecting to checkout...',
         variant: 'success',
       });
-      
+
       // Redirect to checkout page
       navigate('/checkout');
     } catch (error) {
@@ -131,7 +131,7 @@ function ProductDetail() {
           </Button>
           <Skeleton className="h-8 w-48 ml-2" />
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <Skeleton className="aspect-square rounded-lg" />
           <div className="space-y-4">
@@ -172,24 +172,24 @@ function ProductDetail() {
         </Button>
         <h1 className="text-2xl font-bold ml-2">Product Details</h1>
       </div>
-      
+
       {/* Product content */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Product image */}
         <div className="rounded-lg overflow-hidden bg-gray-100">
-          <img 
-            src={product.images && product.images.length > 0 
-              ? product.images[0] 
-              : 'https://placehold.co/600x400/e2e8f0/1e293b?text=No+Image'} 
+          <img
+            src={product.images && product.images.length > 0
+              ? product.images[0]
+              : 'https://placehold.co/600x400/e2e8f0/1e293b?text=No+Image'}
             alt={product.name}
             className="w-full h-full object-cover aspect-square"
           />
         </div>
-        
+
         {/* Product details */}
         <div className="space-y-4">
           <h2 className="text-2xl font-bold">{product.name}</h2>
-          
+
           <div className="flex items-center space-x-2">
             <span className="text-2xl font-bold text-primary">
               {formatCurrency(product.discount)}
@@ -200,37 +200,37 @@ function ProductDetail() {
                   {formatCurrency(product.sellingPrice)}
                 </span>
                 <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                  {product.sellingPrice > 0 ? 
+                  {product.sellingPrice > 0 ?
                     Math.round(((product.sellingPrice - product.discount) / product.sellingPrice) * 100) : 0}% OFF
                 </span>
               </>
             )}
           </div>
-          
+
           <div className="py-4 border-t border-b border-gray-200">
             <p className="text-gray-700">{product.description}</p>
           </div>
-          
+
           <div className="flex items-center text-sm text-gray-500">
             <Check className="h-4 w-4 text-green-500 mr-2" />
             <span>In stock: {product.quantity} available</span>
           </div>
-          
+
           {/* Action buttons */}
           <div className="space-y-3 pt-4">
-            <Button 
-              className="w-full" 
+            <Button
+              className="w-full"
               size="lg"
               onClick={handleBuyNow}
               disabled={paymentInitiated}
             >
               {paymentInitiated ? 'Processing...' : 'Continue to Checkout'}
             </Button>
-            
+
             {!product.packageId && (
-              <Button 
-                variant="outline" 
-                className="w-full" 
+              <Button
+                variant="outline"
+                className="w-full"
                 size="lg"
                 onClick={handleAddToCart}
               >

@@ -127,6 +127,10 @@ export interface IBWithdrawalParams {
   amount: number;
 }
 
+export interface ChangeProductParams {
+  newProductId: string;
+}
+
 // Packages API functions
 const packagesApi = {
   // Get daily savings packages for a user
@@ -250,6 +254,40 @@ const packagesApi = {
     return response.data;
   },
 
+  // Get IB package by payment reference
+  getIBPackageByReference: async (reference: string): Promise<IBPackage> => {
+    const response = await api.get<IBPackage>(
+      `/interest-savings/package/reference?reference=${reference}`
+    );
+    return response.data;
+  },
+
+  // Get SB package by ID
+  getSBPackageById: async (packageId: string): Promise<SBPackage> => {
+    const response = await api.get<SBPackage>(
+      `/daily-savings/sb/package/${packageId}`
+    );
+    return response.data;
+  },
+
+  // Merge packages
+  mergePackages: async (fromPackageId: string, toPackageId: string): Promise<{ message: string }> => {
+    const response = await api.post<{ message: string }>(
+      `/daily-savings/sb/package/merge`,
+      { fromPackageId, toPackageId }
+    );
+    return response.data;
+  },
+
+  // Withdraw from package
+  withdrawFromPackage: async (data: IBWithdrawalParams, packageType: string): Promise<{ message: string }> => {
+    const response = await api.post<{ message: string }>(
+      `/daily-savings/package/${data.packageId}/withdraw`,
+      { amount: data.amount, packageType }
+    );
+    return response.data;
+  },
+
   // Check if user has required account type
   checkAccountType: async (accountType: 'ds' | 'sb'): Promise<boolean> => {
     try {
@@ -261,6 +299,15 @@ const packagesApi = {
       console.error('Error checking account type:', error);
       return false;
     }
+  },
+
+  // Change product for SB package
+  changeProduct: async (packageId: string, data: ChangeProductParams): Promise<{ message: string }> => {
+    const response = await api.patch<{ message: string }>(
+      `/daily-savings/sb/package/${packageId}`,
+      data
+    );
+    return response.data;
   },
 };
 

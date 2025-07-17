@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import productsApi, { Product } from '@/lib/api/products';
+import { Product } from '@/lib/api/products';
+import api from '@/lib/api/axios';
 import packagesApi from '@/lib/api/packages';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -32,8 +33,10 @@ export function ChangeProductModal({ isOpen, onClose, packageData, onSuccess }: 
     const fetchProducts = async () => {
       try {
         setIsLoading(true);
-        const response = await productsApi.getSBProducts();
-        setProducts(response.results);
+        const response = await api.get('products/catalogue');
+        // Extract products from the results array in the response
+        const productsData = response.data?.results || [];
+        setProducts(productsData);
       } catch (error) {
         console.error('Error fetching products:', error);
         toast.error('Failed to load products');
@@ -47,19 +50,19 @@ export function ChangeProductModal({ isOpen, onClose, packageData, onSuccess }: 
     }
   }, [isOpen]);
 
-  const handleProductSelection = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = event.target.value;
+  // Handle product selection
+  const handleProductSelection = (value: string) => {
     setSelectedProductId(value);
-const selectedProductDetails = products.find(
-     (product) => product._id === value
-   );
+    const selectedProductDetails = products.find(
+      (product) => product._id === value
+    );
 
-   if (selectedProductDetails) {
-     setProductDetails(selectedProductDetails);
-  } else {
-     // Reset the preview when nothing is selected
-     setProductDetails(null);
-   }
+    if (selectedProductDetails) {
+      setProductDetails(selectedProductDetails);
+    } else {
+      // Reset the preview when nothing is selected
+      setProductDetails(null);
+    }
   };
 
   const handleSubmit = async () => {
@@ -68,25 +71,42 @@ const selectedProductDetails = products.find(
       return;
     }
 
+    // Check if selected product is different from current product
+    if (packageData.product?._id === selectedProductId) {
+      toast.error('Please select a different product');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
-      await packagesApi.changeProduct(packageData._id, {
+
+      console.log('Submitting product change:', {
+        packageId: packageData._id,
+        newProductId: selectedProductId,
+        selectedProduct: productDetails
+      });
+
+      const response = await packagesApi.changeProduct(packageData._id, {
         newProductId: selectedProductId
       });
-      
+
+      console.log('Product change response:', response);
+
       toast.success('Product changed successfully!');
       onSuccess();
       onClose();
     } catch (error) {
+      console.error('Error changing product:', error);
+
       if (
-        error && 
-        typeof error === 'object' && 
-        'response' in error && 
-        error.response && 
-        typeof error.response === 'object' && 
-        'data' in error.response && 
-        error.response.data && 
-        typeof error.response.data === 'object' && 
+        error &&
+        typeof error === 'object' &&
+        'response' in error &&
+        error.response &&
+        typeof error.response === 'object' &&
+        'data' in error.response &&
+        error.response.data &&
+        typeof error.response.data === 'object' &&
         'message' in error.response.data
       ) {
         // Backend error with a specific error message
@@ -107,7 +127,7 @@ const selectedProductDetails = products.find(
         <DialogHeader>
           <DialogTitle>Change Product</DialogTitle>
         </DialogHeader>
-        
+
         {packageData && packageData.product && (
           <div className="space-y-4">
             <div>
@@ -124,13 +144,13 @@ const selectedProductDetails = products.find(
                 id="product"
                 className="w-full p-2 border border-gray-300 rounded-md"
                 disabled={isLoading}
-                onChange={handleProductSelection}
+                onChange={(e) => handleProductSelection(e.target.value)}
                 value={selectedProductId}
               >
                 <option value="">Select new product</option>
                 {products.map((product) => (
                   <option key={product._id} value={product._id}>
-                    {product.name}
+                    {product.name} - {formatCurrency(product.sellingPrice || 0)}
                   </option>
                 ))}
               </select>
@@ -142,13 +162,18 @@ const selectedProductDetails = products.find(
             </div>
 
             {productDetails && (
-              <div className="bg-gray-100 p-3 rounded-md text-center">
+              <div className="bg-gray-100 p-3 rounded-md text-center border border-gray-200">
                 <div className="font-medium">{productDetails.name}</div>
                 <div className="text-lg font-bold">
                   {productDetails.sellingPrice
                     ? formatCurrency(productDetails.sellingPrice)
                     : 'Price not available'}
                 </div>
+                {productDetails.description && (
+                  <div className="text-sm text-gray-600 mt-2">
+                    {productDetails.description}
+                  </div>
+                )}
               </div>
             )}
 
@@ -160,7 +185,7 @@ const selectedProductDetails = products.find(
               >
                 {isSubmitting ? (
                   <>
-                    <Spinner size="sm"  />
+                    <Spinner size="sm" />
                     Changing Product...
                   </>
                 ) : (

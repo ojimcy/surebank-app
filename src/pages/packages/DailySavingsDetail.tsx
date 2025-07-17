@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/lib/toast-provider';
-import packagesApi, { DailySavingsPackage } from '@/lib/api/packages';
+import packagesApi from '@/lib/api/packages';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { PackageHeader } from '@/components/packages/PackageHeader';
 import { PackageOverview } from '@/components/packages/PackageOverview';
@@ -380,6 +380,7 @@ function DailySavingsDetail() {
                 amountPerDay={packageData.amountPerDay}
                 formatCurrency={formatCurrency}
                 formatDate={formatDate}
+                principalAmount={packageData.current}
             />
 
             {/* Daily Savings specific info */}

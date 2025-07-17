@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/lib/toast-provider';
-import packagesApi, { SBPackage } from '@/lib/api/packages';
+import packagesApi from '@/lib/api/packages';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { PackageHeader } from '@/components/packages/PackageHeader';
 import { PackageOverview } from '@/components/packages/PackageOverview';
@@ -345,6 +345,7 @@ function SBPackageDetail() {
                 productImage={packageData.productImage}
                 type="SB Package"
                 totalContribution={packageData.totalContribution}
+                principalAmount={packageData.current}
                 amountPerDay={0}
                 formatCurrency={formatCurrency}
                 formatDate={formatDate}
