@@ -1,16 +1,21 @@
 {
   "name": "surebank-app",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build && npm run postbuild",
+    "build:prod": "NODE_ENV=production npm run build && npx cap sync",
     "android": "npm run build && npx cap sync && npx cap open android",
+    "android:prod": "npm run build:prod && npx cap open android",
     "ios": "npm run build && npx cap sync && npx cap open ios",
+    "ios:prod": "npm run build:prod && npx cap open ios",
     "postbuild": "cp _headers _redirects netlify.toml dist/",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "cap:sync": "npx cap sync",
+    "cap:copy": "npx cap copy"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.808.0",
