@@ -309,6 +309,15 @@ const packagesApi = {
     );
     return response.data;
   },
+
+  // Edit daily savings package
+  editDailySavingsPackage: async (packageId: string, data: { target: string; amountPerDay: number }): Promise<DailySavingsPackage> => {
+    const response = await api.patch<DailySavingsPackage>(
+      `/daily-savings/package/${packageId}`,
+      data
+    );
+    return response.data;
+  },
 };
 
 export default packagesApi;

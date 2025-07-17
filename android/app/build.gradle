@@ -3,6 +3,12 @@ apply plugin: 'com.android.application'
 android {
     namespace "surebankstores.ng"
     compileSdk rootProject.ext.compileSdkVersion
+    
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    
     defaultConfig {
         applicationId "surebankstores.ng"
         minSdkVersion rootProject.ext.minSdkVersion

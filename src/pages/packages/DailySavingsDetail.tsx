@@ -9,6 +9,7 @@ import { PackageOverview } from '@/components/packages/PackageOverview';
 import { PackageActions } from '@/components/packages/PackageActions';
 import { ContributionTimeline } from '@/components/packages/ContributionTimeline';
 import { PackageDetailsAccordion } from '@/components/packages/PackageDetailsAccordion';
+import { EditDailySavingsModal } from '@/components/packages/EditDailySavingsModal';
 
 // Daily Savings specific UI interface
 interface DailySavingsUIPackage {
@@ -298,12 +299,44 @@ function DailySavingsDetail() {
 
     // Handle editing package
     const handleEditPackage = () => {
-        addToast({
-            title: 'Package updated',
-            description: 'Your package has been successfully updated.',
-            variant: 'success',
-        });
-        setShowEditDialog(false);
+        setShowEditDialog(true);
+    };
+
+    // Handle successful package edit
+    const handleEditSuccess = async () => {
+        if (!id || !user?.id) return;
+
+        try {
+            // Refetch the package data to get updated info
+            const dailySavingsPackages = await packagesApi.getDailySavings(user.id);
+            const dsPackage = dailySavingsPackages.find((pkg) => pkg.id === id);
+
+            if (dsPackage) {
+                const totalContribution = safeParseNumber(dsPackage.totalContribution);
+                const targetAmount = safeParseNumber(dsPackage.targetAmount);
+                const amountPerDay = safeParseNumber(dsPackage.amountPerDay);
+
+                setPackageData({
+                    id: dsPackage.id,
+                    title: dsPackage.target || 'Savings Goal',
+                    accountNumber: dsPackage.accountNumber || 'N/A',
+                    progress: targetAmount > 0 ? Math.floor((totalContribution / targetAmount) * 100) : 0,
+                    current: totalContribution,
+                    target: targetAmount,
+                    amountPerDay: amountPerDay,
+                    status: formatStatus(dsPackage.status),
+                    statusColor: getStatusColor(dsPackage.status),
+                    startDate: dsPackage.startDate,
+                    endDate: dsPackage.endDate,
+                    lastContribution: formatDate(dsPackage.updatedAt),
+                    nextContribution: calculateNextContribution(amountPerDay),
+                    totalContribution: totalContribution,
+                    productImage: getDailySavingsImage(dsPackage.target),
+                });
+            }
+        } catch (error) {
+            console.error('Error refreshing package data:', error);
+        }
     };
 
     // Handle closing package
@@ -407,7 +440,7 @@ function DailySavingsDetail() {
                 type="Daily Savings"
                 color={dsColor}
                 onAddContribution={handleAddContribution}
-                onEditPackage={() => setShowEditDialog(true)}
+                onEditPackage={handleEditPackage}
                 onClosePackage={() => setShowCloseDialog(true)}
                 onBuyProduct={() => { }} // Not used for DS
                 onWithdraw={() => setShowWithdrawDialog(true)}
@@ -440,15 +473,21 @@ function DailySavingsDetail() {
                 formatStatus={formatStatus}
             />
 
+            {/* Edit Package Modal */}
+            {packageData && (
+                <EditDailySavingsModal
+                    isOpen={showEditDialog}
+                    onClose={() => setShowEditDialog(false)}
+                    packageData={{
+                        id: packageData.id,
+                        target: packageData.title,
+                        amountPerDay: packageData.amountPerDay
+                    }}
+                    onSuccess={handleEditSuccess}
+                />
+            )}
+
             {/* Confirmation Dialogs */}
-            <ConfirmationDialog
-                open={showEditDialog}
-                onOpenChange={setShowEditDialog}
-                title="Edit Package"
-                description="Edit this daily savings package details."
-                confirmText="Save Changes"
-                onConfirm={handleEditPackage}
-            />
 
             <ConfirmationDialog
                 open={showCloseDialog}

@@ -71,6 +71,9 @@ function ChangeProduct() {
     const selectedProductDetails = products.find(
       (product) => product._id === value
     );
+    console.log(selectedProductDetails, 'selectedProductDetails');
+    console.log(value, 'value');
+    console.log(products, 'products');
 
     if (selectedProductDetails) {
       setProductDetails(selectedProductDetails);
@@ -148,6 +151,8 @@ function ChangeProduct() {
     }
   }, [packageData, navigate]);
 
+  console.log(selectedProductId, 'selectedProductId');
+  console.log(products, 'products');
   return (
     <div className="container max-w-md mx-auto p-4">
       <Card>
