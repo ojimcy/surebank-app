@@ -220,6 +220,11 @@ function IBPackageDetail() {
         navigate(`/packages/withdraw-interest?packageId=${packageData.id}`);
     };
 
+    // Handle adding contribution
+    const handleAddContribution = () => {
+        navigate('/payments/deposit');
+    };
+
     if (loading) {
         return (
             <div className="flex justify-center items-center min-h-screen">
@@ -333,8 +338,7 @@ function IBPackageDetail() {
             <PackageActions
                 type="Interest-Based"
                 color={ibColor}
-                onAddContribution={() => { }} // Not used for IB
-                onEditPackage={() => setShowEditDialog(true)}
+                onAddContribution={handleAddContribution}
                 onClosePackage={() => setShowCloseDialog(true)}
                 onBuyProduct={() => { }} // Not used for IB
                 onWithdraw={handleWithdraw}

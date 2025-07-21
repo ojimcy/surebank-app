@@ -26,6 +26,7 @@ interface UIPackage {
   startDate: string;
   endDate?: string;
   amountPerDay?: number;
+  totalCount?: number;
 }
 
 // Available package types
@@ -289,10 +290,7 @@ function PackageList() {
           title: pkg.target || 'Savings Goal',
           type: 'Daily Savings' as const,
           icon: 'home',
-          progress:
-            pkg.targetAmount > 0
-              ? Math.floor((pkg.totalContribution / pkg.targetAmount) * 100)
-              : 0,
+          progress: Math.floor((pkg.totalCount / 30) * 100),
           current: pkg.totalContribution,
           target: pkg.targetAmount,
           color: '#0066A1',
@@ -302,6 +300,7 @@ function PackageList() {
           lastContribution: formatDate(pkg.updatedAt),
           nextContribution: calculateNextContribution(pkg.amountPerDay),
           amountPerDay: pkg.amountPerDay,
+          totalCount: pkg.totalCount,
           startDate: pkg.startDate,
           endDate: pkg.endDate,
           productImage: getRandomPackageImage('Daily Savings', pkg.target),
@@ -775,7 +774,11 @@ function PackageList() {
                     <div className="mb-2">
                       <div className="flex justify-between text-xs mb-1">
                         <span>Progress</span>
-                        <span>{pkg.progress}%</span>
+                        <span>
+                          {pkg.type === 'Daily Savings' && pkg.totalCount
+                            ? `${pkg.totalCount}/30 days (${pkg.progress}%)`
+                            : `${pkg.progress}%`}
+                        </span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2.5">
                         <div
@@ -795,14 +798,24 @@ function PackageList() {
                       </span>
                     </div>
                     {pkg.type === 'Daily Savings' && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600 text-sm">
-                          Daily Amount:
-                        </span>
-                        <span className="font-medium">
-                          ₦{pkg.current?.toLocaleString() || '0'}
-                        </span>
-                      </div>
+                      <>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 text-sm">
+                            Daily Amount:
+                          </span>
+                          <span className="font-medium">
+                            ₦{pkg.amountPerDay?.toLocaleString() || '0'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 text-sm">
+                            Total Saved:
+                          </span>
+                          <span className="font-medium">
+                            ₦{pkg.current?.toLocaleString() || '0'}
+                          </span>
+                        </div>
+                      </>
                     )}
                     <div className="flex justify-between">
                       <span className="text-gray-600 text-sm">Start Date:</span>

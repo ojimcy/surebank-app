@@ -8,6 +8,8 @@ export interface DailySavingsPackage {
   target: string;
   targetAmount: number;
   totalContribution: number;
+  totalCount: number;
+  totalCharge?: number;
   status: string;
   startDate: string;
   createdAt: string;
@@ -130,6 +132,7 @@ export interface IBWithdrawalParams {
 export interface ChangeProductParams {
   newProductId: string;
 }
+
 
 // Packages API functions
 const packagesApi = {
@@ -318,6 +321,7 @@ const packagesApi = {
     );
     return response.data;
   },
+
 };
 
 export default packagesApi;

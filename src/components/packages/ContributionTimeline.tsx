@@ -25,6 +25,7 @@ export function ContributionTimeline({
       </div>
     );
   }
+console.log("ContributionTimeline component loaded", contributions);
 
   return (
     <div className="space-y-4">

@@ -7,7 +7,6 @@ import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { PackageHeader } from '@/components/packages/PackageHeader';
 import { PackageOverview } from '@/components/packages/PackageOverview';
 import { PackageActions } from '@/components/packages/PackageActions';
-import { ContributionTimeline } from '@/components/packages/ContributionTimeline';
 import { PackageDetailsAccordion } from '@/components/packages/PackageDetailsAccordion';
 
 // SB Package specific UI interface
@@ -36,14 +35,6 @@ interface SBPackageUIPackage {
     };
 }
 
-// Contribution interface
-interface Contribution {
-    id: string;
-    amount: number;
-    date: string;
-    status: string;
-}
-
 // SB Package placeholder image
 const sbPackagePlaceholder = 'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3';
 
@@ -56,7 +47,6 @@ function SBPackageDetail() {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [packageData, setPackageData] = useState<SBPackageUIPackage | null>(null);
-    const [contributions, setContributions] = useState<Contribution[]>([]);
     const [showEditDialog, setShowEditDialog] = useState<boolean>(false);
     const [showCloseDialog, setShowCloseDialog] = useState<boolean>(false);
     const [showMergeDialog, setShowMergeDialog] = useState<boolean>(false);
@@ -186,8 +176,6 @@ function SBPackageDetail() {
                     },
                 });
 
-                // Generate mock contributions data for demo
-                generateMockContributions(totalContribution);
                 setLoading(false);
             } catch (err) {
                 console.error('Error fetching SB package details:', err);
@@ -195,43 +183,6 @@ function SBPackageDetail() {
                 setLoading(false);
             }
         };
-
-        // Function to generate mock contributions for demo purposes
-        const generateMockContributions = (totalAmount: number) => {
-            const safeTotal = safeParseNumber(totalAmount);
-            if (safeTotal <= 0) {
-                setContributions([]);
-                return;
-            }
-
-            // Generate between 5 and 12 contributions
-            const numContributions = Math.floor(Math.random() * 8) + 5;
-            const mockContributions: Contribution[] = [];
-
-            // Calculate a reasonable average contribution
-            const avgContribution = safeTotal / numContributions;
-
-            // Generate contributions with some variance
-            for (let i = 0; i < numContributions; i++) {
-                const date = new Date();
-                date.setDate(date.getDate() - (i * 7)); // Weekly contributions
-
-                mockContributions.push({
-                    id: `contrib-${i}`,
-                    amount: Math.round(avgContribution * (0.8 + Math.random() * 0.4)),
-                    date: date.toISOString(),
-                    status: Math.random() > 0.1 ? 'completed' : 'pending',
-                });
-            }
-
-            // Sort by date (newest first)
-            mockContributions.sort(
-                (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-            );
-
-            setContributions(mockContributions);
-        };
-
         fetchSBPackageDetail();
     }, [id, user]);
 
@@ -258,42 +209,37 @@ function SBPackageDetail() {
 
     // Handle merge package
     const handleMergePackage = () => {
-        addToast({
-            title: 'Merge initiated',
-            description: 'Your package merge has been initiated.',
-            variant: 'success',
-        });
-        setShowMergeDialog(false);
+        navigate('/packages/merge', { state: { packageId: id } });
     };
 
     // Handle change product
     const handleChangeProduct = () => {
-        addToast({
-            title: 'Product changed',
-            description: 'Your product has been successfully changed.',
-            variant: 'success',
-        });
-        setShowChangeProductDialog(false);
+        if (packageData) {
+            navigate('/packages/change-product', { 
+                state: { 
+                    packageId: id,
+                    currentProduct: packageData.productDetails 
+                } 
+            });
+        }
     };
 
     // Handle buy product
     const handleBuyProduct = () => {
-        addToast({
-            title: 'Purchase initiated',
-            description: 'Your purchase has been initiated.',
-            variant: 'success',
-        });
-        setShowBuyDialog(false);
+        if (packageData) {
+            navigate('/orders', { 
+                state: { 
+                    packageId: id,
+                    productDetails: packageData.productDetails,
+                    availableBalance: packageData.current
+                } 
+            });
+        }
     };
 
     // Handle withdraw
     const handleWithdraw = () => {
-        addToast({
-            title: 'Withdrawal initiated',
-            description: 'Your withdrawal has been initiated.',
-            variant: 'success',
-        });
-        setShowWithdrawDialog(false);
+        navigate('/payments/withdraw');
     };
 
     if (loading) {
@@ -386,24 +332,12 @@ function SBPackageDetail() {
                 type="SB Package"
                 color={sbColor}
                 onAddContribution={() => { }} // Not used for SB
-                onEditPackage={() => setShowEditDialog(true)}
                 onClosePackage={() => setShowCloseDialog(true)}
                 onBuyProduct={() => setShowBuyDialog(true)}
                 onWithdraw={() => setShowWithdrawDialog(true)}
                 onMerge={() => setShowMergeDialog(true)}
                 onChangeProduct={() => setShowChangeProductDialog(true)}
             />
-
-            {/* Contribution History */}
-            <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-                <h2 className="text-lg font-semibold mb-4">Contribution History</h2>
-                <ContributionTimeline
-                    contributions={contributions}
-                    formatCurrency={formatCurrency}
-                    formatDate={formatDate}
-                    formatStatus={formatStatus}
-                />
-            </div>
 
             {/* Package Details Accordion */}
             <PackageDetailsAccordion

@@ -7,9 +7,7 @@ import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { PackageHeader } from '@/components/packages/PackageHeader';
 import { PackageOverview } from '@/components/packages/PackageOverview';
 import { PackageActions } from '@/components/packages/PackageActions';
-import { ContributionTimeline } from '@/components/packages/ContributionTimeline';
 import { PackageDetailsAccordion } from '@/components/packages/PackageDetailsAccordion';
-import { EditDailySavingsModal } from '@/components/packages/EditDailySavingsModal';
 
 // Daily Savings specific UI interface
 interface DailySavingsUIPackage {
@@ -20,6 +18,8 @@ interface DailySavingsUIPackage {
     current: number;
     target: number;
     amountPerDay: number;
+    totalCount: number;
+    totalCharge: number;
     status: string;
     statusColor: string;
     startDate: string;
@@ -28,14 +28,6 @@ interface DailySavingsUIPackage {
     nextContribution: string;
     totalContribution: number;
     productImage: string;
-}
-
-// Contribution interface
-interface Contribution {
-    id: string;
-    amount: number;
-    date: string;
-    status: string;
 }
 
 // Get random image for Daily Savings packages
@@ -69,8 +61,6 @@ function DailySavingsDetail() {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [packageData, setPackageData] = useState<DailySavingsUIPackage | null>(null);
-    const [contributions, setContributions] = useState<Contribution[]>([]);
-    const [showEditDialog, setShowEditDialog] = useState<boolean>(false);
     const [showCloseDialog, setShowCloseDialog] = useState<boolean>(false);
     const [showWithdrawDialog, setShowWithdrawDialog] = useState<boolean>(false);
 
@@ -220,15 +210,19 @@ function DailySavingsDetail() {
                 const totalContribution = safeParseNumber(dsPackage.totalContribution);
                 const targetAmount = safeParseNumber(dsPackage.targetAmount);
                 const amountPerDay = safeParseNumber(dsPackage.amountPerDay);
+                const totalCount = safeParseNumber(dsPackage.totalCount, 0);
+                const totalCharge = safeParseNumber(dsPackage.totalCharge, 0);
 
                 setPackageData({
                     id: dsPackage.id,
                     title: dsPackage.target || 'Savings Goal',
                     accountNumber: dsPackage.accountNumber || 'N/A',
-                    progress: targetAmount > 0 ? Math.floor((totalContribution / targetAmount) * 100) : 0,
+                    progress: Math.floor((totalCount / 30) * 100),
                     current: totalContribution,
                     target: targetAmount,
                     amountPerDay: amountPerDay,
+                    totalCount: totalCount,
+                    totalCharge: totalCharge,
                     status: formatStatus(dsPackage.status),
                     statusColor: getStatusColor(dsPackage.status),
                     startDate: dsPackage.startDate,
@@ -239,8 +233,6 @@ function DailySavingsDetail() {
                     productImage: getDailySavingsImage(dsPackage.target),
                 });
 
-                // Generate mock contributions data for demo
-                generateMockContributions(totalContribution, amountPerDay);
                 setLoading(false);
             } catch (err) {
                 console.error('Error fetching Daily Savings package details:', err);
@@ -249,94 +241,12 @@ function DailySavingsDetail() {
             }
         };
 
-        // Function to generate mock contributions for demo purposes
-        const generateMockContributions = (totalAmount: number, dailyAmount: number) => {
-            const safeTotal = safeParseNumber(totalAmount);
-            const safeDailyAmount = safeParseNumber(dailyAmount);
-
-            if (safeTotal <= 0 || safeDailyAmount <= 0) {
-                setContributions([]);
-                return;
-            }
-
-            // Calculate approximate number of contributions based on daily amount
-            const approximateContributions = Math.floor(safeTotal / safeDailyAmount);
-            const numContributions = Math.min(approximateContributions, 30); // Limit to 30 for demo
-
-            const mockContributions: Contribution[] = [];
-
-            for (let i = 0; i < numContributions; i++) {
-                const date = new Date();
-                date.setDate(date.getDate() - i);
-
-                mockContributions.push({
-                    id: `contrib-${i}`,
-                    amount: safeDailyAmount,
-                    date: date.toISOString(),
-                    status: Math.random() > 0.05 ? 'completed' : 'pending',
-                });
-            }
-
-            // Sort by date (newest first)
-            mockContributions.sort(
-                (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-            );
-
-            setContributions(mockContributions);
-        };
-
         fetchDailySavingsDetail();
     }, [id, user]);
 
     // Handle adding contribution
     const handleAddContribution = () => {
-        addToast({
-            title: 'Contribution added',
-            description: 'Your contribution has been successfully added.',
-            variant: 'success',
-        });
-    };
-
-    // Handle editing package
-    const handleEditPackage = () => {
-        setShowEditDialog(true);
-    };
-
-    // Handle successful package edit
-    const handleEditSuccess = async () => {
-        if (!id || !user?.id) return;
-
-        try {
-            // Refetch the package data to get updated info
-            const dailySavingsPackages = await packagesApi.getDailySavings(user.id);
-            const dsPackage = dailySavingsPackages.find((pkg) => pkg.id === id);
-
-            if (dsPackage) {
-                const totalContribution = safeParseNumber(dsPackage.totalContribution);
-                const targetAmount = safeParseNumber(dsPackage.targetAmount);
-                const amountPerDay = safeParseNumber(dsPackage.amountPerDay);
-
-                setPackageData({
-                    id: dsPackage.id,
-                    title: dsPackage.target || 'Savings Goal',
-                    accountNumber: dsPackage.accountNumber || 'N/A',
-                    progress: targetAmount > 0 ? Math.floor((totalContribution / targetAmount) * 100) : 0,
-                    current: totalContribution,
-                    target: targetAmount,
-                    amountPerDay: amountPerDay,
-                    status: formatStatus(dsPackage.status),
-                    statusColor: getStatusColor(dsPackage.status),
-                    startDate: dsPackage.startDate,
-                    endDate: dsPackage.endDate,
-                    lastContribution: formatDate(dsPackage.updatedAt),
-                    nextContribution: calculateNextContribution(amountPerDay),
-                    totalContribution: totalContribution,
-                    productImage: getDailySavingsImage(dsPackage.target),
-                });
-            }
-        } catch (error) {
-            console.error('Error refreshing package data:', error);
-        }
+        navigate('/payments/deposit');
     };
 
     // Handle closing package
@@ -352,12 +262,7 @@ function DailySavingsDetail() {
 
     // Handle withdraw
     const handleWithdraw = () => {
-        addToast({
-            title: 'Withdrawal initiated',
-            description: 'Your withdrawal has been initiated.',
-            variant: 'success',
-        });
-        setShowWithdrawDialog(false);
+        navigate('/packages/withdraw');
     };
 
     if (loading) {
@@ -385,7 +290,6 @@ function DailySavingsDetail() {
     }
 
     const dsColor = '#0066A1';
-
     return (
         <div className="p-4 max-w-3xl mx-auto">
             {/* Package Header */}
@@ -425,12 +329,36 @@ function DailySavingsDetail() {
                         <div className="text-sm text-gray-600">Daily Amount</div>
                     </div>
                     <div className="text-center">
-                        <div className="text-2xl font-bold text-green-600">{packageData.progress}%</div>
-                        <div className="text-sm text-gray-600">Progress</div>
+                        <div className="text-2xl font-bold text-green-600">{packageData.totalCount}/30</div>
+                        <div className="text-sm text-gray-600">Days Contributed</div>
                     </div>
                     <div className="text-center">
                         <div className="text-sm font-medium text-blue-600">{packageData.nextContribution}</div>
                         <div className="text-sm text-gray-600">Next Due</div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Financial Summary */}
+            <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">Financial Summary</h3>
+                <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Total Deposited:</span>
+                        <span className="font-semibold text-lg">{formatCurrency(packageData.totalContribution + packageData.totalCharge)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Service Charges:</span>
+                        <span className="font-semibold text-red-600">-{formatCurrency(packageData.totalCharge)}</span>
+                    </div>
+                    <div className="border-t pt-3">
+                        <div className="flex justify-between items-center">
+                            <span className="text-gray-800 font-medium">Current Balance:</span>
+                            <span className="font-bold text-xl text-green-600">{formatCurrency(packageData.totalContribution)}</span>
+                        </div>
+                    </div>
+                    <div className="text-sm text-gray-500 mt-2">
+                        <p>* A service charge of {formatCurrency(packageData.amountPerDay)} is deducted on your first contribution of every 31-day cycle.</p>
                     </div>
                 </div>
             </div>
@@ -440,24 +368,12 @@ function DailySavingsDetail() {
                 type="Daily Savings"
                 color={dsColor}
                 onAddContribution={handleAddContribution}
-                onEditPackage={handleEditPackage}
                 onClosePackage={() => setShowCloseDialog(true)}
                 onBuyProduct={() => { }} // Not used for DS
-                onWithdraw={() => setShowWithdrawDialog(true)}
+                onWithdraw={handleWithdraw}
                 onMerge={() => { }} // Not used for DS
                 onChangeProduct={() => { }} // Not used for DS
             />
-
-            {/* Contribution History */}
-            <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-                <h2 className="text-lg font-semibold mb-4">Contribution History</h2>
-                <ContributionTimeline
-                    contributions={contributions}
-                    formatCurrency={formatCurrency}
-                    formatDate={formatDate}
-                    formatStatus={formatStatus}
-                />
-            </div>
 
             {/* Package Details Accordion */}
             <PackageDetailsAccordion
@@ -472,20 +388,6 @@ function DailySavingsDetail() {
                 formatDate={formatDate}
                 formatStatus={formatStatus}
             />
-
-            {/* Edit Package Modal */}
-            {packageData && (
-                <EditDailySavingsModal
-                    isOpen={showEditDialog}
-                    onClose={() => setShowEditDialog(false)}
-                    packageData={{
-                        id: packageData.id,
-                        target: packageData.title,
-                        amountPerDay: packageData.amountPerDay
-                    }}
-                    onSuccess={handleEditSuccess}
-                />
-            )}
 
             {/* Confirmation Dialogs */}
 
