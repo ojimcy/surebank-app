@@ -54,29 +54,13 @@ export function PinPad({
 
   return (
     <div className="flex flex-col items-center">
-      {/* PIN display */}
-      <div className="w-full mb-6 flex justify-center">
-        <div className="flex gap-2">
-          {Array.from({ length: maxLength }).map((_, index) => (
-            <div
-              key={index}
-              className={`w-4 h-4 rounded-full border-2 ${
-                index < pin.length
-                  ? 'bg-[#0066A1] border-[#0066A1]'
-                  : 'bg-transparent border-gray-300'
-              }`}
-            />
-          ))}
-        </div>
-      </div>
-
       {/* PIN pad */}
-      <div className="grid grid-cols-3 gap-4 w-full max-w-[280px]">
+      <div className="grid grid-cols-3 gap-3 w-full max-w-[240px]">
         {numbers.map((num) => (
           <button
             key={num}
             onClick={() => handleNumberPress(num)}
-            className="bg-white h-14 w-full rounded-xl text-xl font-semibold text-gray-800 shadow-sm hover:bg-gray-50 active:bg-gray-100 transition-colors"
+            className="bg-white h-12 w-full rounded-lg text-lg font-semibold text-gray-800 border border-gray-200 hover:bg-blue-50 hover:border-[#0066A1] active:bg-blue-100 transition-all duration-150 shadow-sm"
           >
             {num}
           </button>
@@ -87,27 +71,27 @@ export function PinPad({
           {showForgot && (
             <button
               onClick={onForgot}
-              className="text-[#0066A1] text-sm font-medium"
+              className="text-[#0066A1] text-sm font-medium hover:text-[#004d7a] transition-colors"
             >
-              Forgot
+              Forgot?
             </button>
           )}
         </div>
 
         <button
           onClick={() => handleNumberPress(0)}
-          className="bg-white h-14 w-full rounded-xl text-xl font-semibold text-gray-800 shadow-sm hover:bg-gray-50 active:bg-gray-100 transition-colors"
+          className="bg-white h-12 w-full rounded-lg text-lg font-semibold text-gray-800 border border-gray-200 hover:bg-blue-50 hover:border-[#0066A1] active:bg-blue-100 transition-all duration-150 shadow-sm"
         >
           0
         </button>
 
         <button
           onClick={handleDelete}
-          className="bg-white h-14 w-full rounded-xl flex items-center justify-center shadow-sm hover:bg-gray-50 active:bg-gray-100 transition-colors"
+          className="bg-white h-12 w-full rounded-lg flex items-center justify-center border border-gray-200 hover:bg-red-50 hover:border-red-300 active:bg-red-100 transition-all duration-150 shadow-sm group"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6 text-gray-600"
+            className="h-5 w-5 text-gray-500 group-hover:text-red-500 transition-colors"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -116,7 +100,7 @@ export function PinPad({
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={2}
-              d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414-6.414a2 2 0 012.828 0L21 12m-3 5H7a2 2 0 01-2-2V7"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
             />
           </svg>
         </button>
@@ -127,10 +111,10 @@ export function PinPad({
         <div className="mt-6 w-full">
           <Button
             onClick={handleSubmit}
-            className="w-full bg-[#0066A1] text-white"
-            disabled={pin.length < 6}
+            className="w-full h-12 bg-gradient-to-r from-[#0066A1] to-[#004d7a] hover:from-[#004d7a] hover:to-[#003d5c] text-white font-semibold rounded-lg transition-all duration-200 shadow-lg"
+            disabled={pin.length < 4}
           >
-            Confirm
+            {pin.length < 4 ? 'Enter PIN' : 'Confirm PIN'}
           </Button>
         </div>
       )}

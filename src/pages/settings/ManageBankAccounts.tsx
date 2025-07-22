@@ -6,6 +6,7 @@ import { Loader2, CheckCircle2, Trash2, Edit2, Save, X, AlertCircle, ArrowLeft }
 import { cn } from "@/lib/utils";
 import paymentsApi from "@/lib/api/payments";
 import { useNavigate } from "react-router-dom";
+import { usePinVerification } from "@/hooks/usePinVerification";
 
 interface Bank {
   name: string;
@@ -40,6 +41,7 @@ function ManageBankAccounts() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
+  const { verifyPin, PinVerificationModal } = usePinVerification();
 
   // Update the bank account number field handling
   const handleBankAccountNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -219,12 +221,22 @@ function ManageBankAccounts() {
   }, [verificationError, toast]);
 
   // Save current bank account
-  const saveCurrentBankAccount = (e?: React.MouseEvent) => {
+  const saveCurrentBankAccount = async (e?: React.MouseEvent) => {
     // Prevent default browser behavior that might cause page reload
     if (e) e.preventDefault();
     
     if (!selectedBank || !bankAccountNumber || !bankAccountName || !accountVerified) {
       setVerificationError("Account must be verified before saving");
+      return;
+    }
+
+    // Verify PIN before saving bank account
+    const pinVerified = await verifyPin({
+      title: editingAccountId ? 'Update Bank Account' : 'Add Bank Account',
+      description: `Enter your PIN to ${editingAccountId ? 'update' : 'add'} bank account ending in ${bankAccountNumber.slice(-4)}`
+    });
+
+    if (!pinVerified) {
       return;
     }
     
@@ -281,7 +293,20 @@ function ManageBankAccounts() {
   };
 
   // Delete saved account
-  const deleteSavedAccount = (id: string) => {
+  const deleteSavedAccount = async (id: string) => {
+    const accountToDelete = savedAccounts.find(acc => acc.id === id);
+    if (!accountToDelete) return;
+
+    // Verify PIN before deleting bank account
+    const pinVerified = await verifyPin({
+      title: 'Delete Bank Account',
+      description: `Enter your PIN to delete bank account ending in ${accountToDelete.accountNumber.slice(-4)}`
+    });
+
+    if (!pinVerified) {
+      return;
+    }
+
     const updatedAccounts = savedAccounts.filter(account => account.id !== id);
     setSavedAccounts(updatedAccounts);
     saveBankAccountsToStorage(updatedAccounts);
@@ -546,6 +571,9 @@ function ManageBankAccounts() {
           </div>
         </form>
       </div>
+
+      {/* PIN Verification Modal */}
+      <PinVerificationModal />
     </div>
   );
 }

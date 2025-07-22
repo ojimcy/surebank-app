@@ -13,6 +13,7 @@ import {
   ArrowRight,
   CheckCircle2,
 } from "lucide-react";
+import { usePinVerification } from "@/hooks/usePinVerification";
 
 interface PackageOption {
   id: string;
@@ -45,6 +46,7 @@ function IBWithdrawal() {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const preselectedPackageId = searchParams.get('packageId');
+  const { verifyPin, PinVerificationModal } = usePinVerification();
 
   // Validate withdrawal amount based on available balance
   const validateWithdrawal = (
@@ -260,11 +262,22 @@ function IBWithdrawal() {
     if (!amount || parseFloat(amount) <= 0) return;
     if (!selectedPackageData) return;
 
+    // Save withdrawal details before processing
+    const withdrawalAmount = parseFloat(amount);
+    const packageName = selectedPackageData.name;
+
+    // Verify PIN before processing withdrawal
+    const pinVerified = await verifyPin({
+      title: 'Confirm IB Package Withdrawal',
+      description: `Enter your PIN to withdraw ₦${withdrawalAmount.toLocaleString()} from ${packageName}${!isMatured ? ` (Early withdrawal penalty: ₦${penaltyAmount.toLocaleString()})` : ''}`
+    });
+
+    if (!pinVerified) {
+      return;
+    }
+
     setLoading(true);
     try {
-      // Save withdrawal details before processing
-      const withdrawalAmount = parseFloat(amount);
-      const packageName = selectedPackageData.name;
 
       // Create withdrawal data
       const withdrawalData: IBWithdrawalParams = {
@@ -662,6 +675,9 @@ function IBWithdrawal() {
           "Transfer Funds"
         )}
       </Button>
+
+      {/* PIN Verification Modal */}
+      <PinVerificationModal />
     </div>
   );
 }

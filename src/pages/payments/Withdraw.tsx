@@ -6,6 +6,7 @@ import { useToast } from '@/lib/toast-provider';
 import { Loader2, CheckCircle2, Plus, Minus, AlertCircle, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import paymentsApi, { AccountWithBalance, MultiWithdrawalResponse } from "@/lib/api/payments";
+import { usePinVerification } from "@/hooks/usePinVerification";
 
 interface Bank {
   name: string;
@@ -53,6 +54,7 @@ function Withdraw() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
+  const { verifyPin, PinVerificationModal } = usePinVerification();
 
   // Calculate total withdrawal amount
   const totalWithdrawalAmount = selectedAccounts.reduce((total, account) => {
@@ -380,6 +382,16 @@ function Withdraw() {
 
     if (!validateWithdrawals()) {
       setVerificationError("Please check withdrawal amounts for all selected accounts");
+      return;
+    }
+
+    // Verify PIN before processing withdrawal
+    const pinVerified = await verifyPin({
+      title: 'Confirm Withdrawal',
+      description: `Enter your PIN to withdraw ₦${totalWithdrawalAmount.toLocaleString()}`
+    });
+
+    if (!pinVerified) {
       return;
     }
 
@@ -881,6 +893,9 @@ function Withdraw() {
           </Button>
         </div>
       )}
+
+      {/* PIN Verification Modal */}
+      <PinVerificationModal />
     </div>
   );
 }

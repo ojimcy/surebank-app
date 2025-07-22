@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useCardQueries } from '@/hooks/queries/useCardQueries';
 import { StoredCard } from '@/lib/api/cards';
+import { usePinVerification } from '@/hooks/usePinVerification';
 
 import {
     CreditCard,
@@ -39,6 +40,7 @@ function CardDetail() {
     const [card, setCard] = useState<StoredCard | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const { verifyPin, PinVerificationModal } = usePinVerification();
 
     const {
         getCard,
@@ -72,24 +74,55 @@ function CardDetail() {
         setIsDeleteDialogOpen(true);
     };
 
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
         if (card) {
+            // Verify PIN before deleting card
+            const pinVerified = await verifyPin({
+                title: 'Confirm Card Deletion',
+                description: `Enter your PIN to delete card ending in ${card.lastFourDigits}`
+            });
+
+            if (!pinVerified) {
+                setIsDeleteDialogOpen(false);
+                return;
+            }
+
             deleteCard(card._id);
             setIsDeleteDialogOpen(false);
             navigate('/cards');
         }
     };
 
-    const handleSetDefault = () => {
+    const handleSetDefault = async () => {
         if (card) {
+            // Verify PIN before setting as default
+            const pinVerified = await verifyPin({
+                title: 'Set Default Card',
+                description: `Enter your PIN to set card ending in ${card.lastFourDigits} as default`
+            });
+
+            if (!pinVerified) {
+                return;
+            }
+
             setDefaultCard(card._id);
             // Update local state to reflect the change
             setCard(prev => prev ? { ...prev, isDefault: true } : null);
         }
     };
 
-    const handleDeactivate = () => {
+    const handleDeactivate = async () => {
         if (card) {
+            // Verify PIN before deactivating card
+            const pinVerified = await verifyPin({
+                title: 'Deactivate Card',
+                description: `Enter your PIN to deactivate card ending in ${card.lastFourDigits}`
+            });
+
+            if (!pinVerified) {
+                return;
+            }
+
             deactivateCard(card._id);
             // Update local state to reflect the change
             setCard(prev => prev ? { ...prev, isActive: false } : null);
@@ -383,6 +416,9 @@ function CardDetail() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* PIN Verification Modal */}
+            <PinVerificationModal />
         </div>
     );
 }
