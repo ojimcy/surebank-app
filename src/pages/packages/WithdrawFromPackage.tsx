@@ -18,6 +18,7 @@ interface PackageOption {
   amountPerDay?: number;
   accountNumber: string;
   totalCount?: number;
+  targetName?: string; // Original target string for API calls
 }
 
 function Withdrawal() {
@@ -62,6 +63,7 @@ function Withdrawal() {
             target: typeof pkg.target === 'string' ? (isNaN(parseFloat(pkg.target)) ? 0 : parseFloat(pkg.target)) : (pkg.target || 0),
             amountPerDay: pkg.amountPerDay,
             accountNumber: pkg.accountNumber,
+            targetName: pkg.target // Keep original target string for API
           }))
       );
     } catch (error) {
@@ -137,6 +139,8 @@ function Withdrawal() {
       const withdrawalData: IBWithdrawalParams = {
         packageId: selectedPackage,
         amount: withdrawalAmount,
+        accountNumber: selectedPackageData.accountNumber,
+        target: selectedPackageData.targetName || selectedPackageData.name
       };
 
       // Use the API function with the package type "ds"

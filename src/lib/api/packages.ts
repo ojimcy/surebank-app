@@ -127,6 +127,8 @@ export interface PaymentStatus {
 export interface IBWithdrawalParams {
   packageId: string;
   amount: number;
+  accountNumber?: string; // Required for daily savings transfer
+  target?: string; // Required for daily savings transfer
 }
 
 export interface ChangeProductParams {
@@ -282,13 +284,30 @@ const packagesApi = {
     return response.data;
   },
 
-  // Withdraw from package
+  // Withdraw from package (transfer from package to available balance)
   withdrawFromPackage: async (data: IBWithdrawalParams, packageType: string): Promise<{ message: string }> => {
-    const response = await api.post<{ message: string }>(
-      `/daily-savings/package/${data.packageId}/withdraw`,
-      { amount: data.amount, packageType }
-    );
-    return response.data;
+    if (packageType === 'ds') {
+      // For daily savings, use the transfer endpoint which moves funds from package to available balance
+      if (!data.accountNumber || !data.target) {
+        throw new Error('Account number and target are required for daily savings withdrawal');
+      }
+      const response = await api.post<{ message: string }>(
+        `/daily-savings/transfer?packageId=${data.packageId}`,
+        { 
+          amount: data.amount,
+          accountNumber: data.accountNumber,
+          target: data.target
+        }
+      );
+      return response.data;
+    } else {
+      // For Interest-Based packages, use the request withdrawal endpoint
+      const response = await api.post<{ message: string }>(
+        `/interest-savings/package/${data.packageId}/request-withdrawal`,
+        { amount: data.amount }
+      );
+      return response.data;
+    }
   },
 
   // Check if user has required account type

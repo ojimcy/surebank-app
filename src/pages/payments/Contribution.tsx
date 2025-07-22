@@ -31,6 +31,7 @@ interface PackageOption {
   target?: number;
   amountPerDay?: number;
   status?: string;
+  totalCount?: number; // For tracking contribution days
 }
 
 const CONTRIBUTION_DATA_KEY = 'contributionData';
@@ -42,21 +43,93 @@ function Contribution() {
   const [amount, setAmount] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [fetchingPackages, setFetchingPackages] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const { user } = useAuth();
 
-  // Validate contribution amount for DS packages based on amountPerDay
+  // Enhanced validation for DS packages
   const validateDSContribution = (
     packageData: PackageOption,
     contributionAmount: number
-  ): boolean => {
+  ): { isValid: boolean; error?: string } => {
     if (packageData.type !== 'Daily Savings' || !packageData.amountPerDay) {
-      return true; // Not a DS package or no amountPerDay, so no validation needed
+      return { isValid: true }; // Not a DS package or no amountPerDay, so no validation needed
     }
 
     // Check if amount is a multiple of amountPerDay
-    return contributionAmount % packageData.amountPerDay === 0;
+    if (contributionAmount % packageData.amountPerDay !== 0) {
+      return {
+        isValid: false,
+        error: `Amount must be a multiple of ₦${packageData.amountPerDay.toLocaleString()} (daily amount for this package)`
+      };
+    }
+
+    // Calculate contribution days
+    const contributionDays = Math.round(contributionAmount / packageData.amountPerDay);
+    
+    // Check minimum contribution (at least 1 day)
+    if (contributionDays <= 0) {
+      return {
+        isValid: false,
+        error: 'Contribution amount is too small for this package'
+      };
+    }
+
+    // Check contribution circle limit (31 days max cycle)
+    const CONTRIBUTION_CIRCLE = 31;
+    const currentTotalCount = packageData.totalCount || 0;
+    const newTotalCount = currentTotalCount + contributionDays;
+    
+    if (newTotalCount > CONTRIBUTION_CIRCLE) {
+      const remainingDays = CONTRIBUTION_CIRCLE - currentTotalCount;
+      const maxAllowedAmount = remainingDays * packageData.amountPerDay;
+      return {
+        isValid: false,
+        error: `Contribution exceeds 31-day cycle limit. Maximum allowed: ₦${maxAllowedAmount.toLocaleString()} (${remainingDays} days)`
+      };
+    }
+
+    return { isValid: true };
   };
+
+  // Real-time validation when amount changes
+  const handleAmountChange = (value: string) => {
+    setAmount(value);
+    setValidationError(null);
+
+    if (!selectedPackage || !value) return;
+
+    const selectedPackageData = packages.find(pkg => pkg.id === selectedPackage);
+    if (!selectedPackageData) return;
+
+    const contributionAmount = parseFloat(value);
+    if (isNaN(contributionAmount) || contributionAmount <= 0) return;
+
+    // Validate DS contribution
+    if (selectedPackageData.type === 'Daily Savings') {
+      const validation = validateDSContribution(selectedPackageData, contributionAmount);
+      if (!validation.isValid) {
+        setValidationError(validation.error || null);
+      }
+    }
+  };
+
+  // Clear validation error when package selection changes
+  useEffect(() => {
+    setValidationError(null);
+    if (amount && selectedPackage) {
+      const selectedPackageData = packages.find(pkg => pkg.id === selectedPackage);
+      if (selectedPackageData?.type === 'Daily Savings') {
+        const contributionAmount = parseFloat(amount);
+        if (!isNaN(contributionAmount) && contributionAmount > 0) {
+          const validation = validateDSContribution(selectedPackageData, contributionAmount);
+          if (!validation.isValid) {
+            setValidationError(validation.error || null);
+          }
+        }
+      }
+    }
+  }, [selectedPackage, packages, amount]);
 
   // Fetch packages based on selected type
   useEffect(() => {
@@ -82,7 +155,8 @@ function Contribution() {
                 balance: pkg.totalContribution,
                 target: pkg.targetAmount,
                 amountPerDay: pkg.amountPerDay,
-                status: pkg.status
+                status: pkg.status,
+                totalCount: pkg.totalCount || 0
               }))
             );
             break;
@@ -127,15 +201,13 @@ function Contribution() {
 
     const contributionAmount = parseFloat(amount);
 
-    // Validate DS contribution if needed
-    if (
-      selectedPackageData.type === 'Daily Savings' &&
-      !validateDSContribution(selectedPackageData, contributionAmount)
-    ) {
-      toast.error(
-        `Amount must be a multiple of ₦${selectedPackageData.amountPerDay?.toLocaleString()}`
-      );
-      return;
+    // Enhanced validation for DS contribution
+    if (selectedPackageData.type === 'Daily Savings') {
+      const validation = validateDSContribution(selectedPackageData, contributionAmount);
+      if (!validation.isValid) {
+        toast.error(validation.error || 'Invalid contribution amount');
+        return;
+      }
     }
 
     setLoading(true);
@@ -266,9 +338,28 @@ function Contribution() {
         contributionLogger.info('Executing redirect now...');
         window.location.assign(authorizationUrl);
       }, 1000);
-    } catch (error) {
+    } catch (error: unknown) {
+      const apiError = error as { response?: { data?: { message?: string }; status?: number }; message?: string };
       paymentLogger.logError('Failed to initialize payment', error);
-      toast.error('Failed to process your contribution. Please try again.');
+      
+      // Handle specific API errors with user-friendly messages
+      let errorMessage = 'Failed to process your contribution. Please try again.';
+      
+      if (apiError?.response?.data?.message) {
+        // Use the specific error message from the backend
+        errorMessage = apiError.response.data.message;
+      } else if (apiError?.response?.status === 400) {
+        // Handle common 400 errors
+        errorMessage = 'Invalid contribution details. Please check your input and try again.';
+      } else if (apiError?.response?.status === 403) {
+        errorMessage = 'You do not have permission to contribute to this package.';
+      } else if (apiError?.response?.status === 404) {
+        errorMessage = 'Package not found. Please refresh and try again.';
+      } else if (apiError?.message) {
+        errorMessage = apiError.message;
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -420,11 +511,21 @@ function Contribution() {
             type="number"
             id="amount"
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-md bg-white text-2xl font-bold text-right"
+            onChange={(e) => handleAmountChange(e.target.value)}
+            className={cn(
+              "block w-full pl-10 pr-12 py-3 border rounded-md bg-white text-2xl font-bold text-right",
+              validationError
+                ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+            )}
             placeholder="0.00"
             disabled={!selectedPackage}
           />
+          {validationError && (
+            <div className="mt-2 text-sm text-red-600">
+              {validationError}
+            </div>
+          )}
         </div>
         {selectedPackage && (
           <div className="mt-4 flex justify-between text-sm text-gray-500">
@@ -479,7 +580,7 @@ function Contribution() {
                 <button
                   key={multiplier}
                   type="button"
-                  onClick={() => setAmount(amount.toString())}
+                  onClick={() => handleAmountChange(amount.toString())}
                   className="bg-white py-3 rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-900 font-medium transition-colors"
                 >
                   <div className="flex flex-col items-center">
@@ -498,7 +599,7 @@ function Contribution() {
             <button
               key={presetAmount}
               type="button"
-              onClick={() => setAmount(presetAmount.toString())}
+              onClick={() => handleAmountChange(presetAmount.toString())}
               className="bg-white py-3 rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-900 font-medium transition-colors"
             >
               ₦{presetAmount.toLocaleString()}
@@ -545,9 +646,9 @@ function Contribution() {
       {/* Proceed Button */}
       <Button
         type="button"
-        disabled={!selectedPackage || !amount || loading}
+        disabled={!selectedPackage || !amount || loading || !!validationError}
         onClick={handleSubmit}
-        className="w-full bg-[#0066A1] text-white rounded-md py-4 font-semibold hover:bg-[#007DB8] transition-colors h-auto"
+        className="w-full bg-[#0066A1] text-white rounded-md py-4 font-semibold hover:bg-[#007DB8] disabled:opacity-50 disabled:cursor-not-allowed transition-colors h-auto"
       >
         {loading ? (
           <>
