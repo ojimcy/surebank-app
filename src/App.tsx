@@ -48,6 +48,8 @@ import CardDetail from '@/pages/cards/CardDetail';
 import SchedulesList from '@/pages/schedules/SchedulesList';
 import CreateSchedule from '@/pages/schedules/CreateSchedule';
 import ScheduleDetail from '@/pages/schedules/ScheduleDetail';
+import EditSchedule from '@/pages/schedules/EditSchedule';
+import PaymentActivity from '@/pages/schedules/PaymentActivity';
 import { ThemeProvider } from '@/lib/theme-provider';
 import { AuthProvider } from '@/lib/auth-provider';
 import { PinProvider } from '@/lib/pin-provider';
@@ -131,7 +133,9 @@ function AppRoutes() {
             <Route path="/cards/:id" element={<CardDetail />} />
             <Route path="/schedules" element={<SchedulesList />} />
             <Route path="/schedules/create" element={<CreateSchedule />} />
+            <Route path="/schedules/activity" element={<PaymentActivity />} />
             <Route path="/schedules/:id" element={<ScheduleDetail />} />
+            <Route path="/schedules/:id/edit" element={<EditSchedule />} />
             <Route path="/pin-lock" element={<PinLock />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

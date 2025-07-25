@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useScheduleQueries } from '@/hooks/queries/useScheduleQueries';
-import { ScheduledContribution, PaymentLog } from '@/lib/api/scheduledContributions';
+import { usePinVerification } from '@/hooks/usePinVerification';
+import { ScheduledContribution } from '@/lib/api/scheduledContributions';
 import { formatDateTime, formatCurrency } from '@/lib/utils';
 import {
     Calendar,
@@ -14,11 +15,14 @@ import {
     CheckCircle2,
     XCircle,
     AlertCircle,
-    History,
-    MoreVertical
+    MoreVertical,
+    TrendingUp,
+    Target,
+    DollarSign,
+    Activity
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
     DropdownMenu,
@@ -38,17 +42,15 @@ import {
 } from '@/components/ui/alert-dialog';
 
 function ScheduleDetail() {
-    const { scheduleId } = useParams<{ scheduleId: string }>();
+    const { id: scheduleId } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const { verifyPin, PinVerificationModal } = usePinVerification();
     const [schedule, setSchedule] = useState<ScheduledContribution | null>(null);
-    const [paymentLogs, setPaymentLogs] = useState<PaymentLog[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [isLogsLoading, setIsLogsLoading] = useState(false);
     const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
 
     const {
         getSchedule,
-        getPaymentLogs,
         pauseSchedule,
         isPauseScheduleLoading,
         resumeSchedule,
@@ -73,35 +75,26 @@ function ScheduleDetail() {
         };
 
         fetchSchedule();
-    }, [scheduleId, getSchedule]);
-
-    useEffect(() => {
-        const fetchPaymentLogs = async () => {
-            if (!scheduleId) return;
-
-            setIsLogsLoading(true);
-            try {
-                const logsData = await getPaymentLogs(scheduleId);
-                setPaymentLogs(logsData.logs);
-            } catch (error) {
-                console.error('Error fetching payment logs:', error);
-            } finally {
-                setIsLogsLoading(false);
-            }
-        };
-
-        if (schedule) {
-            fetchPaymentLogs();
-        }
-    }, [scheduleId, schedule, getPaymentLogs]);
+    }, [scheduleId]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleCancelSchedule = () => {
         setIsCancelDialogOpen(true);
     };
 
-    const confirmCancel = () => {
+    const confirmCancel = async () => {
         if (schedule) {
-            cancelSchedule(schedule._id);
+            // Verify PIN before canceling schedule
+            const pinVerified = await verifyPin({
+                title: 'Cancel Schedule',
+                description: `Enter your PIN to cancel the ${schedule.frequency} schedule of ${formatCurrency(schedule.amount)}`
+            });
+
+            if (!pinVerified) {
+                setIsCancelDialogOpen(false);
+                return;
+            }
+
+            cancelSchedule(schedule._id || schedule.id!);
             setIsCancelDialogOpen(false);
             // Update local state to reflect the change
             setSchedule(prev => prev ? { ...prev, status: 'cancelled' } : null);
@@ -110,7 +103,7 @@ function ScheduleDetail() {
 
     const handlePause = () => {
         if (schedule) {
-            pauseSchedule(schedule._id);
+            pauseSchedule(schedule._id || schedule.id!);
             // Update local state to reflect the change
             setSchedule(prev => prev ? { ...prev, status: 'paused' } : null);
         }
@@ -118,7 +111,7 @@ function ScheduleDetail() {
 
     const handleResume = () => {
         if (schedule) {
-            resumeSchedule(schedule._id);
+            resumeSchedule(schedule._id || schedule.id!);
             // Update local state to reflect the change
             setSchedule(prev => prev ? { ...prev, status: 'active' } : null);
         }
@@ -134,6 +127,8 @@ function ScheduleDetail() {
                 return <Badge variant="destructive">Cancelled</Badge>;
             case 'completed':
                 return <Badge variant="outline" className="bg-blue-100 text-blue-800">Completed</Badge>;
+            case 'suspended':
+                return <Badge variant="destructive" className="bg-orange-100 text-orange-800">Suspended</Badge>;
             default:
                 return <Badge variant="outline">{status}</Badge>;
         }
@@ -141,32 +136,6 @@ function ScheduleDetail() {
 
     const getFrequencyIcon = () => {
         return <Calendar className="h-6 w-6 text-[#0066A1]" />;
-    };
-
-    const getPaymentStatusIcon = (status: string) => {
-        switch (status) {
-            case 'success':
-                return <CheckCircle2 className="h-4 w-4 text-green-600" />;
-            case 'failed':
-                return <XCircle className="h-4 w-4 text-red-600" />;
-            case 'pending':
-                return <Clock className="h-4 w-4 text-yellow-600" />;
-            default:
-                return <AlertCircle className="h-4 w-4 text-gray-600" />;
-        }
-    };
-
-    const getPaymentStatusBadge = (status: string) => {
-        switch (status) {
-            case 'success':
-                return <Badge variant="default" className="bg-green-100 text-green-800">Success</Badge>;
-            case 'failed':
-                return <Badge variant="destructive">Failed</Badge>;
-            case 'pending':
-                return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Pending</Badge>;
-            default:
-                return <Badge variant="outline">{status}</Badge>;
-        }
     };
 
     if (isLoading) {
@@ -231,7 +200,7 @@ function ScheduleDetail() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                            <Link to={`/schedules/${schedule._id}/edit`}>
+                            <Link to={`/schedules/${schedule._id || schedule.id}/edit`}>
                                 <Edit3 className="h-4 w-4 mr-2" />
                                 Edit Schedule
                             </Link>
@@ -268,6 +237,94 @@ function ScheduleDetail() {
                 </DropdownMenu>
             </div>
 
+            {/* Performance Dashboard Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Card>
+                    <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm text-gray-600">Total Contributed</p>
+                                <p className="text-2xl font-bold text-[#0066A1]">
+                                    {formatCurrency((schedule.totalPayments - schedule.failedPayments) * schedule.amount)}
+                                </p>
+                            </div>
+                            <div className="p-3 bg-[#0066A1] bg-opacity-10 rounded-lg">
+                                <DollarSign className="h-5 w-5 text-[#0066A1]" />
+                            </div>
+                        </div>
+                        <div className="flex items-center mt-2 text-xs">
+                            <TrendingUp className="h-3 w-3 text-green-600 mr-1" />
+                            <span className="text-green-600">On track</span>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm text-gray-600">Success Rate</p>
+                                <p className="text-2xl font-bold text-green-600">
+                                    {schedule.totalPayments > 0
+                                        ? Math.round(((schedule.totalPayments - schedule.failedPayments) / schedule.totalPayments) * 100)
+                                        : 0}%
+                                </p>
+                            </div>
+                            <div className="p-3 bg-green-100 rounded-lg">
+                                <Target className="h-5 w-5 text-green-600" />
+                            </div>
+                        </div>
+                        <div className="flex items-center mt-2 text-xs">
+                            <Activity className="h-3 w-3 text-gray-500 mr-1" />
+                            <span className="text-gray-500">{schedule.totalPayments - schedule.failedPayments}/{schedule.totalPayments} payments</span>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm text-gray-600">Next Payment</p>
+                                <p className="text-lg font-bold">
+                                    {schedule.nextPaymentDate ? new Date(schedule.nextPaymentDate).toLocaleDateString() : 'Not scheduled'}
+                                </p>
+                            </div>
+                            <div className="p-3 bg-blue-100 rounded-lg">
+                                <Clock className="h-5 w-5 text-blue-600" />
+                            </div>
+                        </div>
+                        <div className="flex items-center mt-2 text-xs">
+                            <Calendar className="h-3 w-3 text-blue-600 mr-1" />
+                            <span className="text-blue-600">{typeof schedule.amount === 'number' ? formatCurrency(schedule.amount) : '₦0'}</span>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm text-gray-600">Status</p>
+                                <p className="text-lg font-bold capitalize">{schedule.status}</p>
+                            </div>
+                            <div className="p-3 bg-gray-100 rounded-lg">
+                                {schedule.status === 'active' ? (
+                                    <Play className="h-5 w-5 text-green-600" />
+                                ) : schedule.status === 'paused' ? (
+                                    <Pause className="h-5 w-5 text-yellow-600" />
+                                ) : (
+                                    <Square className="h-5 w-5 text-gray-600" />
+                                )}
+                            </div>
+                        </div>
+                        <div className="flex items-center mt-2">
+                            {getStatusBadge(schedule.status)}
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
             {/* Schedule Overview */}
             <Card>
                 <CardContent className="p-6">
@@ -279,18 +336,18 @@ function ScheduleDetail() {
                             <div>
                                 <div className="flex items-center space-x-2">
                                     <h2 className="text-2xl font-bold">
-                                        {formatCurrency(schedule.amount)} {schedule.frequency}
+                                        {typeof schedule.amount === 'number' ? formatCurrency(schedule.amount) : '₦0'} {schedule.frequency}
                                     </h2>
                                     {getStatusBadge(schedule.status)}
                                 </div>
                                 <div className="flex items-center space-x-4 mt-1 text-sm text-gray-600">
                                     <div className="flex items-center space-x-1">
                                         <Clock className="h-3 w-3" />
-                                        <span>Next: {formatDateTime(schedule.nextPaymentDate)}</span>
+                                        <span>Next: {schedule.nextPaymentDate ? formatDateTime(schedule.nextPaymentDate) : 'Not scheduled'}</span>
                                     </div>
                                     <div className="flex items-center space-x-1">
                                         <CheckCircle2 className="h-3 w-3" />
-                                        <span>{schedule.successfulContributions} successful</span>
+                                        <span>{schedule.totalPayments - schedule.failedPayments} successful</span>
                                     </div>
                                 </div>
                             </div>
@@ -307,16 +364,29 @@ function ScheduleDetail() {
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-500">Amount</p>
-                                    <p className="font-medium">{formatCurrency(schedule.amount)}</p>
+                                    <p className="font-medium">{typeof schedule.amount === 'number' ? formatCurrency(schedule.amount) : 'Not specified'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-500">Type</p>
+                                    <p className="font-medium uppercase">{schedule.contributionType}</p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-500">Start Date</p>
-                                    <p className="font-medium">{formatDateTime(schedule.startDate)}</p>
+                                    <p className="font-medium">{schedule.startDate ? formatDateTime(schedule.startDate) : 'Not specified'}</p>
                                 </div>
                                 {schedule.endDate && (
                                     <div>
                                         <p className="text-sm text-gray-500">End Date</p>
-                                        <p className="font-medium">{formatDateTime(schedule.endDate)}</p>
+                                        <p className="font-medium">{schedule.endDate ? formatDateTime(schedule.endDate) : 'Not specified'}</p>
+                                    </div>
+                                )}
+                                {typeof schedule.storedCardId === 'object' && (
+                                    <div>
+                                        <p className="text-sm text-gray-500">Payment Card</p>
+                                        <p className="font-medium">
+                                            **** {schedule.storedCardId.last4} ({schedule.storedCardId.cardType.toUpperCase()})
+                                        </p>
+                                        <p className="text-xs text-gray-400">{schedule.storedCardId.bank}</p>
                                     </div>
                                 )}
                             </div>
@@ -326,48 +396,23 @@ function ScheduleDetail() {
                             <h3 className="font-semibold text-gray-900 mb-3">Performance</h3>
                             <div className="space-y-3">
                                 <div>
-                                    <p className="text-sm text-gray-500">Total Contributions</p>
-                                    <p className="font-medium">{schedule.totalContributions}</p>
+                                    <p className="text-sm text-gray-500">Total Payments</p>
+                                    <p className="font-medium">{schedule.totalPayments}</p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-500">Successful</p>
                                     <div className="flex items-center space-x-2">
-                                        <p className="font-medium text-green-600">{schedule.successfulContributions}</p>
+                                        <p className="font-medium text-green-600">{schedule.totalPayments - schedule.failedPayments}</p>
                                         <CheckCircle2 className="h-4 w-4 text-green-600" />
                                     </div>
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-500">Failed</p>
                                     <div className="flex items-center space-x-2">
-                                        <p className="font-medium text-red-600">{schedule.failedContributions}</p>
+                                        <p className="font-medium text-red-600">{schedule.failedPayments}</p>
                                         <XCircle className="h-4 w-4 text-red-600" />
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <h3 className="font-semibold text-gray-900 mb-3">Progress</h3>
-                            <div className="space-y-3">
-                                <div>
-                                    <p className="text-sm text-gray-500">Success Rate</p>
-                                    <p className="font-medium">
-                                        {schedule.totalContributions > 0
-                                            ? Math.round((schedule.successfulContributions / schedule.totalContributions) * 100)
-                                            : 0}%
-                                    </p>
-                                </div>
-                                <div className="w-full bg-gray-200 rounded-full h-3">
-                                    <div
-                                        className="bg-[#0066A1] h-3 rounded-full"
-                                        style={{
-                                            width: `${schedule.totalContributions > 0 ? (schedule.successfulContributions / schedule.totalContributions) * 100 : 0}%`
-                                        }}
-                                    ></div>
-                                </div>
-                                <p className="text-xs text-gray-500">
-                                    {schedule.successfulContributions} of {schedule.totalContributions} completed
-                                </p>
                             </div>
                         </div>
 
@@ -385,11 +430,11 @@ function ScheduleDetail() {
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-500">Created On</p>
-                                    <p className="font-medium">{formatDateTime(schedule.createdAt)}</p>
+                                    <p className="font-medium">{schedule.createdAt ? formatDateTime(schedule.createdAt) : 'Not available'}</p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-500">Last Updated</p>
-                                    <p className="font-medium">{formatDateTime(schedule.updatedAt)}</p>
+                                    <p className="font-medium">{schedule.updatedAt ? formatDateTime(schedule.updatedAt) : 'Not available'}</p>
                                 </div>
                             </div>
                         </div>
@@ -399,7 +444,7 @@ function ScheduleDetail() {
 
             {/* Action Buttons */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Link to={`/schedules/${schedule._id}/edit`}>
+                <Link to={`/schedules/${schedule._id || schedule.id}/edit`}>
                     <Button className="w-full" variant="outline">
                         <Edit3 className="h-4 w-4 mr-2" />
                         Edit Schedule
@@ -446,64 +491,13 @@ function ScheduleDetail() {
                 )}
             </div>
 
-            {/* Payment Logs */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center">
-                        <History className="h-5 w-5 mr-2" />
-                        Payment History
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    {isLogsLoading ? (
-                        <div className="flex items-center justify-center py-8">
-                            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#0066A1]"></div>
-                        </div>
-                    ) : paymentLogs.length === 0 ? (
-                        <div className="text-center py-8">
-                            <History className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                            <p className="text-gray-600">No payment history yet</p>
-                        </div>
-                    ) : (
-                        <div className="space-y-4">
-                            {paymentLogs.map((log) => (
-                                <div key={log._id} className="flex items-center justify-between p-4 border rounded-lg">
-                                    <div className="flex items-center space-x-4">
-                                        <div className="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-full">
-                                            {getPaymentStatusIcon(log.status)}
-                                        </div>
-                                        <div>
-                                            <div className="flex items-center space-x-2">
-                                                <p className="font-medium">{formatCurrency(log.amount)}</p>
-                                                {getPaymentStatusBadge(log.status)}
-                                            </div>
-                                            <p className="text-sm text-gray-600">
-                                                {formatDateTime(log.paymentDate)} • Ref: {log.reference}
-                                            </p>
-                                            {log.errorMessage && (
-                                                <p className="text-sm text-red-600 mt-1">{log.errorMessage}</p>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-xs text-gray-500">
-                                            {formatDateTime(log.createdAt)}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
-
             {/* Cancel Confirmation Dialog */}
             <AlertDialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
-                <AlertDialogContent>
+                <AlertDialogContent className="bg-white">
                     <AlertDialogHeader>
                         <AlertDialogTitle>Cancel Schedule</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Are you sure you want to cancel this scheduled contribution of {formatCurrency(schedule.amount)} {schedule.frequency}?
+                            Are you sure you want to cancel this scheduled contribution of {typeof schedule.amount === 'number' ? formatCurrency(schedule.amount) : '₦0'} {schedule.frequency}?
                             This action cannot be undone.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
@@ -519,6 +513,9 @@ function ScheduleDetail() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* PIN Verification Modal */}
+            <PinVerificationModal />
         </div>
     );
 }

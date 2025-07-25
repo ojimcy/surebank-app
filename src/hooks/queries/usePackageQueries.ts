@@ -62,16 +62,15 @@ export const usePackageQueries = () => {
         title: pkg.target || 'Savings Goal',
         type: 'Daily Savings',
         icon: 'home',
-        progress:
-          pkg.targetAmount > 0
-            ? Math.floor((pkg.totalContribution / pkg.targetAmount) * 100)
-            : 0,
+        progress: Math.floor((pkg.totalCount / 30) * 100), // DS progress based on days (totalCount/30)
         current: pkg.totalContribution,
         target: pkg.targetAmount,
         color: getPackageColor('Daily Savings'),
         amountPerDay: pkg.amountPerDay,
         totalContribution: pkg.totalContribution,
         startDate: pkg.startDate,
+        status: pkg.status, // Add status field for filtering
+        totalCount: pkg.totalCount, // Add totalCount for DS package validation
       })
     );
 
@@ -91,6 +90,7 @@ export const usePackageQueries = () => {
         color: getPackageColor('SB Package'),
         amountPerDay: 0, // SB packages don't have amountPerDay
         totalContribution: pkg.totalContribution,
+        status: pkg.status, // Add status field for consistency
       })
     );
 

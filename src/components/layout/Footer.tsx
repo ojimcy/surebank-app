@@ -161,7 +161,7 @@ function Footer() {
                       </div>
                       <span className="text-sm font-medium">Withdraw</span>
                     </Link>
-                    {/* <div className="w-full h-px bg-gray-200 my-1"></div>
+                    <div className="w-full h-px bg-gray-200 my-1"></div>
                     <Link
                       to="/cards"
                       className="flex items-center gap-3 p-2 hover:bg-gray-100 rounded-md"
@@ -207,7 +207,7 @@ function Footer() {
                         </svg>
                       </div>
                       <span className="text-sm font-medium">Schedules</span>
-                    </Link> */}
+                    </Link>
                   </motion.div>
                 )}
               </AnimatePresence>

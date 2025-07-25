@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCardQueries } from '@/hooks/queries/useCardQueries';
+import { usePinVerification } from '@/hooks/usePinVerification';
 import { StoredCard } from '@/lib/api/cards';
 import {
     CreditCard,
@@ -11,6 +12,12 @@ import {
     Eye,
     ArrowLeft,
     AlertCircle,
+    Shield,
+    Calendar,
+    Activity,
+    TrendingUp,
+    Settings,
+    CheckCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -34,6 +41,7 @@ import {
 
 function CardsList() {
     const navigate = useNavigate();
+    const { verifyPin, PinVerificationModal } = usePinVerification();
     const [cardToDelete, setCardToDelete] = useState<StoredCard | null>(null);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
@@ -56,34 +64,80 @@ function CardsList() {
         setIsDeleteDialogOpen(true);
     };
 
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
         if (cardToDelete) {
+            // Verify PIN before deleting card
+            const pinVerified = await verifyPin({
+                title: 'Delete Card',
+                description: `Enter your PIN to delete the card ending in ${cardToDelete.lastFourDigits}`
+            });
+
+            if (!pinVerified) {
+                setIsDeleteDialogOpen(false);
+                return;
+            }
+
             deleteCard(cardToDelete._id);
             setIsDeleteDialogOpen(false);
             setCardToDelete(null);
         }
     };
 
-    const handleSetDefault = (cardId: string) => {
-        setDefaultCard(cardId);
-    };
+    const handleSetDefault = async (card: StoredCard) => {
+        // Verify PIN before setting default card
+        const pinVerified = await verifyPin({
+            title: 'Set Default Card',
+            description: `Enter your PIN to set the card ending in ${card.lastFourDigits} as default`
+        });
 
-    const handleDeactivate = (cardId: string) => {
-        deactivateCard(cardId);
-    };
-
-    const getCardTypeIcon = () => {
-        return <CreditCard className="h-6 w-6" />;
-    };
-
-    const getStatusBadge = (card: StoredCard) => {
-        if (!card.isActive) {
-            return <Badge variant="secondary">Inactive</Badge>;
+        if (pinVerified) {
+            setDefaultCard(card._id);
         }
-        if (card.isDefault) {
-            return <Badge variant="default" className="bg-green-100 text-green-800">Default</Badge>;
+    };
+
+    const handleDeactivate = async (card: StoredCard) => {
+        // Verify PIN before deactivating card
+        const pinVerified = await verifyPin({
+            title: 'Deactivate Card',
+            description: `Enter your PIN to deactivate the card ending in ${card.lastFourDigits}`
+        });
+
+        if (pinVerified) {
+            deactivateCard(card._id);
         }
-        return <Badge variant="outline">Active</Badge>;
+    };
+
+    const getCardTypeIcon = (cardType: string) => {
+        switch (cardType.toLowerCase()) {
+            case 'visa':
+                return <div className="text-lg font-bold text-blue-600">VISA</div>;
+            case 'mastercard':
+                return <div className="text-lg font-bold text-red-600">MC</div>;
+            case 'verve':
+                return <div className="text-lg font-bold text-green-600">VERVE</div>;
+            default:
+                return <CreditCard className="h-6 w-6" />;
+        }
+    };
+
+    const getCardGradient = (index: number) => {
+        const gradients = [
+            'bg-gradient-to-br from-blue-600 to-blue-800',
+            'bg-gradient-to-br from-purple-600 to-purple-800',
+            'bg-gradient-to-br from-green-600 to-green-800',
+            'bg-gradient-to-br from-red-600 to-red-800',
+            'bg-gradient-to-br from-indigo-600 to-indigo-800',
+        ];
+        return gradients[index % gradients.length];
+    };
+
+
+    const activeCards = Array.isArray(cards) ? cards.filter(card => card.isActive) : [];
+    const defaultCard = Array.isArray(cards) ? cards.find(card => card.isDefault) : undefined;
+    const cardStats = {
+        total: Array.isArray(cards) ? cards.length : 0,
+        active: activeCards.length,
+        hasDefault: !!defaultCard,
     };
 
     if (isCardsLoading) {
@@ -148,6 +202,85 @@ function CardsList() {
                 </Link>
             </div>
 
+            {/* Cards Statistics */}
+            {hasCards && (
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <Card>
+                        <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm text-gray-600">Total Cards</p>
+                                    <p className="text-2xl font-bold text-[#0066A1]">{cardStats.total}</p>
+                                </div>
+                                <div className="p-3 bg-[#0066A1] bg-opacity-10 rounded-lg">
+                                    <CreditCard className="h-5 w-5 text-[#0066A1]" />
+                                </div>
+                            </div>
+                            <div className="flex items-center mt-2 text-xs">
+                                <Activity className="h-3 w-3 text-gray-500 mr-1" />
+                                <span className="text-gray-500">Stored securely</span>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm text-gray-600">Active Cards</p>
+                                    <p className="text-2xl font-bold text-green-600">{cardStats.active}</p>
+                                </div>
+                                <div className="p-3 bg-green-100 rounded-lg">
+                                    <CheckCircle className="h-5 w-5 text-green-600" />
+                                </div>
+                            </div>
+                            <div className="flex items-center mt-2 text-xs">
+                                <TrendingUp className="h-3 w-3 text-green-600 mr-1" />
+                                <span className="text-green-600">Ready for use</span>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm text-gray-600">Default Card</p>
+                                    <p className="text-lg font-bold">
+                                        {defaultCard ? `•••• ${defaultCard.lastFourDigits}` : 'None set'}
+                                    </p>
+                                </div>
+                                <div className="p-3 bg-yellow-100 rounded-lg">
+                                    <Star className="h-5 w-5 text-yellow-600" />
+                                </div>
+                            </div>
+                            <div className="flex items-center mt-2 text-xs">
+                                <Shield className="h-3 w-3 text-yellow-600 mr-1" />
+                                <span className="text-yellow-600">{defaultCard ? defaultCard.bank : 'Set preferred card'}</span>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm text-gray-600">Security</p>
+                                    <p className="text-lg font-bold text-blue-600">Encrypted</p>
+                                </div>
+                                <div className="p-3 bg-blue-100 rounded-lg">
+                                    <Shield className="h-5 w-5 text-blue-600" />
+                                </div>
+                            </div>
+                            <div className="flex items-center mt-2 text-xs">
+                                <Settings className="h-3 w-3 text-blue-600 mr-1" />
+                                <span className="text-blue-600">PIN protected</span>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
+
             {/* Cards List */}
             {!hasCards ? (
                 <div className="text-center py-12">
@@ -158,62 +291,104 @@ function CardsList() {
                     <p className="text-gray-600 mb-6">
                         Add your first card to start making scheduled payments
                     </p>
-                    <Link to="/cards/add">
-                        <Button className="bg-[#0066A1] hover:bg-[#005085]">
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add Your First Card
-                        </Button>
-                    </Link>
+                    <div className="space-y-3">
+                        <Link to="/cards/add">
+                            <Button className="bg-[#0066A1] hover:bg-[#005085] w-full">
+                                <Plus className="h-4 w-4 mr-2" />
+                                Add Your First Card
+                            </Button>
+                        </Link>
+                        <Link to="/schedules">
+                            <Button variant="outline" className="w-full border-gray-300 text-gray-700 hover:bg-gray-50">
+                                <Calendar className="h-4 w-4 mr-2" />
+                                View Scheduled Payments
+                            </Button>
+                        </Link>
+                    </div>
                 </div>
             ) : (
-                <div className="grid gap-4">
-                    {cards.map((card) => (
-                        <Card key={card._id} className="hover:shadow-md transition-shadow">
-                            <CardContent className="p-6">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center space-x-4">
-                                        <div className="flex items-center justify-center w-12 h-12 bg-[#0066A1] bg-opacity-10 rounded-lg">
-                                            {getCardTypeIcon()}
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {Array.isArray(cards) && cards.map((card, index) => (
+                        <div key={card._id} className="relative group">
+                            {/* Credit Card Visual Design */}
+                            <div className={`
+                                relative w-full h-52 rounded-xl shadow-lg transform transition-all duration-300 
+                                hover:scale-105 hover:shadow-xl cursor-pointer ${getCardGradient(index)}
+                            `}>
+                                {/* Card Background Pattern */}
+                                <div className="absolute inset-0 rounded-xl opacity-20">
+                                    <div className="absolute top-4 right-4 w-16 h-16 border border-white/30 rounded-full"></div>
+                                    <div className="absolute top-8 right-8 w-8 h-8 border border-white/20 rounded-full"></div>
+                                </div>
+
+                                {/* Card Content */}
+                                <div className="relative h-full p-6 flex flex-col justify-between text-white">
+                                    {/* Top Section */}
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex items-center space-x-2">
+                                            {card.isDefault && (
+                                                <div className="flex items-center bg-yellow-500 rounded-full px-2 py-1">
+                                                    <Star className="h-3 w-3 text-white fill-current" />
+                                                    <span className="text-xs font-medium ml-1">Default</span>
+                                                </div>
+                                            )}
+                                            {!card.isActive && (
+                                                <Badge variant="secondary" className="bg-gray-500 text-white">
+                                                    Inactive
+                                                </Badge>
+                                            )}
                                         </div>
-                                        <div>
-                                            <div className="flex items-center space-x-2">
-                                                <h3 className="font-semibold text-lg">
-                                                    •••• •••• •••• {card.lastFourDigits}
-                                                </h3>
-                                                {card.isDefault && (
-                                                    <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                                                )}
-                                            </div>
-                                            <div className="flex items-center space-x-2 mt-1">
-                                                <p className="text-sm text-gray-600">
-                                                    {card.bank} • {card.cardType}
-                                                </p>
-                                                {getStatusBadge(card)}
-                                            </div>
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                Expires: {card.expiryMonth}/{card.expiryYear}
-                                            </p>
+                                        <div className="text-right">
+                                            {getCardTypeIcon(card.cardType)}
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center space-x-2">
+                                    {/* Middle Section - Card Number */}
+                                    <div className="flex-1 flex items-center">
+                                        <div className="space-y-2">
+                                            <div className="text-lg font-mono tracking-wider">
+                                                •••• •••• •••• {card.lastFourDigits}
+                                            </div>
+                                            <div className="text-sm opacity-90">
+                                                {card.bank}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Bottom Section */}
+                                    <div className="flex justify-between items-end">
+                                        <div className="flex items-center space-x-1">
+                                            <Calendar className="h-3 w-3" />
+                                            <span className="text-xs">
+                                                {card.expiryMonth}/{card.expiryYear}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center space-x-1">
+                                            <Shield className="h-3 w-3" />
+                                            <span className="text-xs">Secured</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Hover Actions Overlay */}
+                                <div className="absolute inset-0 bg-black/50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                                    <div className="flex space-x-2">
                                         <Link to={`/cards/${card._id}`}>
-                                            <Button variant="outline" size="sm">
+                                            <Button variant="secondary" size="sm">
                                                 <Eye className="h-4 w-4 mr-2" />
                                                 View
                                             </Button>
                                         </Link>
-
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="sm">
+                                                <Button variant="secondary" size="sm">
                                                     <MoreVertical className="h-4 w-4" />
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
                                                 {!card.isDefault && card.isActive && (
                                                     <DropdownMenuItem
-                                                        onClick={() => handleSetDefault(card._id)}
+                                                        onClick={() => handleSetDefault(card)}
                                                         disabled={isSetDefaultCardLoading}
                                                     >
                                                         <Star className="h-4 w-4 mr-2" />
@@ -222,7 +397,7 @@ function CardsList() {
                                                 )}
                                                 {card.isActive && (
                                                     <DropdownMenuItem
-                                                        onClick={() => handleDeactivate(card._id)}
+                                                        onClick={() => handleDeactivate(card)}
                                                         disabled={isDeactivateCardLoading}
                                                     >
                                                         <AlertCircle className="h-4 w-4 mr-2" />
@@ -241,8 +416,18 @@ function CardsList() {
                                         </DropdownMenu>
                                     </div>
                                 </div>
-                            </CardContent>
-                        </Card>
+                            </div>
+
+                            {/* Card Info Below */}
+                            <div className="mt-3 text-center">
+                                <p className="font-medium text-gray-900">
+                                    {card.bank} {card.cardType}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                    Added {new Date(card.createdAt).toLocaleDateString()}
+                                </p>
+                            </div>
+                        </div>
                     ))}
                 </div>
             )}
@@ -269,6 +454,9 @@ function CardsList() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* PIN Verification Modal */}
+            <PinVerificationModal />
         </div>
     );
 }

@@ -175,6 +175,7 @@ const packagesApi = {
       packagesApi.getSBPackages(userId),
       packagesApi.getIBPackages(),
     ]);
+console.log('all', dsResponse);
 
     return {
       dailySavings: dsResponse,

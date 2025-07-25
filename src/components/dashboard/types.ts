@@ -18,6 +18,7 @@ export interface SavingsPackage {
   target: number;
   color: string;
   status?: string;
+  totalCount?: number; // For DS packages validation
 }
 
 export interface PackageType {

@@ -9,7 +9,8 @@ import packagesApi, {
 import { Button } from '@/components/ui/button';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/lib/utils';
-import { Check, Circle, Loader2, Package, Wallet } from 'lucide-react';
+import { Check, Circle, Loader2, Package, Wallet, Info, CreditCard, Calendar, Plus } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import storage from '@/lib/api/storage';
 import { getRedirectUrl, isMobile, getPlatformInfo } from '@/lib/utils/platform';
 import { paymentPolling } from '@/lib/services/payment-polling';
@@ -642,6 +643,39 @@ function Contribution() {
           </div>
         </div>
       </div>
+
+      {/* Contextual Help Section */}
+      {selectedPackage && amount && (
+        <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+          <h3 className="font-medium text-gray-900 mb-3 flex items-center">
+            <Info className="h-4 w-4 mr-2" />
+            Need Help with Payments?
+          </h3>
+          <div className="grid grid-cols-2 gap-3">
+            <Link
+              to="/cards"
+              className="flex items-center p-3 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all group"
+            >
+              <CreditCard className="h-5 w-5 text-blue-600 mr-3" />
+              <div>
+                <p className="text-sm font-medium text-gray-900">Manage Cards</p>
+                <p className="text-xs text-gray-500">Add or update payment cards</p>
+              </div>
+            </Link>
+            
+            <Link
+              to="/schedules"
+              className="flex items-center p-3 bg-white rounded-lg border border-gray-200 hover:border-green-300 hover:bg-green-50 transition-all group"
+            >
+              <Calendar className="h-5 w-5 text-green-600 mr-3" />
+              <div>
+                <p className="text-sm font-medium text-gray-900">Auto Contributions</p>
+                <p className="text-xs text-gray-500">Set up recurring payments</p>
+              </div>
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Proceed Button */}
       <Button

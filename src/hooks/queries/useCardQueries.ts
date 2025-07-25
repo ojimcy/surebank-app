@@ -41,11 +41,14 @@ export function useCardQueries() {
     // Get specific card by ID
     const getCard = async (cardId: string) => {
         try {
+            console.log('useCardQueries: getCard called with ID:', cardId);
             const card = await cardsApi.getCard(cardId);
+            console.log('useCardQueries: getCard received:', card);
             return card;
         } catch (error) {
             const axiosError = error as AxiosError<{ message?: string }>;
             console.error('Get card error:', {
+                cardId,
                 status: axiosError.response?.status,
                 data: axiosError.response?.data,
                 message: axiosError.message,
