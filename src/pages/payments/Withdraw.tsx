@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useToast } from '@/lib/toast-provider';
-import { Loader2, CheckCircle2, Plus, Minus, AlertCircle, Settings, Calendar, CreditCard, Lightbulb } from "lucide-react";
+import { Loader2, CheckCircle2, Plus, Minus, AlertCircle, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import paymentsApi, { AccountWithBalance, MultiWithdrawalResponse } from "@/lib/api/payments";
 import { usePinVerification } from "@/hooks/usePinVerification";
@@ -862,39 +862,6 @@ function Withdraw() {
                   )}
                 </div>
               )}
-            </div>
-          )}
-
-          {/* Helpful Links Section */}
-          {selectedAccounts.length > 0 && accountVerified && (
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 border border-gray-200">
-              <h3 className="font-medium text-gray-900 mb-3 flex items-center">
-                <Lightbulb className="h-4 w-4 mr-2" />
-                Quick Actions
-              </h3>
-              <div className="grid grid-cols-2 gap-3">
-                <Link
-                  to="/cards/add"
-                  className="flex items-center justify-center p-3 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all text-center"
-                >
-                  <div>
-                    <Plus className="h-4 w-4 mx-auto mb-1 text-blue-600" />
-                    <p className="text-xs font-medium text-gray-900">Add Payment Card</p>
-                    <p className="text-xs text-gray-500">For future deposits</p>
-                  </div>
-                </Link>
-                
-                <Link
-                  to="/schedules/create"
-                  className="flex items-center justify-center p-3 bg-white rounded-lg border border-gray-200 hover:border-green-300 hover:bg-green-50 transition-all text-center"
-                >
-                  <div>
-                    <Calendar className="h-4 w-4 mx-auto mb-1 text-green-600" />
-                    <p className="text-xs font-medium text-gray-900">Schedule Deposits</p>
-                    <p className="text-xs text-gray-500">Automate contributions</p>
-                  </div>
-                </Link>
-              </div>
             </div>
           )}
 

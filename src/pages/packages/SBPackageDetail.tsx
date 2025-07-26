@@ -11,7 +11,7 @@ import { PackageDetailsAccordion } from '@/components/packages/PackageDetailsAcc
 
 // SB Package specific UI interface
 interface SBPackageUIPackage {
-    id: string;
+    id: string; 
     title: string;
     accountNumber: string;
     progress: number;
