@@ -21,6 +21,20 @@ const config: CapacitorConfig = {
       style: 'dark',
       backgroundColor: '#0066A1',
       overlaysWebView: false
+    },
+    PushNotifications: {
+      presentationOptions: ["badge", "sound", "alert"]
+    },
+    FirebaseMessaging: {
+      presentationOptions: ["badge", "sound", "alert"]
+    },
+    FirebaseCrashlytics: {
+      enabled: true,
+      enabledDuringDevelopment: true
+    },
+    FirebaseAnalytics: {
+      enabled: true,
+      enabledDuringDevelopment: false
     }
   },
   ios: {

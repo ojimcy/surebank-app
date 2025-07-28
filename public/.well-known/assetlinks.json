@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "surebankstores.ng",
+      "sha256_cert_fingerprints": [
+        "8D:2A:A6:D8:40:9D:11:96:F0:89:9E:5F:FA:09:AE:7E:D7:CB:53:76:31:13:8F:14:C1:08:9F:FA:54:81:50:7F"
+      ]
+    }
+  }
+]

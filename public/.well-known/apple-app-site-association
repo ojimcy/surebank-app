@@ -1,0 +1,58 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": [
+          "YOUR_TEAM_ID.surebankstores.ng"
+        ],
+        "components": [
+          {
+            "/": "/app/*",
+            "comment": "App routes"
+          },
+          {
+            "/": "/payments/*",
+            "comment": "Payment flows"
+          },
+          {
+            "/": "/packages/*",
+            "comment": "Package management"
+          },
+          {
+            "/": "/orders/*",
+            "comment": "Order management"
+          },
+          {
+            "/": "/transactions/*",
+            "comment": "Transaction details"
+          },
+          {
+            "/": "/settings/*",
+            "comment": "Settings and preferences"
+          },
+          {
+            "/": "/kyc/*",
+            "comment": "KYC verification"
+          },
+          {
+            "/": "/products/*",
+            "comment": "Product catalog"
+          },
+          {
+            "/": "/cards/*",
+            "comment": "Card management"
+          },
+          {
+            "/": "/schedules/*",
+            "comment": "Schedule management"
+          }
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "YOUR_TEAM_ID.surebankstores.ng"
+    ]
+  }
+}
