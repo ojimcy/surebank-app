@@ -88,4 +88,6 @@ export function VerifyEmailPage() {
             </div>
         </AuthLayout>
     );
-} 
+}
+
+export default VerifyEmailPage; 

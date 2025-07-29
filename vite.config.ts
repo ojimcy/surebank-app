@@ -66,7 +66,8 @@ export default defineConfig({
           firebase: [
             '@capacitor-firebase/app',
             '@capacitor-firebase/messaging',
-            '@capacitor-firebase/crashlytics'
+            '@capacitor-firebase/crashlytics',
+            '@capacitor-firebase/analytics'
           ],
           
           // AWS SDK
@@ -82,14 +83,15 @@ export default defineConfig({
         // Optimize chunk naming
         chunkFileNames: (chunkInfo) => {
           const facadeModuleId = chunkInfo.facadeModuleId 
-            ? chunkInfo.facadeModuleId.split('/').pop().replace(/\.[jt]sx?$/, '') 
+            ? chunkInfo.facadeModuleId.split('/').pop()?.replace(/\.[jt]sx?$/, '') || 'chunk'
             : 'chunk';
           return `assets/${facadeModuleId}-[hash].js`;
         },
         
         // Optimize asset naming
         assetFileNames: (assetInfo) => {
-          const info = assetInfo.name.split('.');
+          const name = assetInfo.name || 'asset';
+          const info = name.split('.');
           const ext = info[info.length - 1];
           if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(ext)) {
             return `assets/images/[name]-[hash][extname]`;
@@ -106,7 +108,10 @@ export default defineConfig({
       
       // Configure tree-shaking
       treeshake: {
-        moduleSideEffects: false,
+        moduleSideEffects: (id) => {
+          // Keep side effects for Firebase modules
+          return id.includes('@capacitor-firebase') || id.includes('firebase');
+        },
         propertyReadSideEffects: false,
         unknownGlobalSideEffects: false,
       },
@@ -147,7 +152,10 @@ export default defineConfig({
       '@capacitor/app',
       '@capacitor-firebase/app',
       '@capacitor-firebase/messaging',
-      '@capacitor-firebase/crashlytics'
+      '@capacitor-firebase/crashlytics',
+      '@capacitor-firebase/analytics',
+      'firebase/analytics',
+      'firebase/app'
     ]
   },
   

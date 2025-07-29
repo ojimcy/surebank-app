@@ -3,7 +3,7 @@ import { logger } from '@/lib/utils/logger';
 
 const imageLogger = logger.create('OptimizedImage');
 
-interface OptimizedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+interface OptimizedImageProps extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, 'onError'> {
   src: string;
   alt: string;
   fallbackSrc?: string;

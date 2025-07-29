@@ -25,7 +25,7 @@ const KycBvnVerification = createLazyComponent(() => import('@/pages/settings/Ky
 const KycSuccess = createLazyComponent(() => import('@/pages/settings/KycSuccess'), 'KycSuccess');
 const Register = createLazyComponent(() => import('@/pages/auth/Register'), 'Register');
 const Verify = createLazyComponent(() => import('@/pages/auth/Verify'), 'Verify');
-const VerifyEmailPage = createLazyComponent(() => import('@/pages/auth/VerifyEmailPage').then(module => ({ default: module.VerifyEmailPage })), 'VerifyEmailPage');
+const VerifyEmailPage = createLazyComponent(() => import('@/pages/auth/VerifyEmailPage'), 'VerifyEmailPage');
 const Deposit = createLazyComponent(() => import('@/pages/payments/Contribution'), 'Deposit');
 const Withdraw = createLazyComponent(() => import('@/pages/payments/Withdraw'), 'Withdraw');
 const WithdrawFromPackage = createLazyComponent(() => import('@/pages/packages/WithdrawFromPackage'), 'WithdrawFromPackage');
@@ -66,7 +66,6 @@ import AuthGuard from '@/components/auth/AuthGuard';
 import PinGuard from '@/components/auth/PinGuard';
 import { UrlHandler } from '@/lib/services/url-handler';
 import { deepLinkingService } from '@/lib/services/deep-linking';
-import { pushNotificationService } from '@/lib/services/push-notifications';
 import { crashReportingService } from '@/lib/services/crash-reporting';
 import { analyticsService } from '@/lib/services/analytics';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
