@@ -26,6 +26,7 @@ const KycSuccess = createLazyComponent(() => import('@/pages/settings/KycSuccess
 const Register = createLazyComponent(() => import('@/pages/auth/Register'), 'Register');
 const Verify = createLazyComponent(() => import('@/pages/auth/Verify'), 'Verify');
 const VerifyEmailPage = createLazyComponent(() => import('@/pages/auth/VerifyEmailPage'), 'VerifyEmailPage');
+const Welcome = createLazyComponent(() => import('@/pages/auth/Welcome'), 'Welcome');
 const Deposit = createLazyComponent(() => import('@/pages/payments/Contribution'), 'Deposit');
 const Withdraw = createLazyComponent(() => import('@/pages/payments/Withdraw'), 'Withdraw');
 const WithdrawFromPackage = createLazyComponent(() => import('@/pages/packages/WithdrawFromPackage'), 'WithdrawFromPackage');
@@ -64,6 +65,7 @@ import { LoaderProvider } from '@/lib/loader-provider';
 import { setupSafeArea } from '@/lib/safe-area';
 import AuthGuard from '@/components/auth/AuthGuard';
 import PinGuard from '@/components/auth/PinGuard';
+import OnboardingGuard from '@/components/auth/OnboardingGuard';
 import { UrlHandler } from '@/lib/services/url-handler';
 import { deepLinkingService } from '@/lib/services/deep-linking';
 import { crashReportingService } from '@/lib/services/crash-reporting';
@@ -100,55 +102,68 @@ function AppRoutes() {
   return (
     <AuthGuard>
       <PinGuard>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/packages" element={<PackageList />} />
-            <Route path="/packages/new" element={<NewPackage />} />
-            <Route path="/packages/new/daily" element={<NewDailySavings />} />
-            <Route path="/packages/new/sb" element={<NewSBPackage />} />
-            <Route path="/packages/new/ibs" element={<NewIBSPackage />} />
-            <Route path="/packages/new/success" element={<PackageSuccess />} />
-            <Route path="/packages/new/ibs-error" element={<PaymentError />} />
-            <Route path="/packages/:id" element={<PackageDetail />} />
-            <Route path="/packages/withdraw" element={<WithdrawFromPackage />} />
-            <Route path="/packages/withdraw-interest" element={<WithdrawFromIBPackage />} />
-            <Route path="/packages/merge" element={<MergePackages />} />
-            <Route path="/packages/change-product" element={<ChangeProduct />} />
-            <Route path="/products" element={<ProductCatalog />} />
-            <Route path="/products/:productId/:packageId" element={<ProductDetail />} />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/orders" element={<Orders />} />
-            <Route path="/orders/:orderId" element={<OrderDetails />} />
-            <Route path="/accounts/:accountType" element={<AccountDetail />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/settings/setup-pin" element={<SetupPin />} />
-            <Route path="/settings/pin-settings" element={<PinSettings />} />
-            <Route path="/settings/notifications" element={<Notifications />} />
-            <Route path="/settings/personal-information" element={<PersonalInformation />} />
-            <Route path="/settings/manage-bank-accounts" element={<ManageBankAccounts />} />
-            <Route path="/settings/kyc" element={<KycVerification />} />
-            <Route path="/settings/kyc/bvn" element={<KycBvnVerification />} />
-            <Route path="/settings/kyc/id" element={<KycVerification />} />
-            <Route path="/settings/kyc/success" element={<KycSuccess />} />
-            <Route path="/payments/deposit" element={<Deposit />} />
-            <Route path="/payments/withdraw" element={<Withdraw />} />
-            <Route path="/payments/success" element={<PaymentSuccess />} />
-            <Route path="/payments/error" element={<PaymentError />} />
-            <Route path="/payments/history" element={<TransactionHistory />} />
-            <Route path="/payments/transaction/:transactionId" element={<TransactionDetails />} />
-            <Route path="/cards" element={<CardsList />} />
-            <Route path="/cards/add" element={<AddCard />} />
-            <Route path="/cards/:id" element={<CardDetail />} />
-            <Route path="/schedules" element={<SchedulesList />} />
-            <Route path="/schedules/create" element={<CreateSchedule />} />
-            <Route path="/schedules/activity" element={<PaymentActivity />} />
-            <Route path="/schedules/:id" element={<ScheduleDetail />} />
-            <Route path="/schedules/:id/edit" element={<EditSchedule />} />
-            <Route path="/pin-lock" element={<PinLock />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Layout>
+        <Routes>
+          {/* Welcome screen - no layout wrapper */}
+          <Route path="/welcome" element={<Welcome />} />
+          
+          {/* Protected routes with layout and onboarding guard */}
+          <Route
+            path="/*"
+            element={
+              <OnboardingGuard>
+                <Layout>
+                  <Routes>
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/packages" element={<PackageList />} />
+                    <Route path="/packages/new" element={<NewPackage />} />
+                    <Route path="/packages/new/daily" element={<NewDailySavings />} />
+                    <Route path="/packages/new/sb" element={<NewSBPackage />} />
+                    <Route path="/packages/new/ibs" element={<NewIBSPackage />} />
+                    <Route path="/packages/new/success" element={<PackageSuccess />} />
+                    <Route path="/packages/new/ibs-error" element={<PaymentError />} />
+                    <Route path="/packages/:id" element={<PackageDetail />} />
+                    <Route path="/packages/withdraw" element={<WithdrawFromPackage />} />
+                    <Route path="/packages/withdraw-interest" element={<WithdrawFromIBPackage />} />
+                    <Route path="/packages/merge" element={<MergePackages />} />
+                    <Route path="/packages/change-product" element={<ChangeProduct />} />
+                    <Route path="/products" element={<ProductCatalog />} />
+                    <Route path="/products/:productId/:packageId" element={<ProductDetail />} />
+                    <Route path="/checkout" element={<Checkout />} />
+                    <Route path="/orders" element={<Orders />} />
+                    <Route path="/orders/:orderId" element={<OrderDetails />} />
+                    <Route path="/accounts/:accountType" element={<AccountDetail />} />
+                    <Route path="/settings" element={<Settings />} />
+                    <Route path="/settings/setup-pin" element={<SetupPin />} />
+                    <Route path="/settings/pin-settings" element={<PinSettings />} />
+                    <Route path="/settings/notifications" element={<Notifications />} />
+                    <Route path="/settings/personal-information" element={<PersonalInformation />} />
+                    <Route path="/settings/manage-bank-accounts" element={<ManageBankAccounts />} />
+                    <Route path="/settings/kyc" element={<KycVerification />} />
+                    <Route path="/settings/kyc/bvn" element={<KycBvnVerification />} />
+                    <Route path="/settings/kyc/id" element={<KycVerification />} />
+                    <Route path="/settings/kyc/success" element={<KycSuccess />} />
+                    <Route path="/payments/deposit" element={<Deposit />} />
+                    <Route path="/payments/withdraw" element={<Withdraw />} />
+                    <Route path="/payments/success" element={<PaymentSuccess />} />
+                    <Route path="/payments/error" element={<PaymentError />} />
+                    <Route path="/payments/history" element={<TransactionHistory />} />
+                    <Route path="/payments/transaction/:transactionId" element={<TransactionDetails />} />
+                    <Route path="/cards" element={<CardsList />} />
+                    <Route path="/cards/add" element={<AddCard />} />
+                    <Route path="/cards/:id" element={<CardDetail />} />
+                    <Route path="/schedules" element={<SchedulesList />} />
+                    <Route path="/schedules/create" element={<CreateSchedule />} />
+                    <Route path="/schedules/activity" element={<PaymentActivity />} />
+                    <Route path="/schedules/:id" element={<ScheduleDetail />} />
+                    <Route path="/schedules/:id/edit" element={<EditSchedule />} />
+                    <Route path="/pin-lock" element={<PinLock />} />
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
+                </Layout>
+              </OnboardingGuard>
+            }
+          />
+        </Routes>
       </PinGuard>
     </AuthGuard>
   );

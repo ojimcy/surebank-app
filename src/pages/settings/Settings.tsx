@@ -1,14 +1,21 @@
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { usePin } from '@/lib/pin-provider';
+import useOnboarding from '@/hooks/useOnboarding';
 
 function Settings() {
   const { user, logout } = useAuth();
   const { isPinSet } = usePin();
+  const { resetOnboarding } = useOnboarding();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
+  };
+
+  const handleResetOnboarding = () => {
+    resetOnboarding();
+    navigate('/welcome');
   };
 
   return (
@@ -718,6 +725,18 @@ function Settings() {
             </li>
           </ul>
         </div>
+      </div>
+
+      {/* Debug Section */}
+      <div className="bg-gray-50 rounded-xl shadow-sm p-4">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">Debug Options</h3>
+        <button
+          onClick={handleResetOnboarding}
+          className="w-full bg-blue-500 text-white rounded-md py-2 font-medium hover:bg-blue-600 transition-colors mb-2"
+        >
+          Reset Onboarding (Show Welcome Screen)
+        </button>
+        <p className="text-sm text-gray-600">This will show the welcome screen again on next app load.</p>
       </div>
 
       {/* Logout Button */}
