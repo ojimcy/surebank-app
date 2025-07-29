@@ -80,7 +80,6 @@ function CreateSchedule() {
 
             // For DS packages, filter by status = 'open' (active packages)
             const activeDsPackages = dsPackages.filter(pkg => {
-                console.log(`DS package ${pkg.id}: status = ${pkg.status}, totalCount = ${pkg.totalCount}`);
                 return pkg.status === 'open';
             });
             return activeDsPackages;
@@ -594,11 +593,6 @@ function CreateSchedule() {
                                             <div className="space-y-1 text-sm">
                                                 <p><strong>Amount:</strong> {formatCurrency(formData.amount)}</p>
                                                 <p><strong>Frequency:</strong> {getFrequencyDescription(formData.frequency)}</p>
-                                                <p><strong>Monthly estimate:</strong> {formatCurrency(
-                                                    formData.frequency === 'daily' ? formData.amount * 30 :
-                                                        formData.frequency === 'weekly' ? formData.amount * 4 :
-                                                            formData.amount
-                                                )}</p>
                                             </div>
                                         </CardContent>
                                     </Card>

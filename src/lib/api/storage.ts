@@ -4,6 +4,8 @@ import { Preferences } from '@capacitor/preferences';
 export const STORAGE_KEYS = {
   AUTH_TOKEN: 'auth-token',
   REFRESH_TOKEN: 'refresh-token',
+  CSRF_TOKEN: 'csrf-token',
+  CSRF_SECRET: 'csrf-secret',
 };
 
 // In-memory fallback storage for platforms where Preferences might fail
