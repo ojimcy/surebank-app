@@ -226,7 +226,7 @@ function PaymentActivity() {
                             </div>
                             <div className="text-center">
                                 <p className="text-2xl font-bold text-yellow-600">
-                                    {activityData.filter(activity => activity.status === 'processing' || activity.status === 'pending').length}
+                                    {activityData.filter(activity => activity.status !== 'success' && activity.status !== 'failed').length}
                                 </p>
                                 <p className="text-sm text-gray-600">Processing</p>
                             </div>

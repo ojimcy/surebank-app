@@ -91,7 +91,7 @@ function SchedulesList() {
                 return;
             }
 
-            cancelSchedule(scheduleToCancel._id);
+            cancelSchedule(scheduleToCancel._id!);
             setIsCancelDialogOpen(false);
             setScheduleToCancel(null);
         }

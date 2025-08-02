@@ -134,7 +134,7 @@ export class AnalyticsService {
       
       await FirebaseAnalytics.logEvent({
         name: this.sanitizeEventName(name),
-        parameters: sanitizedParams,
+        params: sanitizedParams,
       });
       
       analyticsLogger.debug(`Event logged: ${name}`, sanitizedParams);
@@ -143,11 +143,10 @@ export class AnalyticsService {
     }
   }
 
-  public async setCurrentScreen(screenName: string, screenClass?: string): Promise<void> {
+  public async setCurrentScreen(screenName: string, _screenClass?: string): Promise<void> {
     try {
       await FirebaseAnalytics.setCurrentScreen({
-        screenName,
-        screenClass: screenClass || screenName,
+        screenName
       });
       analyticsLogger.debug(`Screen set: ${screenName}`);
     } catch (error) {

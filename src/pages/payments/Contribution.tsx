@@ -9,7 +9,7 @@ import packagesApi, {
 import { Button } from '@/components/ui/button';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/lib/utils';
-import { Check, Circle, Loader2, Package, Wallet, Info, CreditCard, Calendar, Plus } from 'lucide-react';
+import { Check, Circle, Loader2, Package, Wallet, Info, CreditCard, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import storage from '@/lib/api/storage';
 import { getRedirectUrl, isMobile, getPlatformInfo } from '@/lib/utils/platform';

@@ -124,7 +124,7 @@ export function OptimizedImage({
         ref={imgRef}
         className={`relative overflow-hidden ${className}`}
         style={style}
-        {...(props as any)}
+        {...(props as React.HTMLAttributes<HTMLDivElement>)}
       >
         <div style={placeholderStyles}>
           {hasError ? (
@@ -192,6 +192,7 @@ function optimizeImageUrl(src: string, quality: number): string {
   }
 }
 
+
 // Hook for preloading images
 export function useImagePreloader(imageSources: string[]) {
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
@@ -214,9 +215,9 @@ export function useImagePreloader(imageSources: string[]) {
     });
 
     Promise.allSettled(preloadPromises).then(() => {
-      imageLogger.info(`Preloaded ${loadedImages.size} images, ${failedImages.size} failed`);
+      imageLogger.info(`Preloaded images, ${failedImages.size} failed`);
     });
-  }, [imageSources]);
+  }, [imageSources, failedImages.size]);
 
   return {
     loadedImages,

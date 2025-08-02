@@ -12,7 +12,6 @@ import {
     CheckCircle2,
     Info,
     DollarSign,
-    Clock,
     Save,
     Pause,
     Play,
@@ -66,7 +65,7 @@ function EditSchedule() {
         isCancelScheduleLoading,
     } = useScheduleQueries();
 
-    const { cards, isCardsLoading } = useCardQueries();
+    const { } = useCardQueries();
 
     useEffect(() => {
         const fetchSchedule = async () => {
@@ -389,11 +388,11 @@ function EditSchedule() {
                     </div>
 
                     {/* Preview */}
-                    {formData.amount > 0 && (
+                    {(formData.amount ?? 0) > 0 && (
                         <Alert>
                             <CheckCircle2 className="h-4 w-4" />
                             <AlertDescription>
-                                New schedule: <strong>{formatCurrency(formData.amount)} {formData.frequency}</strong>
+                                New schedule: <strong>{formatCurrency(formData.amount ?? 0)} {formData.frequency}</strong>
                                 {formData.endDate && ` until ${new Date(formData.endDate).toLocaleDateString()}`}
                             </AlertDescription>
                         </Alert>

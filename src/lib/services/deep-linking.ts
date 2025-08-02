@@ -95,59 +95,59 @@ export class DeepLinkingService {
     });
 
     // Package management
-    this.registerHandler(/^surebank:\/\/.*\/packages\/(.+)/, (params, url) => {
+    this.registerHandler(/^surebank:\/\/.*\/packages\/(.+)/, (params, _url) => {
       const packageId = params['$1'];
       this.navigateToRoute(`/packages/${packageId}`, params);
     });
 
     // Order management
-    this.registerHandler(/^surebank:\/\/.*\/orders\/(.+)/, (params, url) => {
+    this.registerHandler(/^surebank:\/\/.*\/orders\/(.+)/, (params, _url) => {
       const orderId = params['$1'];
       this.navigateToRoute(`/orders/${orderId}`, params);
     });
 
     // Transaction details
-    this.registerHandler(/^surebank:\/\/.*\/transactions\/(.+)/, (params, url) => {
+    this.registerHandler(/^surebank:\/\/.*\/transactions\/(.+)/, (params, _url) => {
       const transactionId = params['$1'];
       this.navigateToRoute(`/payments/transaction-details?id=${transactionId}`, params);
     });
 
     // Settings deep links
-    this.registerHandler(/^surebank:\/\/.*\/settings(?:\/(.+))?/, (params, url) => {
+    this.registerHandler(/^surebank:\/\/.*\/settings(?:\/(.+))?/, (params, _url) => {
       const section = params['$1'];
       const route = section ? `/settings/${section}` : '/settings';
       this.navigateToRoute(route, params);
     });
 
     // Dashboard sections
-    this.registerHandler(/^surebank:\/\/.*\/dashboard(?:\/(.+))?/, (params, url) => {
+    this.registerHandler(/^surebank:\/\/.*\/dashboard(?:\/(.+))?/, (params, _url) => {
       const section = params['$1'];
       const route = section ? `/dashboard/${section}` : '/dashboard';
       this.navigateToRoute(route, params);
     });
 
     // Product catalog
-    this.registerHandler(/^surebank:\/\/.*\/products\/(.+)/, (params, url) => {
+    this.registerHandler(/^surebank:\/\/.*\/products\/(.+)/, (params, _url) => {
       const productId = params['$1'];
       this.navigateToRoute(`/products/${productId}`, params);
     });
 
     // Cards management
-    this.registerHandler(/^surebank:\/\/.*\/cards(?:\/(.+))?/, (params, url) => {
+    this.registerHandler(/^surebank:\/\/.*\/cards(?:\/(.+))?/, (params, _url) => {
       const cardId = params['$1'];
       const route = cardId ? `/cards/${cardId}` : '/cards';
       this.navigateToRoute(route, params);
     });
 
     // KYC verification
-    this.registerHandler(/^surebank:\/\/.*\/kyc(?:\/(.+))?/, (params, url) => {
+    this.registerHandler(/^surebank:\/\/.*\/kyc(?:\/(.+))?/, (params, _url) => {
       const step = params['$1'];
       const route = step ? `/settings/kyc-${step}` : '/settings/kyc-verification';
       this.navigateToRoute(route, params);
     });
 
     // Schedule management
-    this.registerHandler(/^surebank:\/\/.*\/schedules\/(.+)/, (params, url) => {
+    this.registerHandler(/^surebank:\/\/.*\/schedules\/(.+)/, (params, _url) => {
       const scheduleId = params['$1'];
       this.navigateToRoute(`/schedules/${scheduleId}`, params);
     });
@@ -158,7 +158,7 @@ export class DeepLinkingService {
     });
 
     // Web app links
-    this.registerHandler(/^https:\/\/surebankstores\.ng\/app\/(.+)/, (params, url) => {
+    this.registerHandler(/^https:\/\/surebankstores\.ng\/app\/(.+)/, (params, _url) => {
       const path = params['$1'];
       this.navigateToRoute(`/${path}`, params);
     });
@@ -262,7 +262,7 @@ export class DeepLinkingService {
     this.navigateToRoute(route, params);
   }
 
-  private handleNavigateAction(params: Record<string, string>, url: string): void {
+  private handleNavigateAction(params: Record<string, string>, _url: string): void {
     const action = params.action;
     const route = params.route;
 

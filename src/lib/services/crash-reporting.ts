@@ -73,7 +73,7 @@ export class CrashReportingService {
       await FirebaseCrashlytics.setCustomKey({
         key,
         value: value.toString(),
-        type: typeof value as 'string' | 'number' | 'boolean',
+        type: typeof value as 'string' | 'boolean' | 'long' | 'double' | 'int' | 'float',
       });
       crashLogger.debug(`Custom key set: ${key} = ${value}`);
     } catch (error) {
@@ -86,10 +86,12 @@ export class CrashReportingService {
       const keys = Object.entries(attributes).map(([key, value]) => ({
         key,
         value: value.toString(),
-        type: typeof value as 'string' | 'number' | 'boolean',
+        type: typeof value as 'string' | 'boolean' | 'long' | 'double' | 'int' | 'float',
       }));
 
-      await FirebaseCrashlytics.setCustomKeys({ keys });
+      for (const keyObj of keys) {
+        await FirebaseCrashlytics.setCustomKey(keyObj);
+      }
       crashLogger.debug('Custom keys set:', attributes);
     } catch (error) {
       crashLogger.error('Failed to set custom keys:', error);
@@ -105,18 +107,23 @@ export class CrashReportingService {
     }
   }
 
-  public async recordError(error: Error, context?: Record<string, any>): Promise<void> {
+  public async recordError(error: Error, context?: Record<string, unknown>): Promise<void> {
     try {
       // Set context as custom keys if provided
       if (context) {
-        await this.setCustomKeys(context);
+        const validContext = Object.entries(context).reduce((acc, [key, value]) => {
+          if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+            acc[key] = value;
+          }
+          return acc;
+        }, {} as Record<string, string | number | boolean>);
+        await this.setCustomKeys(validContext);
       }
 
       // Record the error
       await FirebaseCrashlytics.recordException({
         message: error.message,
-        code: error.name,
-        stackTrace: error.stack,
+        code: 0,
       });
 
       crashLogger.info(`Error recorded: ${error.message}`);
@@ -125,12 +132,11 @@ export class CrashReportingService {
     }
   }
 
-  public async recordNonFatalError(message: string, stack?: string): Promise<void> {
+  public async recordNonFatalError(message: string): Promise<void> {
     try {
       await FirebaseCrashlytics.recordException({
         message,
-        code: 'NonFatalError',
-        stackTrace: stack,
+        code: 0,
       });
 
       crashLogger.info(`Non-fatal error recorded: ${message}`);
@@ -187,7 +193,7 @@ export class CrashReportingService {
   }
 
   // Utility methods for common use cases
-  public recordUserAction(action: string, properties?: Record<string, any>): void {
+  public recordUserAction(action: string, properties?: Record<string, unknown>): void {
     const message = `User action: ${action}`;
     this.recordMessage(message);
     

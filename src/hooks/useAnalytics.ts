@@ -38,7 +38,7 @@ export function useAnalytics() {
             user_type: user.role || 'customer',
             is_verified: user.isVerified || false,
             registration_date: user.createdAt || '',
-            has_packages: user.packages?.length > 0 || false,
+            has_packages: (user.packages?.length ?? 0) > 0,
           });
         } catch (error) {
           analyticsLogger.error('Failed to set user analytics:', error);
@@ -49,7 +49,7 @@ export function useAnalytics() {
     setUserAnalytics();
   }, [isAuthenticated, user]);
 
-  const trackEvent = useCallback(async (eventName: string, parameters: Record<string, any> = {}) => {
+  const trackEvent = useCallback(async (eventName: string, parameters: Record<string, unknown> = {}) => {
     try {
       await analyticsService.logEvent(eventName, parameters);
     } catch (error) {

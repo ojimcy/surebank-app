@@ -73,7 +73,7 @@ export class PushNotificationService {
     if (Capacitor.getPlatform() === 'android') {
       try {
         // Initialize Firebase messaging for Android
-        await FirebaseMessaging.initialize();
+        // Firebase messaging is auto-initialized
         notificationLogger.info('Firebase messaging initialized for Android');
       } catch (error) {
         notificationLogger.error('Failed to initialize Firebase messaging:', error);
@@ -164,7 +164,7 @@ export class PushNotificationService {
 
   private handleNotificationData(data: { [key: string]: any }): void {
     // Route to appropriate screen based on notification data
-    const { type, id, action } = data;
+    const { type, id, action: _action } = data;
     
     switch (type) {
       case 'transaction':

@@ -21,11 +21,13 @@ export interface User {
   kycStatus: string;
   kycType: string;
   isEmailVerified: boolean;
+  isVerified?: boolean;
   isTwoFactorAuthEnabled: boolean;
   passwordAttempts: number;
   lastPasswordChange: string;
   createdAt: string;
   updatedAt: string;
+  packages?: Array<any>;
 }
 
 export interface LoginPayload {

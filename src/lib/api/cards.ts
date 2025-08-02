@@ -95,7 +95,7 @@ const cardsApi = {
     /**
      * Initialize card verification payment with Paystack
      */
-    initializeCardVerification: async (payload: CardVerificationPayload) => {
+    initializeCardVerification: async () => {
         // This would typically go through your backend to initialize a Paystack transaction
         // For now, returning a mock structure
         return {
