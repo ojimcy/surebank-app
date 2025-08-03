@@ -1,33 +1,33 @@
 {
   "project_info": {
-    "project_number": "YOUR_PROJECT_NUMBER",
-    "project_id": "surebank-app",
-    "storage_bucket": "surebank-app.appspot.com"
+    "project_number": "258336910936",
+    "project_id": "surebank-bdc3d",
+    "storage_bucket": "surebank-bdc3d.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:YOUR_PROJECT_NUMBER:android:YOUR_APP_ID",
+        "mobilesdk_app_id": "1:258336910936:android:0645fa210bd9a3fd66642d",
         "android_client_info": {
           "package_name": "surebankstores.ng"
         }
       },
       "oauth_client": [
         {
-          "client_id": "YOUR_OAUTH_CLIENT_ID",
+          "client_id": "258336910936-unidiqbiv6ghkv1v4rd5ntlvak0eb6ld.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "YOUR_API_KEY"
+          "current_key": "AIzaSyDPgA7njkQTw1kdMjesJzUVJYlLdvOo8j8"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "YOUR_OAUTH_CLIENT_ID",
+              "client_id": "258336910936-oobta9mh2ofblp44adgm5lq972gva3ok.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
