@@ -86,17 +86,7 @@ function SetupPin() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
-        {/* Back Button */}
-        <div className="mb-6">
-          <button
-            onClick={handleBack}
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            {step === 'confirm' ? 'Back' : 'Cancel'}
-          </button>
-        </div>
-
+       
         {/* Modal-style Card */}
         <div className="bg-white border-0 shadow-2xl rounded-2xl overflow-hidden">
           {/* Header Section */}

@@ -1,5 +1,3 @@
-import { useNavigate } from 'react-router-dom';
-
 interface PackageHeaderProps {
   title: string;
   type: string;
@@ -17,34 +15,10 @@ export function PackageHeader({
   color,
   accountNumber,
 }: PackageHeaderProps) {
-  const navigate = useNavigate();
 
   return (
     <>
-      {/* Back Button */}
-      <div className="flex items-center justify-between mb-4">
-        <button
-          onClick={() => navigate('/packages')}
-          className="flex items-center text-gray-600 hover:text-gray-900"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5 mr-1"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-          Back
-        </button>
-      </div>
-
+      
       {/* Package Title and Type */}
       <div className="flex justify-between items-start mb-6">
         <div>

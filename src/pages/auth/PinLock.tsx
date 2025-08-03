@@ -9,7 +9,7 @@ function PinLock() {
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const { unlockApp } = usePin();
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const navigate = useNavigate();
 
   const handlePinChange = (value: string) => {
@@ -34,24 +34,26 @@ function PinLock() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-lg">
+      <div className="w-full max-w-lg max-h-screen flex flex-col">
         {/* Modal-style Card */}
-        <div className="bg-white border-0 shadow-2xl rounded-2xl overflow-hidden">
+        <div className="bg-white border-0 shadow-2xl rounded-2xl overflow-hidden flex-1 flex flex-col max-h-[90vh]">
           {/* Header Section */}
-          <div className="bg-gradient-to-r from-[#0066A1] to-[#004d7a] px-6 py-8 text-center">
-            <div className="flex justify-center mb-4">
-              <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
-                <Shield className="h-8 w-8 text-white" />
+          <div className="bg-gradient-to-r from-[#0066A1] to-[#004d7a] px-6 py-4 text-center flex-shrink-0">
+            <div className="flex justify-center mb-2">
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
+                <Shield className="h-6 w-6 text-white" />
               </div>
             </div>
-            <h1 className="text-xl font-bold text-white mb-2">App Locked</h1>
-            <p className="text-blue-100 text-sm leading-relaxed">
-              Welcome back, {user?.firstName || 'User'}. Enter your PIN to unlock the app.
-            </p>
+            <h1 className="text-lg font-bold text-white mb-1">App Locked</h1>
+            <div className="flex justify-center">
+              <div className="bg-white/10 backdrop-blur-sm rounded-full p-2">
+                <div className="text-white text-sm">👋</div>
+              </div>
+            </div>
           </div>
 
           {/* Content Section */}
-          <div className="px-6 py-8">
+          <div className="px-6 py-4 flex-1 overflow-y-auto">
             {/* Error Message */}
             {error && (
               <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
@@ -62,7 +64,7 @@ function PinLock() {
               </div>
             )}
 
-            <div className="space-y-6">
+            <div className="space-y-4">
               {/* PIN Display */}
               <div className="flex justify-center">
                 <div className="flex space-x-3">
@@ -80,7 +82,7 @@ function PinLock() {
               </div>
 
               {/* PIN Pad */}
-              <div className="bg-gray-50 rounded-2xl p-6">
+              <div className="bg-gray-50 rounded-2xl p-4">
                 <PinPad
                   value={pin}
                   onChange={handlePinChange}
@@ -91,7 +93,7 @@ function PinLock() {
             </div>
 
             {/* Security Notice */}
-            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="flex items-start">
                 <Shield className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
                 <p className="ml-2 text-xs text-blue-700">
@@ -101,7 +103,7 @@ function PinLock() {
             </div>
 
             {/* Logout Option */}
-            <div className="mt-6 text-center">
+            <div className="mt-4 text-center">
               <button
                 type="button"
                 onClick={handleLogout}
@@ -115,7 +117,7 @@ function PinLock() {
         </div>
 
         {/* Footer */}
-        <div className="mt-6 text-center">
+        <div className="mt-4 text-center flex-shrink-0">
           <p className="text-xs text-gray-500">
             © {new Date().getFullYear()} SureBank. All rights reserved.
           </p>
