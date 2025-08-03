@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/auth-provider';
+import { shouldShowOnboarding } from '@/hooks/useOnboarding';
 import { Button } from '@/components/ui/button';
 import AuthLayout from '@/components/layout/AuthLayout';
 import Spinner from '@/components/ui/Spinner';
+import { Eye, EyeOff } from 'lucide-react';
 
 function Login() {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{
     identifier?: string;
     password?: string;
@@ -15,7 +18,7 @@ function Login() {
   }>({});
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const { login, isLoginLoading, isAuthenticated } = useAuth();
+  const { login, isLoginLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -23,13 +26,15 @@ function Login() {
   useEffect(() => {
     if (location.state?.message) {
       setSuccessMessage(location.state.message);
-      // Clean up the location state to prevent showing the message again on refresh
-      window.history.replaceState({}, document.title);
+      // Note: We don't manipulate history here to avoid refresh issues
     }
   }, [location]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
+    
+    // Clear previous errors and messages
     setErrors({});
     setSuccessMessage(null);
 
@@ -56,7 +61,12 @@ function Login() {
 
     try {
       await login(identifier, password);
-      navigate('/');
+      // Check if user needs to see welcome screen first
+      if (shouldShowOnboarding()) {
+        navigate('/welcome');
+      } else {
+        navigate('/');
+      }
     } catch (error: unknown) {
       console.error("Login handleSubmit raw error:", error);
       const axiosError = error as {
@@ -103,11 +113,6 @@ function Login() {
     }
   };
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/');
-    }
-  }, [isAuthenticated, navigate]);
 
   return (
     <AuthLayout
@@ -173,22 +178,36 @@ function Login() {
           >
             Password
           </label>
-          <input
-            type="password"
-            id="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className={`block w-full rounded-md border ${
-              errors.password ? 'border-[#DC3545]' : 'border-[#E5E8ED]'
-            } bg-white px-3 py-2 text-sm text-[#212529] placeholder:text-[#6C757D] focus:outline-none focus:ring-2 ${
-              errors.password
-                ? 'focus:ring-[#DC3545]/30'
-                : 'focus:ring-[#0066A1]/30'
-            } disabled:cursor-not-allowed disabled:opacity-50 h-12`}
-            placeholder="Enter your password"
-            disabled={isLoginLoading}
-            autoComplete="current-password"
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={`block w-full rounded-md border ${
+                errors.password ? 'border-[#DC3545]' : 'border-[#E5E8ED]'
+              } bg-white px-3 py-2 pr-10 text-sm text-[#212529] placeholder:text-[#6C757D] focus:outline-none focus:ring-2 ${
+                errors.password
+                  ? 'focus:ring-[#DC3545]/30'
+                  : 'focus:ring-[#0066A1]/30'
+              } disabled:cursor-not-allowed disabled:opacity-50 h-12`}
+              placeholder="Enter your password"
+              disabled={isLoginLoading}
+              autoComplete="current-password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              disabled={isLoginLoading}
+              className="absolute inset-y-0 right-0 flex items-center pr-3 text-[#6C757D] hover:text-[#212529] disabled:cursor-not-allowed"
+            >
+              {showPassword ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </button>
+          </div>
           {errors.password && (
             <p className="mt-1 text-xs text-[#DC3545]">{errors.password}</p>
           )}

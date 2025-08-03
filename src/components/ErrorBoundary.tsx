@@ -133,15 +133,7 @@ export class ErrorBoundary extends Component<Props, State> {
                   Our team has been notified and is working on a fix.
                 </p>
               </div>
-
-              {this.state.errorId && (
-                <div className="bg-gray-100 p-3 rounded-lg">
-                  <p className="text-xs text-gray-500 text-center">
-                    Error ID: {this.state.errorId}
-                  </p>
-                </div>
-              )}
-
+              
               <div className="space-y-3">
                 <Button 
                   onClick={this.handleReload}
@@ -162,19 +154,6 @@ export class ErrorBoundary extends Component<Props, State> {
                 </Button>
               </div>
 
-              {process.env.NODE_ENV === 'development' && this.state.error && (
-                <details className="mt-4">
-                  <summary className="text-sm text-gray-500 cursor-pointer">
-                    Error Details (Development)
-                  </summary>
-                  <div className="mt-2 p-3 bg-red-50 rounded text-xs text-red-800 font-mono overflow-auto max-h-32">
-                    <div className="font-bold">{this.state.error.message}</div>
-                    <div className="mt-2 whitespace-pre-wrap">
-                      {this.state.error.stack}
-                    </div>
-                  </div>
-                </details>
-              )}
             </CardContent>
           </Card>
         </div>
