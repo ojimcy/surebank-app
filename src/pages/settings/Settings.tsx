@@ -1,6 +1,7 @@
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { usePin } from '@/lib/pin-provider';
+import { Edit2 } from 'lucide-react';
 function Settings() {
   const { user, logout } = useAuth();
   const { isPinSet, lockApp } = usePin();
@@ -45,9 +46,10 @@ function Settings() {
           </div>
           <button
             onClick={() => navigate('/settings/personal-information')}
-            className="ml-auto bg-[#0066A1] text-white rounded-md px-4 py-2 text-sm"
+            className="ml-auto bg-[#0066A1] text-white rounded-md p-2"
+            aria-label="Edit Profile"
           >
-            Edit Profile
+            <Edit2 className="h-5 w-5" />
           </button>
         </div>
       </div>
@@ -314,49 +316,6 @@ function Settings() {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <span className="block">Login Activity</span>
-                    <span className="text-xs text-gray-500">
-                      View and manage your active sessions
-                    </span>
-                  </div>
-                </div>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-gray-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </button>
-            </li>
-
-            <li>
-              <button className="w-full flex items-center justify-between py-2 cursor-pointer">
-                <div className="flex text-left">
-                  <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 text-[#0066A1]"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
                         d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"
                       />
                     </svg>
@@ -435,141 +394,6 @@ function Settings() {
             </li>
           </ul>
         </div>
-
-        {/* Payment Management */}
-        {/* <div className="p-4">
-          <h3 className="font-bold text-lg mb-3">Payment Management</h3>
-          <ul className="space-y-3">
-            <li>
-              <button className="w-full flex items-center justify-between py-2 cursor-pointer" onClick={() => navigate('/cards')}>
-                <div className="flex text-left">
-                  <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 text-[#0066A1]"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <span className="block">Stored Cards</span>
-                    <span className="text-xs text-gray-500">
-                      Manage your saved payment cards
-                    </span>
-                  </div>
-                </div>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-gray-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </button>
-            </li>
-
-            <li>
-              <button className="w-full flex items-center justify-between py-2 cursor-pointer" onClick={() => navigate('/schedules')}>
-                <div className="flex text-left">
-                  <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 text-[#0066A1]"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <span className="block">Scheduled Contributions</span>
-                    <span className="text-xs text-gray-500">
-                      Manage your recurring payments
-                    </span>
-                  </div>
-                </div>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-gray-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </button>
-            </li>
-
-            <li>
-              <button className="w-full flex items-center justify-between py-2 cursor-pointer" onClick={() => navigate('/settings/manage-bank-accounts')}>
-                <div className="flex text-left">
-                  <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 text-[#0066A1]"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <span className="block">Bank Accounts</span>
-                    <span className="text-xs text-gray-500">
-                      Manage your linked bank accounts
-                    </span>
-                  </div>
-                </div>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-gray-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </button>
-            </li>
-          </ul>
-        </div> */}
 
         {/* App Preferences */}
         <div className="p-4">
@@ -650,7 +474,12 @@ function Settings() {
               </Link>
             </li>
             <li>
-              <button className="w-full flex items-center justify-between py-2 cursor-pointer">
+              <a 
+                href="https://surebankstores.ng/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center justify-between py-2 cursor-pointer"
+              >
                 <div className="flex text-left">
                   <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
                     <svg
@@ -681,10 +510,10 @@ function Settings() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
                   />
                 </svg>
-              </button>
+              </a>
             </li>
           </ul>
         </div>
@@ -694,7 +523,12 @@ function Settings() {
           <h3 className="font-bold text-lg mb-3">Support & About</h3>
           <ul className="space-y-3">
             <li>
-              <button className="w-full flex items-center justify-between py-2 cursor-pointer">
+              <a 
+                href="https://surebankstores.ng/support"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center justify-between py-2 cursor-pointer"
+              >
                 <div className="flex text-left">
                   <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
                     <svg
@@ -725,13 +559,18 @@ function Settings() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M9 5l7 7-7 7"
+                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
                   />
                 </svg>
-              </button>
+              </a>
             </li>
             <li>
-              <button className="w-full flex items-center justify-between py-2 cursor-pointer">
+              <a 
+                href="https://surebankstores.ng/about"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center justify-between py-2 cursor-pointer"
+              >
                 <div className="flex text-left">
                   <div className="h-10 w-10 bg-[#E5E8ED] rounded-full flex items-center justify-center mr-3">
                     <svg
@@ -762,10 +601,10 @@ function Settings() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M9 5l7 7-7 7"
+                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
                   />
                 </svg>
-              </button>
+              </a>
             </li>
           </ul>
         </div>

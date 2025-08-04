@@ -83,22 +83,24 @@ function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
         </div>
 
         <div className={cn(
-          "flex-1 flex flex-col p-5 pt-8 md:justify-center",
+          "flex-1 flex flex-col md:justify-center overflow-y-auto",
           safeAreaClasses.paddingBottom
         )}>
-          <div className="max-w-md mx-auto w-full">
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold text-[#212529]">{title}</h2>
-              {subtitle && <p className="text-[#6C757D] mt-2">{subtitle}</p>}
+          <div className="p-5 pt-8">
+            <div className="max-w-md mx-auto w-full">
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-[#212529]">{title}</h2>
+                {subtitle && <p className="text-[#6C757D] mt-2">{subtitle}</p>}
+              </div>
+
+              {children}
             </div>
 
-            {children}
-          </div>
-
-          <div className="md:hidden mt-8 text-center">
-            <p className="text-sm text-[#6C757D]">
-              © {new Date().getFullYear()} SureBank. All rights reserved.
-            </p>
+            <div className="md:hidden mt-8 text-center">
+              <p className="text-sm text-[#6C757D]">
+                © {new Date().getFullYear()} SureBank. All rights reserved.
+              </p>
+            </div>
           </div>
         </div>
       </div>

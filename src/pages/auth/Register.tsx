@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/lib/auth-provider';
 import { Button } from '@/components/ui/button';
@@ -10,13 +10,7 @@ function Register() {
     name: '',
     email: '',
     phone: '',
-    address: {
-      street: '',
-      city: '',
-      state: '',
-      zipCode: '',
-      country: 'Nigeria',
-    },
+    address: '',
     password: '',
     confirmPassword: '',
   });
@@ -25,10 +19,7 @@ function Register() {
     name?: string;
     email?: string;
     phone?: string;
-    'address.street'?: string;
-    'address.city'?: string;
-    'address.state'?: string;
-    'address.zipCode'?: string;
+    address?: string;
     password?: string;
     confirmPassword?: string;
     general?: string;
@@ -36,6 +27,22 @@ function Register() {
 
   const { register, isRegisterLoading } = useAuth();
   const navigate = useNavigate();
+  const formRef = useRef<HTMLFormElement>(null);
+
+  // Handle input focus to scroll into view with keyboard avoidance
+  const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    // Small delay to ensure keyboard is shown
+    setTimeout(() => {
+      const element = e.target;
+      const rect = element.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      
+      // Check if element is near bottom of viewport (where keyboard appears)
+      if (rect.bottom > viewportHeight * 0.5) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 300);
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -49,22 +56,10 @@ function Register() {
       });
     }
 
-    // Handle nested address fields
-    if (name.startsWith('address.')) {
-      const addressField = name.split('.')[1];
-      setFormData((prev) => ({
-        ...prev,
-        address: {
-          ...prev.address,
-          [addressField]: value,
-        },
-      }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    }
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -90,16 +85,8 @@ function Register() {
       newErrors.phone = 'Please enter a valid phone number (numbers only)';
     }
 
-    if (!formData.address.street.trim()) {
-      newErrors['address.street'] = 'Street address is required';
-    }
-
-    if (!formData.address.city.trim()) {
-      newErrors['address.city'] = 'City is required';
-    }
-
-    if (!formData.address.state.trim()) {
-      newErrors['address.state'] = 'State is required';
+    if (!formData.address.trim()) {
+      newErrors.address = 'Address is required';
     }
 
     if (!formData.password) {
@@ -127,13 +114,7 @@ function Register() {
         email: formData.email,
         phone: formData.phone,
         password: formData.password,
-        address: {
-          street: formData.address.street,
-          city: formData.address.city,
-          state: formData.address.state,
-          zipCode: formData.address.zipCode,
-          country: formData.address.country,
-        },
+        address: formData.address,
       });
 
       // Navigate to verification page
@@ -177,7 +158,7 @@ function Register() {
         </div>
       )}
 
-      <form className="space-y-5 relative" onSubmit={handleSubmit}>
+      <form ref={formRef} className="space-y-5 relative" onSubmit={handleSubmit}>
         {isRegisterLoading && (
           <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] rounded-md flex items-center justify-center z-10">
             <div className="flex flex-col items-center">
@@ -216,6 +197,7 @@ function Register() {
                     : 'focus:ring-[#0066A1]/30'
                 } disabled:cursor-not-allowed disabled:opacity-50 h-10`}
                 placeholder="Enter your full name"
+                onFocus={handleInputFocus}
               />
               {errors.name && (
                 <p className="mt-1 text-xs text-[#DC3545]">{errors.name}</p>
@@ -243,6 +225,7 @@ function Register() {
                     : 'focus:ring-[#0066A1]/30'
                 } disabled:cursor-not-allowed disabled:opacity-50 h-10`}
                 placeholder="Enter your email address"
+                onFocus={handleInputFocus}
               />
               {errors.email && (
                 <p className="mt-1 text-xs text-[#DC3545]">{errors.email}</p>
@@ -270,150 +253,39 @@ function Register() {
                     : 'focus:ring-[#0066A1]/30'
                 } disabled:cursor-not-allowed disabled:opacity-50 h-10`}
                 placeholder="Enter your phone number"
+                onFocus={handleInputFocus}
               />
               {errors.phone && (
                 <p className="mt-1 text-xs text-[#DC3545]">{errors.phone}</p>
               )}
             </div>
-          </div>
-        </div>
 
-        {/* Address Information */}
-        <div>
-          <h3 className="text-base font-semibold mb-3 text-[#212529]">
-            Address
-          </h3>
-          <div className="space-y-3">
             <div className="space-y-1">
               <label
-                htmlFor="address.street"
+                htmlFor="address"
                 className="block text-sm font-medium text-[#212529]"
               >
-                Street Address*
+                Address*
               </label>
               <input
                 type="text"
-                id="address.street"
-                name="address.street"
-                value={formData.address.street}
+                id="address"
+                name="address"
+                value={formData.address}
                 onChange={handleChange}
                 className={`mt-1 block w-full rounded-md border ${
-                  errors['address.street']
-                    ? 'border-[#DC3545]'
-                    : 'border-[#E5E8ED]'
+                  errors.address ? 'border-[#DC3545]' : 'border-[#E5E8ED]'
                 } bg-white px-3 py-2 text-sm text-[#212529] placeholder:text-[#6C757D] focus:outline-none focus:ring-2 ${
-                  errors['address.street']
+                  errors.address
                     ? 'focus:ring-[#DC3545]/30'
                     : 'focus:ring-[#0066A1]/30'
                 } disabled:cursor-not-allowed disabled:opacity-50 h-10`}
-                placeholder="Enter your street address"
+                placeholder="Enter your address"
+                onFocus={handleInputFocus}
               />
-              {errors['address.street'] && (
-                <p className="mt-1 text-xs text-[#DC3545]">
-                  {errors['address.street']}
-                </p>
+              {errors.address && (
+                <p className="mt-1 text-xs text-[#DC3545]">{errors.address}</p>
               )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label
-                  htmlFor="address.city"
-                  className="block text-sm font-medium text-[#212529]"
-                >
-                  City*
-                </label>
-                <input
-                  type="text"
-                  id="address.city"
-                  name="address.city"
-                  value={formData.address.city}
-                  onChange={handleChange}
-                  className={`mt-1 block w-full rounded-md border ${
-                    errors['address.city']
-                      ? 'border-[#DC3545]'
-                      : 'border-[#E5E8ED]'
-                  } bg-white px-3 py-2 text-sm text-[#212529] placeholder:text-[#6C757D] focus:outline-none focus:ring-2 ${
-                    errors['address.city']
-                      ? 'focus:ring-[#DC3545]/30'
-                      : 'focus:ring-[#0066A1]/30'
-                  } disabled:cursor-not-allowed disabled:opacity-50 h-10`}
-                  placeholder="City"
-                />
-                {errors['address.city'] && (
-                  <p className="mt-1 text-xs text-[#DC3545]">
-                    {errors['address.city']}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-1">
-                <label
-                  htmlFor="address.state"
-                  className="block text-sm font-medium text-[#212529]"
-                >
-                  State/Province*
-                </label>
-                <input
-                  type="text"
-                  id="address.state"
-                  name="address.state"
-                  value={formData.address.state}
-                  onChange={handleChange}
-                  className={`mt-1 block w-full rounded-md border ${
-                    errors['address.state']
-                      ? 'border-[#DC3545]'
-                      : 'border-[#E5E8ED]'
-                  } bg-white px-3 py-2 text-sm text-[#212529] placeholder:text-[#6C757D] focus:outline-none focus:ring-2 ${
-                    errors['address.state']
-                      ? 'focus:ring-[#DC3545]/30'
-                      : 'focus:ring-[#0066A1]/30'
-                  } disabled:cursor-not-allowed disabled:opacity-50 h-10`}
-                  placeholder="State"
-                />
-                {errors['address.state'] && (
-                  <p className="mt-1 text-xs text-[#DC3545]">
-                    {errors['address.state']}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label
-                  htmlFor="address.zipCode"
-                  className="block text-sm font-medium text-[#212529]"
-                >
-                  Zip/Postal Code
-                </label>
-                <input
-                  type="text"
-                  id="address.zipCode"
-                  name="address.zipCode"
-                  value={formData.address.zipCode}
-                  onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border border-[#E5E8ED] bg-white px-3 py-2 text-sm text-[#212529] placeholder:text-[#6C757D] focus:outline-none focus:ring-2 focus:ring-[#0066A1]/30 disabled:cursor-not-allowed disabled:opacity-50 h-10"
-                  placeholder="Zip code"
-                />
-              </div>
-              <div className="space-y-1">
-                <label
-                  htmlFor="address.country"
-                  className="block text-sm font-medium text-[#212529]"
-                >
-                  Country*
-                </label>
-                <input
-                  type="text"
-                  id="address.country"
-                  name="address.country"
-                  value={formData.address.country}
-                  onChange={handleChange}
-                  className="mt-1 block w-full rounded-md border border-[#E5E8ED] bg-[#F6F8FA] px-3 py-2 text-sm text-[#6C757D] placeholder:text-[#6C757D] focus:outline-none focus:ring-2 focus:ring-[#0066A1]/30 disabled:cursor-not-allowed disabled:opacity-50 h-10"
-                  placeholder="Country"
-                  disabled
-                />
-              </div>
             </div>
           </div>
         </div>
@@ -445,6 +317,7 @@ function Register() {
                     : 'focus:ring-[#0066A1]/30'
                 } disabled:cursor-not-allowed disabled:opacity-50 h-10`}
                 placeholder="Create a password"
+                onFocus={handleInputFocus}
               />
               {errors.password ? (
                 <p className="mt-1 text-xs text-[#DC3545]">{errors.password}</p>
@@ -478,6 +351,7 @@ function Register() {
                     : 'focus:ring-[#0066A1]/30'
                 } disabled:cursor-not-allowed disabled:opacity-50 h-10`}
                 placeholder="Confirm your password"
+                onFocus={handleInputFocus}
               />
               {errors.confirmPassword && (
                 <p className="mt-1 text-xs text-[#DC3545]">
@@ -500,7 +374,7 @@ function Register() {
         </Button>
       </form>
 
-      <div className="mt-6 text-center">
+      <div className="mt-6 text-center pb-10">
         <p className="text-sm text-[#6C757D]">
           Already have an account?{' '}
           <Link
