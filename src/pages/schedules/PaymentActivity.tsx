@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import NestedHeader from '@/components/layout/NestedHeader';
 import { useScheduleQueries } from '@/hooks/queries/useScheduleQueries';
 import { RecentActivity } from '@/lib/api/scheduledContributions';
 import { formatDate, formatCurrency } from '@/lib/utils';
 import {
-    ArrowLeft,
     Activity,
     CheckCircle2,
     XCircle,
@@ -129,17 +129,7 @@ function PaymentActivity() {
     if (isScheduleStatsError) {
         return (
             <div className="space-y-6">
-                <div className="flex items-center mb-4">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigate(-1)}
-                        className="mr-2"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                    <h1 className="text-2xl font-bold text-[#212529]">Payment Activity</h1>
-                </div>
+                <NestedHeader title="Payment Activity" />
 
                 <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
                     <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
@@ -159,21 +149,13 @@ function PaymentActivity() {
 
     return (
         <div className="space-y-6">
-            {/* Header */}
+            <NestedHeader title="Payment Activity" />
+            
+            {/* Header Actions */}
             <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigate(-1)}
-                        className="mr-2"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                    <div className="flex items-center space-x-2">
-                        <Activity className="h-6 w-6 text-[#0066A1]" />
-                        <h1 className="text-2xl font-bold text-[#212529]">Payment Activity</h1>
-                    </div>
+                <div className="flex items-center space-x-2">
+                    <Activity className="h-6 w-6 text-[#0066A1]" />
+                    <h1 className="text-2xl font-bold text-[#212529]">Payment Activity</h1>
                 </div>
                 <div className="flex space-x-2">
                     <Button

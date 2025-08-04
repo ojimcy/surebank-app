@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import NestedHeader from '@/components/layout/NestedHeader';
 
 interface FormData {
   bvn: string;
@@ -81,9 +82,7 @@ function KycBvnVerification() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">BVN Verification</h1>
-      </div>
+      <NestedHeader title="BVN Verification" />
       
       <div className="bg-white rounded-xl shadow-sm p-6">
         <div className="mb-6">

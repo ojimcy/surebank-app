@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { usePin } from '@/lib/pin-provider';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/lib/toast-provider';
-import { ArrowLeft, Shield, Settings, AlertTriangle } from 'lucide-react';
+import { Shield, Settings, AlertTriangle } from 'lucide-react';
+import NestedHeader from '@/components/layout/NestedHeader';
 
 function PinSettings() {
   const { isPinSet, inactivityTimeout, setInactivityTimeout } = usePin();
@@ -45,16 +46,7 @@ function PinSettings() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
-        {/* Back Button */}
-        <div className="mb-6">
-          <button
-            onClick={() => navigate('/settings')}
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Settings
-          </button>
-        </div>
+        <NestedHeader title="PIN Settings" onBack={() => navigate('/settings')} />
 
         {/* Modal-style Card */}
         <div className="bg-white border-0 shadow-2xl rounded-2xl overflow-hidden">

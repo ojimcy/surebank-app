@@ -4,6 +4,7 @@ import { Stepper, StepContent } from '@/components/ui/stepper';
 import { useAuth } from '@/hooks/useAuth';
 import { useS3Upload } from '@/hooks/useS3Upload';
 import kycApi from '@/lib/api/kyc';
+import NestedHeader from '@/components/layout/NestedHeader';
 
 type IdType = 'national_id' | 'drivers_license' | 'passport' | 'voters_card';
 
@@ -488,9 +489,7 @@ function KycIdVerification() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">ID Verification</h1>
-      </div>
+      <NestedHeader title="ID Verification" />
       
       <div className="bg-white rounded-xl shadow-sm p-6">
         <div className="mb-6">

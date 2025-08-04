@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import NestedHeader from '@/components/layout/NestedHeader';
 import { useScheduleQueries } from '@/hooks/queries/useScheduleQueries';
 import { ScheduledContribution, RecentActivity } from '@/lib/api/scheduledContributions';
 import { formatDate, formatCurrency } from '@/lib/utils';
@@ -13,7 +14,6 @@ import {
     MoreVertical,
     Edit3,
     Eye,
-    ArrowLeft,
     AlertCircle,
     CheckCircle2,
     Clock,
@@ -49,7 +49,6 @@ import {
 } from '@/components/ui/alert-dialog';
 
 function SchedulesList() {
-    const navigate = useNavigate();
     const [scheduleToCancel, setScheduleToCancel] = useState<ScheduledContribution | null>(null);
     const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -172,17 +171,7 @@ function SchedulesList() {
     if (isSchedulesError) {
         return (
             <div className="space-y-6">
-                <div className="flex items-center mb-4">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigate(-1)}
-                        className="mr-2"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                    <h1 className="text-2xl font-bold text-[#212529]">Scheduled Contributions</h1>
-                </div>
+                <NestedHeader title="Scheduled Contributions" />
 
                 <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
                     <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
@@ -202,19 +191,11 @@ function SchedulesList() {
 
     return (
         <div className="space-y-6">
-            {/* Header */}
+            <NestedHeader title="Scheduled Contributions" />
+            
+            {/* Header with Create button */}
             <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigate(-1)}
-                        className="mr-2"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                    <h1 className="text-2xl font-bold text-[#212529]">Scheduled Contributions</h1>
-                </div>
+                <h1 className="text-2xl font-bold text-[#212529]">Scheduled Contributions</h1>
                 <Link to="/schedules/create">
                     <Button className="bg-[#0066A1] hover:bg-[#005085]">
                         <Plus className="h-4 w-4 mr-2" />
@@ -512,9 +493,9 @@ function SchedulesList() {
                                                     {schedule.status === 'active' && (
                                                         <DropdownMenuItem
                                                             onClick={() => {
-                                                        const id = schedule._id || schedule.id;
-                                                        if (id) handlePauseSchedule(id);
-                                                    }}
+                                                                const id = schedule._id || schedule.id;
+                                                                if (id) handlePauseSchedule(id);
+                                                            }}
                                                             disabled={isPauseScheduleLoading}
                                                         >
                                                             <Pause className="h-4 w-4 mr-2" />
@@ -524,9 +505,9 @@ function SchedulesList() {
                                                     {schedule.status === 'paused' && (
                                                         <DropdownMenuItem
                                                             onClick={() => {
-                                                        const id = schedule._id || schedule.id;
-                                                        if (id) handleResumeSchedule(id);
-                                                    }}
+                                                                const id = schedule._id || schedule.id;
+                                                                if (id) handleResumeSchedule(id);
+                                                            }}
                                                             disabled={isResumeScheduleLoading}
                                                         >
                                                             <Play className="h-4 w-4 mr-2" />

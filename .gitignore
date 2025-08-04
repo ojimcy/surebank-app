@@ -31,3 +31,9 @@ dist-ssr
 
 # Local Netlify folder
 .netlify
+
+# Firebase configuration files 
+google-services.json
+GoogleService-Info.plist
+firebase-config.json
+firebase-config.js

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ShoppingCart, Check } from 'lucide-react';
+import { ShoppingCart, Check } from 'lucide-react';
+import NestedHeader from '@/components/layout/NestedHeader';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatCurrency } from '@/lib/utils';
@@ -125,12 +126,7 @@ function ProductDetail() {
   if (loading) {
     return (
       <div className="container max-w-4xl mx-auto px-4 py-8">
-        <div className="flex items-center mb-6">
-          <Button variant="ghost" size="icon" onClick={handleGoBack}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <Skeleton className="h-8 w-48 ml-2" />
-        </div>
+        <NestedHeader title="Product Details" />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <Skeleton className="aspect-square rounded-lg" />
@@ -149,12 +145,7 @@ function ProductDetail() {
   if (!product) {
     return (
       <div className="container max-w-4xl mx-auto px-4 py-8">
-        <div className="flex items-center mb-6">
-          <Button variant="ghost" size="icon" onClick={handleGoBack}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-2xl font-bold ml-2">Product Not Found</h1>
-        </div>
+        <NestedHeader title="Product Not Found" />
         <p className="text-gray-500">The product you're looking for could not be found.</p>
         <Button className="mt-4" onClick={handleGoBack}>
           Go Back
@@ -165,13 +156,7 @@ function ProductDetail() {
 
   return (
     <div className="container max-w-4xl mx-auto px-4 py-8">
-      {/* Header with back button */}
-      <div className="flex items-center mb-6">
-        <Button variant="ghost" size="icon" onClick={handleGoBack}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <h1 className="text-2xl font-bold ml-2">Product Details</h1>
-      </div>
+      <NestedHeader title="Product Details" />
 
       {/* Product content */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

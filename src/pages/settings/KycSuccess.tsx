@@ -1,13 +1,12 @@
 import { useNavigate } from 'react-router-dom';
+import NestedHeader from '@/components/layout/NestedHeader';
 
 function KycSuccess() {
   const navigate = useNavigate();
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Verification Submitted</h1>
-      </div>
+      <NestedHeader title="Verification Submitted" />
       
       <div className="bg-white rounded-xl shadow-sm p-6 text-center">
         <div className="flex justify-center mb-6">

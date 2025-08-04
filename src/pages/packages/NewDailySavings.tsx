@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import NestedHeader from '@/components/layout/NestedHeader';
 import { useMutation } from '@tanstack/react-query';
 import packagesApi, {
   CreateDailySavingsPackageParams,
@@ -129,28 +130,7 @@ function NewDailySavings() {
   if (hasRequiredAccount === false) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center mb-4">
-          <Link
-            to="/packages/new"
-            className="p-2 rounded-full bg-[#F6F8FA] hover:bg-[#E5E8ED] transition-colors mr-2"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 text-[#212529]"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-          </Link>
-          <h1 className="text-2xl font-bold text-[#212529]">Daily Savings</h1>
-        </div>
+        <NestedHeader title="Daily Savings" />
 
         <div className="bg-white rounded-xl shadow-sm p-6">
           <div className="text-center">
@@ -193,28 +173,7 @@ function NewDailySavings() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center mb-4">
-        <Link
-          to="/packages/new"
-          className="p-2 rounded-full bg-[#F6F8FA] hover:bg-[#E5E8ED] transition-colors mr-2"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5 text-[#212529]"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-        </Link>
-        <h1 className="text-2xl font-bold text-[#212529]">Daily Savings</h1>
-      </div>
+      <NestedHeader title="Daily Savings" />
 
       <div className="bg-white rounded-xl shadow-sm p-6">
         <form onSubmit={handleSubmit} className="space-y-6">

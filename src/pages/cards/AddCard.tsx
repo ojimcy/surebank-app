@@ -22,6 +22,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'react-hot-toast';
+import NestedHeader from '@/components/layout/NestedHeader';
 
 type CardType = 'visa' | 'mastercard' | 'verve' | 'american-express' | 'unknown';
 
@@ -340,18 +341,7 @@ function AddCard() {
 
     return (
         <div className="max-w-md mx-auto space-y-6">
-            {/* Header */}
-            <div className="flex items-center">
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => navigate(-1)}
-                    className="mr-2"
-                >
-                    <ArrowLeft className="h-4 w-4" />
-                </Button>
-                <h1 className="text-2xl font-bold text-[#212529]">Add New Card</h1>
-            </div>
+            <NestedHeader title="Add New Card" onBack={() => navigate(-1)} />
 
             {/* Card Preview */}
             <div className="relative">

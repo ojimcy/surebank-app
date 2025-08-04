@@ -14,6 +14,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { usePinVerification } from "@/hooks/usePinVerification";
+import NestedHeader from '@/components/layout/NestedHeader';
 
 interface PackageOption {
   id: string;
@@ -412,10 +413,7 @@ function IBWithdrawal() {
 
   return (
     <div className="max-w-md mx-auto py-6 px-4 sm:px-6 lg:px-8 space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Transfer from Interest Savings</h1>
-      <p className="text-gray-600">
-        Transfer funds from your interest-based savings package to your available balance. From there, you can withdraw to your bank account.
-      </p>
+      <NestedHeader title="Transfer from Interest Savings" />
 
       {/* Package Selection */}
       <div className="bg-white rounded-xl shadow-sm p-4">

@@ -21,6 +21,7 @@ import { Label } from '@/components/ui/label';
 import packagesApi, { SBPackage } from '@/lib/api/packages';
 import { formatCurrency } from '@/lib/utils';
 import { useToast } from '@/lib/toast-provider';
+import NestedHeader from '@/components/layout/NestedHeader';
 
 // Package type for the UI
 interface UIPackage {
@@ -122,9 +123,9 @@ function MergePackages() {
   
   return (
     <div className="container max-w-md mx-auto p-4">
+      <NestedHeader title="Merge Packages" />
       <Card>
         <CardHeader>
-          <CardTitle>Merge Packages</CardTitle>
           <CardDescription>
             Combine two packages by merging them together. The source package will be closed and its balance transferred to the destination package.
           </CardDescription>
@@ -172,21 +173,13 @@ function MergePackages() {
             </Select>
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col gap-4">
+        <CardFooter>
           <Button 
             className="w-full" 
             disabled={isFetchingPackages || isLoading || !fromPackage || !toPackage} 
             onClick={handleMergePackages}
           >
             {isLoading ? 'Merging...' : 'Merge Packages'}
-          </Button>
-          <Button 
-            className="w-full" 
-            variant="outline" 
-            onClick={() => navigate(-1)}
-            disabled={isLoading}
-          >
-            Cancel
           </Button>
         </CardFooter>
       </Card>

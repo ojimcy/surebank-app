@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import NestedHeader from '@/components/layout/NestedHeader';
 import { useScheduleQueries } from '@/hooks/queries/useScheduleQueries';
 import { useCardQueries } from '@/hooks/queries/useCardQueries';
 import { ScheduledContribution, UpdateSchedulePayload } from '@/lib/api/scheduledContributions';
 import { formatCurrency, formatDateTime } from '@/lib/utils';
 import { usePinVerification } from '@/hooks/usePinVerification';
 import {
-    ArrowLeft,
     CreditCard,
     AlertCircle,
     CheckCircle2,
@@ -230,17 +230,7 @@ function EditSchedule() {
     if (!schedule) {
         return (
             <div className="space-y-6">
-                <div className="flex items-center mb-4">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigate('/schedules')}
-                        className="mr-2"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                    <h1 className="text-2xl font-bold text-[#212529]">Edit Schedule</h1>
-                </div>
+                <NestedHeader title="Edit Schedule" onBack={() => navigate('/schedules')} />
 
                 <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
                     <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
@@ -262,19 +252,11 @@ function EditSchedule() {
 
     return (
         <div className="max-w-2xl mx-auto space-y-6">
-            {/* Header */}
+            <NestedHeader title="Edit Schedule" onBack={() => navigate(`/schedules/${schedule._id || schedule.id}`)} />
+            
+            {/* Status Badge */}
             <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigate(`/schedules/${schedule._id || schedule.id}`)}
-                        className="mr-2"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                    <h1 className="text-2xl font-bold text-[#212529]">Edit Schedule</h1>
-                </div>
+                <h1 className="text-2xl font-bold text-[#212529]">Edit Schedule</h1>
                 {getStatusBadge(schedule.status)}
             </div>
 

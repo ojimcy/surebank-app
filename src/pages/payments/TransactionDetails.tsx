@@ -1,8 +1,9 @@
-    import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useTransactionQueries } from '@/hooks/queries/useTransactionQueries';
 import { useToast } from '@/lib/toast-provider';
 import { useEffect, useState } from 'react';
 import { FormattedTransaction } from '@/hooks/queries/useTransactionQueries';
+import NestedHeader from '@/components/layout/NestedHeader';
 
 export default function TransactionDetails() {
   const { transactionId } = useParams<{ transactionId: string }>();
@@ -41,28 +42,7 @@ export default function TransactionDetails() {
     return (
       <div className="min-h-screen bg-[#F8F9FA] p-4">
         <div className="max-w-md mx-auto">
-          <div className="flex items-center mb-6">
-            <button
-              onClick={() => navigate(-1)}
-              className="p-2 hover:bg-gray-100 rounded-full mr-3"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-            </button>
-            <h1 className="text-xl font-bold">Transaction Details</h1>
-          </div>
+          <NestedHeader title="Transaction Details" onBack={() => navigate(-1)} />
           
           <div className="bg-white rounded-lg p-6 animate-pulse">
             <div className="h-6 bg-gray-200 rounded mb-4"></div>
@@ -79,28 +59,7 @@ export default function TransactionDetails() {
     return (
       <div className="min-h-screen bg-[#F8F9FA] p-4">
         <div className="max-w-md mx-auto">
-          <div className="flex items-center mb-6">
-            <button
-              onClick={() => navigate(-1)}
-              className="p-2 hover:bg-gray-100 rounded-full mr-3"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-            </button>
-            <h1 className="text-xl font-bold">Transaction Details</h1>
-          </div>
+          <NestedHeader title="Transaction Details" onBack={() => navigate(-1)} />
           
           <div className="bg-white rounded-lg p-6 text-center">
             <p className="text-gray-500">Transaction not found</p>
@@ -133,29 +92,7 @@ export default function TransactionDetails() {
   return (
     <div className="min-h-screen bg-[#F8F9FA] p-4">
       <div className="max-w-md mx-auto">
-        {/* Header */}
-        <div className="flex items-center mb-6">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 hover:bg-gray-100 rounded-full mr-3"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-          </button>
-          <h1 className="text-xl font-bold">Transaction Details</h1>
-        </div>
+        <NestedHeader title="Transaction Details" onBack={() => navigate(-1)} />
 
         {/* Transaction Status Card */}
         <div className="bg-white rounded-lg p-6 mb-6 text-center">

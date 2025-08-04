@@ -8,6 +8,7 @@ import { Package, MapPin, Phone, User, Clock, CreditCard } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { useEffect, useState } from 'react';
+import NestedHeader from '@/components/layout/NestedHeader';
 
 // Define a normalized order structure to handle API response variations
 interface NormalizedProduct {
@@ -192,22 +193,9 @@ return new Date(dateString).toLocaleString('en-NG', {
 
       <div className="container max-w-4xl py-8 px-4 md:px-6">
         
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold tracking-tight">
-            {isLoading ? (
-              <Skeleton className="h-8 w-64" />
-            ) : (
-              `Order #${order?.orderNumber}`
-            )}
-          </h1>
-          <div className="text-muted-foreground mt-1">
-            {isLoading ? (
-              <Skeleton className="h-5 w-48" />
-            ) : (
-              order?.createdAt && `Placed on ${formatDate(order.createdAt)}`
-            )}
-          </div>
-        </div>
+        <NestedHeader 
+          title={isLoading ? "Loading..." : `Order #${order?.orderNumber || 'Details'}`}
+        />
 
         {isError && (
           <Card className="mb-8">

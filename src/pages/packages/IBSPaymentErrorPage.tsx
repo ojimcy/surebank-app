@@ -1,5 +1,6 @@
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import NestedHeader from '@/components/layout/NestedHeader';
 
 function IBSPaymentErrorPage() {
   const [searchParams] = useSearchParams();
@@ -11,12 +12,7 @@ function IBSPaymentErrorPage() {
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
-      <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold text-red-600">Payment Failed</h1>
-        <p className="text-gray-500">
-          Unfortunately, there was an issue processing your payment.
-        </p>
-      </div>
+      <NestedHeader title="Payment Failed" />
 
       <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="text-center space-y-4">

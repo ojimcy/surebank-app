@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, CreditCard, Truck, ShieldCheck, ShoppingCart, MapPin, Package, AlertCircle } from 'lucide-react';
+import { CreditCard, Truck, ShieldCheck, ShoppingCart, MapPin, Package, AlertCircle } from 'lucide-react';
+import NestedHeader from '@/components/layout/NestedHeader';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatCurrency } from '@/lib/utils';
@@ -247,12 +248,7 @@ function Checkout() {
   if (loading) {
     return (
       <div className="container max-w-6xl mx-auto px-4 py-8">
-        <div className="flex items-center mb-6">
-          <Button variant="ghost" size="icon" onClick={handleGoBack}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <Skeleton className="h-8 w-48 ml-2" />
-        </div>
+        <NestedHeader title="Checkout" />
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
@@ -270,16 +266,9 @@ function Checkout() {
   if (!cartData || !cartData.cartItems || cartData.cartItems.length === 0) {
     return (
       <div className="container max-w-7xl py-6 space-y-8">
+        <NestedHeader title="Checkout" />
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleGoBack}
-              className="mr-2"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
             <h1 className="text-2xl font-bold">Checkout</h1>
           </div>
           
@@ -318,12 +307,11 @@ function Checkout() {
 
   return (
     <div className="container max-w-6xl mx-auto px-4 py-8">
-      {/* Header with back button */}
+      <NestedHeader title="Checkout" />
+      
+      {/* Header with clear cart button */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center">
-          <Button variant="ghost" size="icon" onClick={handleGoBack}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
           <h1 className="text-2xl font-bold ml-2">Checkout</h1>
         </div>
         

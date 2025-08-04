@@ -6,6 +6,7 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { Button } from '@/components/ui/button';
 import { formatNotificationDate } from '@/lib/utils';
 import { Notification } from '@/lib/api/notifications';
+import NestedHeader from '@/components/layout/NestedHeader';
 
 function NotificationsPage() {
   const {
@@ -160,9 +161,9 @@ function NotificationsPage() {
 
   return (
     <div className="max-w-3xl mx-auto">
+      <NestedHeader title="Notifications" />
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center">
-          <h1 className="text-2xl font-bold">Notifications</h1>
         </div>
         {notifications.length > 0 && (
           <Button

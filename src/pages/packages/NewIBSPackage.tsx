@@ -14,6 +14,7 @@ import { getPaymentSuccessUrl } from '@/lib/utils/payment-redirect';
 import { paymentLogger } from '@/lib/utils/payment-logger';
 import { logger } from '@/lib/utils/logger';
 import { getPlatformInfo } from '@/lib/utils/platform';
+import NestedHeader from '@/components/layout/NestedHeader';
 
 // Create a logger instance for the IBS package component
 const ibsLogger = logger.create('IBSPackage');
@@ -303,14 +304,7 @@ function NewIBSPackage() {
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-bold">
-          Create Interest-Based Savings Package
-        </h1>
-        <p className="text-gray-500">
-          Invest your money and earn interest over time
-        </p>
-      </div>
+      <NestedHeader title="Create Interest-Based Savings Package" />
 
       <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="mb-4">

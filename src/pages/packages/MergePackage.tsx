@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import NestedHeader from '@/components/layout/NestedHeader';
 
 interface PackageOption {
   id: string;
@@ -162,21 +163,7 @@ function MergePackage() {
 
   return (
     <div className="container max-w-md mx-auto px-4 py-8">
-      <Button
-        variant="ghost"
-        className="mb-4 pl-0 hover:bg-transparent hover:text-primary"
-        onClick={handleBack}
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Back
-      </Button>
-
-      <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold mb-3">Merge Packages</h1>
-        <p className="text-gray-500 max-w-sm mx-auto">
-          Combine two packages by merging them together. The source package will be closed and its balance transferred to the destination package.
-        </p>
-      </div>
+      <NestedHeader title="Merge Packages" onBack={handleBack} />
 
       {loading && !sourcePackage ? (
         <div className="flex justify-center py-8">
@@ -262,31 +249,20 @@ function MergePackage() {
         </CardContent>
       </Card>
 
-      <div className="space-y-4">
-        <Button
-          variant="outline"
-          className="w-full border border-slate-200 bg-white hover:bg-slate-50 hover:text-slate-900 transition-colors py-6"
-          onClick={handleBack}
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Package Details
-        </Button>
-        
-        <Button
-          className="w-full bg-primary hover:bg-primary/90 transition-colors shadow-md py-6 font-medium"
-          disabled={!selectedPackage || loading}
-          onClick={handleMergeClick}
-        >
-          {loading ? (
-            <>
-              <Loader2 className="h-5 w-5 animate-spin mr-2" />
-              Processing...
-            </>
-          ) : (
-            "Merge Packages"
-          )}
-        </Button>
-      </div>
+      <Button
+        className="w-full bg-primary hover:bg-primary/90 transition-colors shadow-md py-6 font-medium"
+        disabled={!selectedPackage || loading}
+        onClick={handleMergeClick}
+      >
+        {loading ? (
+          <>
+            <Loader2 className="h-5 w-5 animate-spin mr-2" />
+            Processing...
+          </>
+        ) : (
+          "Merge Packages"
+        )}
+      </Button>
 
       {/* Confirmation Dialog */}
       <ConfirmationDialog

@@ -5,6 +5,7 @@ import { Account } from '@/lib/api/accounts';
 import { useToast } from '@/lib/toast-provider';
 import { formatCurrency } from '@/lib/utils';
 import { format, isValid } from 'date-fns';
+import NestedHeader from '@/components/layout/NestedHeader';
 
 export default function AccountDetail() {
   const { accountType } = useParams<{ accountType: 'ds' | 'sb' | 'ibs' }>();
@@ -94,9 +95,7 @@ export default function AccountDetail() {
     <div className="p-4 max-w-3xl mx-auto">
       {/* Account Header */}
       <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold text-gray-800">Account Overview</h1>
-        </div>
+        <NestedHeader title="Account Overview" />
 
         <div className="flex flex-col md:flex-row md:items-center justify-between p-4 bg-gray-50 rounded-lg">
           <div>

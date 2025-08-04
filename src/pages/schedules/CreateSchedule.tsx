@@ -18,6 +18,7 @@ import {
     Clock,
     Plus
 } from 'lucide-react';
+import NestedHeader from '@/components/layout/NestedHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -273,18 +274,7 @@ function CreateSchedule() {
 
     return (
         <div className="max-w-2xl mx-auto space-y-6">
-            {/* Header */}
-            <div className="flex items-center">
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => navigate(-1)}
-                    className="mr-2"
-                >
-                    <ArrowLeft className="h-4 w-4" />
-                </Button>
-                <h1 className="text-2xl font-bold text-[#212529]">Create Scheduled Contribution</h1>
-            </div>
+            <NestedHeader title="Create Scheduled Contribution" onBack={() => navigate(-1)} />
 
             {/* Prerequisites Check */}
             {(!hasPackages || !hasCards) && (

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import NestedHeader from '@/components/layout/NestedHeader';
 import { useCardQueries } from '@/hooks/queries/useCardQueries';
 import { usePinVerification } from '@/hooks/usePinVerification';
 import { StoredCard } from '@/lib/api/cards';
@@ -10,7 +11,6 @@ import {
     MoreVertical,
     Trash2,
     Eye,
-    ArrowLeft,
     AlertCircle,
     Shield,
     Calendar,
@@ -151,17 +151,7 @@ function CardsList() {
     if (isCardsError) {
         return (
             <div className="space-y-6">
-                <div className="flex items-center mb-4">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigate(-1)}
-                        className="mr-2"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                    <h1 className="text-2xl font-bold text-[#212529]">My Cards</h1>
-                </div>
+                <NestedHeader title="My Cards" />
 
                 <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
                     <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
@@ -181,19 +171,11 @@ function CardsList() {
 
     return (
         <div className="space-y-6">
-            {/* Header */}
+            <NestedHeader title="My Cards" />
+            
+            {/* Header with Add Button */}
             <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigate(-1)}
-                        className="mr-2"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                    <h1 className="text-2xl font-bold text-[#212529]">My Cards</h1>
-                </div>
+                <h1 className="text-2xl font-bold text-[#212529]">My Cards</h1>
                 <Link to="/cards/add">
                     <Button className="bg-[#0066A1] hover:bg-[#005085]">
                         <Plus className="h-4 w-4 mr-2" />

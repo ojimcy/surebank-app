@@ -23,6 +23,7 @@ import { Product } from '@/lib/api/products';
 import api from '@/lib/api/axios';
 import packagesApi from '@/lib/api/packages';
 import { formatCurrency } from '@/lib/utils';
+import NestedHeader from '@/components/layout/NestedHeader';
 
 interface LocationState {
   packageId: string;
@@ -155,9 +156,9 @@ function ChangeProduct() {
   console.log(products, 'products');
   return (
     <div className="container max-w-md mx-auto p-4">
+      <NestedHeader title="Change Product" />
       <Card>
         <CardHeader>
-          <CardTitle>Change Product</CardTitle>
           <CardDescription>
             Select a new product for your SureBank package
           </CardDescription>
@@ -218,7 +219,7 @@ function ChangeProduct() {
           )}
         </CardContent>
 
-        <CardFooter className="flex flex-col gap-4">
+        <CardFooter>
           <Button
             className="w-full"
             disabled={isSubmitting || !selectedProductId}
@@ -232,14 +233,6 @@ function ChangeProduct() {
             ) : (
               'Change Product'
             )}
-          </Button>
-          <Button
-            className="w-full"
-            variant="outline"
-            onClick={() => navigate(-1)}
-            disabled={isSubmitting}
-          >
-            Cancel
           </Button>
         </CardFooter>
       </Card>

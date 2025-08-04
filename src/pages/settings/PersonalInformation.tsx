@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import Spinner from '@/components/ui/Spinner';
 import { useToast } from '@/lib/toast-provider';
+import NestedHeader from '@/components/layout/NestedHeader';
 
 function PersonalInformation() {
   const { user } = useAuth();
@@ -59,9 +60,7 @@ const requestPhoneChange = () => {
   
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Personal Information</h1>
-      </div>
+      <NestedHeader title="Personal Information" />
       
       <div className="bg-white rounded-xl shadow-sm p-6">
         {!isEditing ? (

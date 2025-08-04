@@ -17,6 +17,7 @@ import { paymentPolling } from '@/lib/services/payment-polling';
 import { logger } from '@/lib/utils/logger';
 import { paymentLogger } from '@/lib/utils/payment-logger';
 import api from '@/lib/api/axios';
+import NestedHeader from '@/components/layout/NestedHeader';
 
 // Create a logger instance for the contribution component
 const contributionLogger = logger.create('Contribution');
@@ -394,7 +395,7 @@ function Contribution() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Make Contribution</h1>
+      <NestedHeader title="Make Contribution" />
 
       {/* Package Type Selector */}
       <div className="bg-white rounded-xl shadow-sm p-4">

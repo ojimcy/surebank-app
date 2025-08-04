@@ -6,7 +6,6 @@ import { ScheduledContribution } from '@/lib/api/scheduledContributions';
 import { formatDateTime, formatCurrency } from '@/lib/utils';
 import {
     Calendar,
-    ArrowLeft,
     Play,
     Pause,
     Square,
@@ -23,6 +22,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import NestedHeader from '@/components/layout/NestedHeader';
 import { Badge } from '@/components/ui/badge';
 import {
     DropdownMenu,
@@ -149,17 +149,7 @@ function ScheduleDetail() {
     if (!schedule) {
         return (
             <div className="space-y-6">
-                <div className="flex items-center mb-4">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigate('/schedules')}
-                        className="mr-2"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                    <h1 className="text-2xl font-bold text-[#212529]">Schedule Details</h1>
-                </div>
+                <NestedHeader title="Schedule Details" onBack={() => navigate('/schedules')} />
 
                 <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
                     <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
@@ -179,19 +169,11 @@ function ScheduleDetail() {
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
-            {/* Header */}
+            <NestedHeader title="Schedule Details" onBack={() => navigate('/schedules')} />
+            
+            {/* Action Menu */}
             <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigate('/schedules')}
-                        className="mr-2"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                    <h1 className="text-2xl font-bold text-[#212529]">Schedule Details</h1>
-                </div>
+                <h1 className="text-2xl font-bold text-[#212529]">Schedule Details</h1>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="outline" size="sm">

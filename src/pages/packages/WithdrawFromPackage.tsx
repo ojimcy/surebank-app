@@ -9,6 +9,7 @@ import { toast } from "react-hot-toast";
 import { cn } from "@/lib/utils";
 import { Check, Loader2, Wallet, AlertTriangle, ArrowRight, CheckCircle2 } from "lucide-react";
 import { usePinVerification } from "@/hooks/usePinVerification";
+import NestedHeader from '@/components/layout/NestedHeader';
 
 interface PackageOption {
   id: string;
@@ -263,10 +264,7 @@ function Withdrawal() {
 
   return (
     <div className="max-w-md mx-auto py-6 px-4 sm:px-6 lg:px-8 space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Withdraw Funds</h1>
-      <p className="text-gray-600">
-        Withdraw funds from your Daily Savings package to your available balance.
-      </p>
+      <NestedHeader title="Withdraw Funds" />
 
       {/* Package Selection */}
       <div className="bg-white rounded-xl shadow-sm p-4">

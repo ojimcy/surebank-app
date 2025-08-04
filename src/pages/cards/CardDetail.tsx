@@ -38,6 +38,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import NestedHeader from '@/components/layout/NestedHeader';
 
 function CardDetail() {
     const { id: cardId } = useParams<{ id: string }>();
@@ -202,17 +203,7 @@ function CardDetail() {
     if (!card) {
         return (
             <div className="space-y-6">
-                <div className="flex items-center mb-4">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigate('/cards')}
-                        className="mr-2"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                    <h1 className="text-2xl font-bold text-[#212529]">Card Details</h1>
-                </div>
+                <NestedHeader title="Card Details" onBack={() => navigate('/cards')} />
 
                 <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
                     <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
@@ -232,19 +223,9 @@ function CardDetail() {
 
     return (
         <div className="max-w-2xl mx-auto space-y-6">
-            {/* Header */}
             <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigate('/cards')}
-                        className="mr-2"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                    </Button>
-                    <h1 className="text-2xl font-bold text-[#212529]">Card Details</h1>
-                </div>
+                <NestedHeader title="Card Details" onBack={() => navigate('/cards')} />
+                <div>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="outline" size="sm">

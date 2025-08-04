@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import paymentsApi from "@/lib/api/payments";
 import { useNavigate } from "react-router-dom";
 import { usePinVerification } from "@/hooks/usePinVerification";
+import NestedHeader from '@/components/layout/NestedHeader';
 
 interface Bank {
   name: string;
@@ -364,15 +365,7 @@ function ManageBankAccounts() {
 
   return (
     <div className="max-w-md mx-auto p-6 space-y-6">
-      <div className="flex items-center mb-6">
-        <button 
-          onClick={() => navigate(-1)}
-          className="mr-3 p-1 rounded-full hover:bg-gray-100"
-        >
-          <ArrowLeft className="h-5 w-5 text-gray-700" />
-        </button>
-        <h1 className="text-2xl font-bold text-gray-900">Manage Bank Accounts</h1>
-      </div>
+      <NestedHeader title="Manage Bank Accounts" onBack={() => navigate(-1)} />
 
       {/* Display a single error message if there's a verification error */}
       {verificationError && (

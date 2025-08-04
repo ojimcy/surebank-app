@@ -7,6 +7,7 @@ import { Loader2, CheckCircle2, Plus, Minus, AlertCircle, Settings } from "lucid
 import { cn } from "@/lib/utils";
 import paymentsApi, { AccountWithBalance, MultiWithdrawalResponse } from "@/lib/api/payments";
 import { usePinVerification } from "@/hooks/usePinVerification";
+import NestedHeader from '@/components/layout/NestedHeader';
 
 interface Bank {
   name: string;
@@ -559,12 +560,7 @@ function Withdraw() {
 
   return (
     <div className="max-w-md mx-auto p-6 space-y-6">
-      <div className="text-center mb-2">
-        <h1 className="text-2xl font-bold text-gray-900">Withdraw Funds</h1>
-        <p className="text-gray-600 mt-1">
-          Withdraw from multiple accounts simultaneously
-        </p>
-      </div>
+      <NestedHeader title="Withdraw Funds" />
 
       {/* Display a single error message if there's a verification error */}
       {verificationError && (
