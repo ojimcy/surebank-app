@@ -1,6 +1,6 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useAuth as useRealAuth } from '@/hooks/useAuth';
-import { User, Address } from '@/lib/api/auth';
+import { User } from '@/lib/api/auth';
 import { useToast } from '@/lib/toast-provider';
 import { extractErrorMessage } from '@/lib/utils';
 
@@ -14,14 +14,14 @@ interface AuthContextType {
     phone?: string;
     password: string;
     name: string;
-    address?: Address;
+    address?: string;
   }) => Promise<void>;
   verifyCode: (code: string) => Promise<void>;
   resendVerificationCode: () => Promise<void>;
   logout: () => void;
   pendingVerification: boolean;
   verificationEmail?: string;
-  pendingAddress?: Address;
+  pendingAddress?: string;
   requestPasswordReset: (email: string) => Promise<void>;
   verifyPasswordResetCode: (code: string) => Promise<void>;
   resetPassword: (newPassword: string) => Promise<void>;
@@ -54,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     string | undefined
   >();
   const [pendingAddress, setPendingAddress] = React.useState<
-    Address | undefined
+    string | undefined
   >();
 
   // State for password reset flow
@@ -85,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     phone?: string;
     password: string;
     name: string;
-    address?: Address;
+    address?: string;
   }) => {
     try {
       const identifier = params.email || params.phone;
@@ -105,9 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         lastName:
           params.name.split(' ').slice(1).join(' ') ||
           params.name.split(' ')[0],
-        address: params.address
-          ? `${params.address.street}, ${params.address.city}, ${params.address.state}`
-          : undefined,
+        address: params.address,
       };
 
       await auth.register(apiParams);
