@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import NestedHeader from '@/components/layout/NestedHeader';
 import { useMutation, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import packagesApi, { CreateSBPackageParams } from '../../lib/api/packages';

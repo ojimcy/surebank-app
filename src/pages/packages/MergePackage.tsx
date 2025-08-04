@@ -7,7 +7,7 @@ import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import NestedHeader from '@/components/layout/NestedHeader';
 
@@ -35,12 +35,12 @@ function MergePackage() {
   // Fetch compatible packages for merging (only SB packages)
   const fetchCompatiblePackages = async () => {
     if (!user?.id || !packageId) return;
-    
+
     setFetchingPackages(true);
     try {
       // Get all SB packages for the user
       const sbPackages = await packagesApi.getSBPackages(user.id);
-      
+
       // Filter out the current package and closed packages
       const compatiblePackages = sbPackages
         .filter((pkg) => pkg._id !== packageId && pkg.status !== 'CLOSED')
@@ -51,7 +51,7 @@ function MergePackage() {
           accountNumber: pkg.accountNumber,
           productName: pkg.product?.name || 'SB Package',
         }));
-      
+
       setAvailablePackages(compatiblePackages);
     } catch (err) {
       console.error('Error fetching compatible packages:', err);
@@ -68,12 +68,12 @@ function MergePackage() {
   useEffect(() => {
     const fetchSourcePackage = async () => {
       if (!packageId || !user?.id) return;
-      
+
       setLoading(true);
       try {
         // Get all SB packages for the user
         const sbPackages = await packagesApi.getSBPackages(user.id);
-        
+
         // Find the specific package by ID
         const sbPackage = sbPackages.find(pkg => pkg._id === packageId);
         if (sbPackage) {
@@ -82,7 +82,7 @@ function MergePackage() {
           await fetchCompatiblePackages();
           return;
         }
-        
+
         // If we get here, the package wasn't found
         showError({
           title: "Error",
@@ -101,7 +101,7 @@ function MergePackage() {
     };
 
     fetchSourcePackage();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [packageId, user?.id, navigate, showError]);
 
   // Handle package selection
@@ -112,17 +112,17 @@ function MergePackage() {
   // Handle merge confirmation
   const handleMergePackage = async () => {
     if (!sourcePackage || !selectedPackage) return;
-    
+
     setLoading(true);
     try {
       // Call API to merge packages
       await packagesApi.mergePackages(sourcePackage._id, selectedPackage);
-      
+
       showSuccess({
         title: "Success",
         description: "Products merged successfully."
       });
-      
+
       // Navigate back to packages list
       navigate('/packages');
     } catch (err) {
@@ -231,12 +231,12 @@ function MergePackage() {
                   ))}
                 </SelectContent>
               </Select>
-              
+
               {selectedPackage && (
                 <div className="mt-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
                   <p className="text-sm text-slate-500 mb-2">Selected package:</p>
                   <p className="font-medium text-slate-900">
-                    {availablePackages.find(pkg => pkg.id === selectedPackage)?.productName} 
+                    {availablePackages.find(pkg => pkg.id === selectedPackage)?.productName}
                     ({availablePackages.find(pkg => pkg.id === selectedPackage)?.accountNumber})
                   </p>
                   <p className="text-sm text-slate-500 mt-1">

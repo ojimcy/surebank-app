@@ -6,7 +6,6 @@ import { usePinVerification } from '@/hooks/usePinVerification';
 
 import {
     CreditCard,
-    ArrowLeft,
     Star,
     Shield,
     AlertCircle,
@@ -173,22 +172,22 @@ function CardDetail() {
         // Parse month and year
         const monthNum = parseInt(month);
         const yearNum = parseInt(year);
-        
+
         // Handle both 2-digit and 4-digit year formats
         const fullYear = yearNum < 100 ? 2000 + yearNum : yearNum;
-        
+
         // Cards expire at the END of the expiry month
         // So we need to get the last day of the month
         // Create date for the first day of the NEXT month, then subtract 1 day
         const expiryDate = new Date(fullYear, monthNum, 0); // Day 0 = last day of previous month
-        
+
         // Set to end of day (23:59:59) since cards expire at end of the expiry date
         expiryDate.setHours(23, 59, 59, 999);
-        
+
         const today = new Date();
         const diffTime = expiryDate.getTime() - today.getTime();
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
+
         return diffDays;
     };
 
@@ -226,41 +225,42 @@ function CardDetail() {
             <div className="flex items-center justify-between">
                 <NestedHeader title="Card Details" onBack={() => navigate('/cards')} />
                 <div>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm">
-                            <MoreVertical className="h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        {!card.isDefault && card.isActive && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm">
+                                <MoreVertical className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            {!card.isDefault && card.isActive && (
+                                <DropdownMenuItem
+                                    onClick={handleSetDefault}
+                                    disabled={isSetDefaultCardLoading}
+                                >
+                                    <Star className="h-4 w-4 mr-2" />
+                                    Set as Default
+                                </DropdownMenuItem>
+                            )}
+                            {card.isActive && (
+                                <DropdownMenuItem
+                                    onClick={handleDeactivate}
+                                    disabled={isDeactivateCardLoading}
+                                >
+                                    <AlertCircle className="h-4 w-4 mr-2" />
+                                    Deactivate
+                                </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem
-                                onClick={handleSetDefault}
-                                disabled={isSetDefaultCardLoading}
+                                onClick={handleDeleteCard}
+                                className="text-red-600 hover:text-red-700"
+                                disabled={isDeleteCardLoading}
                             >
-                                <Star className="h-4 w-4 mr-2" />
-                                Set as Default
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
                             </DropdownMenuItem>
-                        )}
-                        {card.isActive && (
-                            <DropdownMenuItem
-                                onClick={handleDeactivate}
-                                disabled={isDeactivateCardLoading}
-                            >
-                                <AlertCircle className="h-4 w-4 mr-2" />
-                                Deactivate
-                            </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem
-                            onClick={handleDeleteCard}
-                            className="text-red-600 hover:text-red-700"
-                            disabled={isDeleteCardLoading}
-                        >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
             </div>
 
             {/* Visual Card Display */}
@@ -450,7 +450,7 @@ function CardDetail() {
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <div className="space-y-4">
                                     <div>
                                         <label className="text-sm font-medium text-gray-500">Status</label>

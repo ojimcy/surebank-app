@@ -5,7 +5,6 @@ import { useCardQueries } from '@/hooks/queries/useCardQueries';
 import { StoreCardPayload, CardVerificationPayload } from '@/lib/api/cards';
 import {
     CreditCard,
-    ArrowLeft,
     Shield,
     AlertCircle,
     CheckCircle2,

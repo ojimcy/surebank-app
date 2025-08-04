@@ -6,7 +6,6 @@ import { usePackageQueries } from '@/hooks/queries/usePackageQueries';
 import { CreateSchedulePayload } from '@/lib/api/scheduledContributions';
 import { formatCurrency } from '@/lib/utils';
 import {
-    ArrowLeft,
     CreditCard,
     Wallet,
     AlertCircle,

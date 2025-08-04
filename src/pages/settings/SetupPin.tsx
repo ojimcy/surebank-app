@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { usePin } from '@/lib/pin-provider';
 import { useToast } from '@/lib/toast-provider';
 import { PinPad } from '@/components/ui/PinPad';
-import { AlertCircle, Shield, ArrowLeft, Trash2 } from 'lucide-react';
+import { AlertCircle, Shield, Trash2 } from 'lucide-react';
 
 function SetupPin() {
   const [pin, setPin] = useState('');
@@ -74,14 +74,6 @@ function SetupPin() {
     navigate('/settings');
   };
 
-  const handleBack = () => {
-    if (step === 'confirm') {
-      setStep('enter');
-      setError('');
-    } else {
-      navigate('/settings');
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center p-4">

@@ -1,21 +1,13 @@
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { usePin } from '@/lib/pin-provider';
-import useOnboarding from '@/hooks/useOnboarding';
-
 function Settings() {
   const { user, logout } = useAuth();
   const { isPinSet, lockApp } = usePin();
-  const { resetOnboarding } = useOnboarding();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
-  };
-
-  const handleResetOnboarding = () => {
-    resetOnboarding();
-    navigate('/welcome');
   };
 
   const handleLockApp = () => {

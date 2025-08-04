@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { useToast } from '@/lib/toast-provider';
-import { Loader2, CheckCircle2, Trash2, Edit2, Save, X, AlertCircle, ArrowLeft } from "lucide-react";
+import { Loader2, CheckCircle2, Trash2, Edit2, Save, X, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import paymentsApi from "@/lib/api/payments";
 import { useNavigate } from "react-router-dom";

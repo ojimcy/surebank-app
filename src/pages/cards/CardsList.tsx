@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import NestedHeader from '@/components/layout/NestedHeader';
 import { useCardQueries } from '@/hooks/queries/useCardQueries';
 import { usePinVerification } from '@/hooks/usePinVerification';
@@ -40,7 +40,6 @@ import {
 } from '@/components/ui/alert-dialog';
 
 function CardsList() {
-    const navigate = useNavigate();
     const { verifyPin, PinVerificationModal } = usePinVerification();
     const [cardToDelete, setCardToDelete] = useState<StoredCard | null>(null);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
