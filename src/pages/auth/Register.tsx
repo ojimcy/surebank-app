@@ -1,9 +1,10 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/lib/auth-provider';
 import { Button } from '@/components/ui/button';
 import AuthLayout from '@/components/layout/AuthLayout';
 import Spinner from '@/components/ui/Spinner';
+import { Eye, EyeOff, CheckCircle2, Circle } from 'lucide-react';
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -29,6 +30,24 @@ function Register() {
   const navigate = useNavigate();
   const formRef = useRef<HTMLFormElement>(null);
 
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const passwordChecks = useMemo(() => {
+    const pwd = formData.password || '';
+    return {
+      length: pwd.length >= 8, // recommendation; backend minimum remains 6
+      upper: /[A-Z]/.test(pwd),
+      lower: /[a-z]/.test(pwd),
+      number: /\d/.test(pwd),
+      special: /[^A-Za-z0-9]/.test(pwd),
+    };
+  }, [formData.password]);
+
+  const allChecksMet = useMemo(() =>
+    Object.values(passwordChecks).every(Boolean)
+    , [passwordChecks]);
+
   // Handle input focus to scroll into view with keyboard avoidance
   const handleInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
     // Small delay to ensure keyboard is shown
@@ -36,7 +55,7 @@ function Register() {
       const element = e.target;
       const rect = element.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
-      
+
       // Check if element is near bottom of viewport (where keyboard appears)
       if (rect.bottom > viewportHeight * 0.5) {
         element.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -189,13 +208,11 @@ function Register() {
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                className={`mt-1 block w-full rounded-md border ${
-                  errors.name ? 'border-[#DC3545]' : 'border-[#E5E8ED]'
-                } bg-white px-3 py-2 text-sm text-[#212529] placeholder:text-[#6C757D] focus:outline-none focus:ring-2 ${
-                  errors.name
+                className={`mt-1 block w-full rounded-md border ${errors.name ? 'border-[#DC3545]' : 'border-[#E5E8ED]'
+                  } bg-white px-3 py-2 text-sm text-[#212529] placeholder:text-[#6C757D] focus:outline-none focus:ring-2 ${errors.name
                     ? 'focus:ring-[#DC3545]/30'
                     : 'focus:ring-[#0066A1]/30'
-                } disabled:cursor-not-allowed disabled:opacity-50 h-10`}
+                  } disabled:cursor-not-allowed disabled:opacity-50 h-10`}
                 placeholder="Enter your full name"
                 onFocus={handleInputFocus}
               />
@@ -217,13 +234,11 @@ function Register() {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className={`mt-1 block w-full rounded-md border ${
-                  errors.email ? 'border-[#DC3545]' : 'border-[#E5E8ED]'
-                } bg-white px-3 py-2 text-sm text-[#212529] placeholder:text-[#6C757D] focus:outline-none focus:ring-2 ${
-                  errors.email
+                className={`mt-1 block w-full rounded-md border ${errors.email ? 'border-[#DC3545]' : 'border-[#E5E8ED]'
+                  } bg-white px-3 py-2 text-sm text-[#212529] placeholder:text-[#6C757D] focus:outline-none focus:ring-2 ${errors.email
                     ? 'focus:ring-[#DC3545]/30'
                     : 'focus:ring-[#0066A1]/30'
-                } disabled:cursor-not-allowed disabled:opacity-50 h-10`}
+                  } disabled:cursor-not-allowed disabled:opacity-50 h-10`}
                 placeholder="Enter your email address"
                 onFocus={handleInputFocus}
               />
@@ -245,13 +260,11 @@ function Register() {
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
-                className={`mt-1 block w-full rounded-md border ${
-                  errors.phone ? 'border-[#DC3545]' : 'border-[#E5E8ED]'
-                } bg-white px-3 py-2 text-sm text-[#212529] placeholder:text-[#6C757D] focus:outline-none focus:ring-2 ${
-                  errors.phone
+                className={`mt-1 block w-full rounded-md border ${errors.phone ? 'border-[#DC3545]' : 'border-[#E5E8ED]'
+                  } bg-white px-3 py-2 text-sm text-[#212529] placeholder:text-[#6C757D] focus:outline-none focus:ring-2 ${errors.phone
                     ? 'focus:ring-[#DC3545]/30'
                     : 'focus:ring-[#0066A1]/30'
-                } disabled:cursor-not-allowed disabled:opacity-50 h-10`}
+                  } disabled:cursor-not-allowed disabled:opacity-50 h-10`}
                 placeholder="Enter your phone number"
                 onFocus={handleInputFocus}
               />
@@ -273,13 +286,11 @@ function Register() {
                 name="address"
                 value={formData.address}
                 onChange={handleChange}
-                className={`mt-1 block w-full rounded-md border ${
-                  errors.address ? 'border-[#DC3545]' : 'border-[#E5E8ED]'
-                } bg-white px-3 py-2 text-sm text-[#212529] placeholder:text-[#6C757D] focus:outline-none focus:ring-2 ${
-                  errors.address
+                className={`mt-1 block w-full rounded-md border ${errors.address ? 'border-[#DC3545]' : 'border-[#E5E8ED]'
+                  } bg-white px-3 py-2 text-sm text-[#212529] placeholder:text-[#6C757D] focus:outline-none focus:ring-2 ${errors.address
                     ? 'focus:ring-[#DC3545]/30'
                     : 'focus:ring-[#0066A1]/30'
-                } disabled:cursor-not-allowed disabled:opacity-50 h-10`}
+                  } disabled:cursor-not-allowed disabled:opacity-50 h-10`}
                 placeholder="Enter your address"
                 onFocus={handleInputFocus}
               />
@@ -303,29 +314,92 @@ function Register() {
               >
                 Password*
               </label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                className={`mt-1 block w-full rounded-md border ${
-                  errors.password ? 'border-[#DC3545]' : 'border-[#E5E8ED]'
-                } bg-white px-3 py-2 text-sm text-[#212529] placeholder:text-[#6C757D] focus:outline-none focus:ring-2 ${
-                  errors.password
-                    ? 'focus:ring-[#DC3545]/30'
-                    : 'focus:ring-[#0066A1]/30'
-                } disabled:cursor-not-allowed disabled:opacity-50 h-10`}
-                placeholder="Create a password"
-                onFocus={handleInputFocus}
-              />
-              {errors.password ? (
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className={`mt-1 block w-full rounded-md border ${errors.password ? 'border-[#DC3545]' : 'border-[#E5E8ED]'
+                    } bg-white px-3 py-2 pr-10 text-sm text-[#212529] placeholder:text-[#6C757D] focus:outline-none focus:ring-2 ${errors.password
+                      ? 'focus:ring-[#DC3545]/30'
+                      : 'focus:ring-[#0066A1]/30'
+                    } disabled:cursor-not-allowed disabled:opacity-50 h-10`}
+                  placeholder="Create a password"
+                  onFocus={handleInputFocus}
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-[#6C757D] hover:text-[#212529]"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {errors.password && (
                 <p className="mt-1 text-xs text-[#DC3545]">{errors.password}</p>
-              ) : (
-                <p className="mt-1 text-xs text-[#6C757D]">
-                  Must be at least 6 characters
-                </p>
               )}
+              <div className="mt-2">
+                <p className="text-xs font-medium text-[#6C757D]">Make your password stronger by meeting these:</p>
+                <ul className="mt-1 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
+                  <li className="flex items-center gap-2 text-xs">
+                    {passwordChecks.length ? (
+                      <CheckCircle2 className="h-4 w-4 text-[#28A745]" />
+                    ) : (
+                      <Circle className="h-4 w-4 text-[#6C757D]" />
+                    )}
+                    <span className={passwordChecks.length ? 'text-[#212529]' : 'text-[#6C757D]'}>
+                      At least 8 characters
+                    </span>
+                  </li>
+                  <li className="flex items-center gap-2 text-xs">
+                    {passwordChecks.upper ? (
+                      <CheckCircle2 className="h-4 w-4 text-[#28A745]" />
+                    ) : (
+                      <Circle className="h-4 w-4 text-[#6C757D]" />
+                    )}
+                    <span className={passwordChecks.upper ? 'text-[#212529]' : 'text-[#6C757D]'}>
+                      One uppercase letter
+                    </span>
+                  </li>
+                  <li className="flex items-center gap-2 text-xs">
+                    {passwordChecks.lower ? (
+                      <CheckCircle2 className="h-4 w-4 text-[#28A745]" />
+                    ) : (
+                      <Circle className="h-4 w-4 text-[#6C757D]" />
+                    )}
+                    <span className={passwordChecks.lower ? 'text-[#212529]' : 'text-[#6C757D]'}>
+                      One lowercase letter
+                    </span>
+                  </li>
+                  <li className="flex items-center gap-2 text-xs">
+                    {passwordChecks.number ? (
+                      <CheckCircle2 className="h-4 w-4 text-[#28A745]" />
+                    ) : (
+                      <Circle className="h-4 w-4 text-[#6C757D]" />
+                    )}
+                    <span className={passwordChecks.number ? 'text-[#212529]' : 'text-[#6C757D]'}>
+                      One number
+                    </span>
+                  </li>
+                  <li className="flex items-center gap-2 text-xs">
+                    {passwordChecks.special ? (
+                      <CheckCircle2 className="h-4 w-4 text-[#28A745]" />
+                    ) : (
+                      <Circle className="h-4 w-4 text-[#6C757D]" />
+                    )}
+                    <span className={passwordChecks.special ? 'text-[#212529]' : 'text-[#6C757D]'}>
+                      One special character
+                    </span>
+                  </li>
+                </ul>
+                {allChecksMet && (
+                  <p className="mt-2 text-xs text-[#28A745]">Great password!</p>
+                )}
+              </div>
             </div>
 
             <div className="space-y-1">
@@ -335,24 +409,37 @@ function Register() {
               >
                 Confirm Password*
               </label>
-              <input
-                type="password"
-                id="confirmPassword"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className={`mt-1 block w-full rounded-md border ${
-                  errors.confirmPassword
-                    ? 'border-[#DC3545]'
-                    : 'border-[#E5E8ED]'
-                } bg-white px-3 py-2 text-sm text-[#212529] placeholder:text-[#6C757D] focus:outline-none focus:ring-2 ${
-                  errors.confirmPassword
-                    ? 'focus:ring-[#DC3545]/30'
-                    : 'focus:ring-[#0066A1]/30'
-                } disabled:cursor-not-allowed disabled:opacity-50 h-10`}
-                placeholder="Confirm your password"
-                onFocus={handleInputFocus}
-              />
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  className={`mt-1 block w-full rounded-md border ${errors.confirmPassword
+                      ? 'border-[#DC3545]'
+                      : 'border-[#E5E8ED]'
+                    } bg-white px-3 py-2 pr-10 text-sm text-[#212529] placeholder:text-[#6C757D] focus:outline-none focus:ring-2 ${errors.confirmPassword
+                      ? 'focus:ring-[#DC3545]/30'
+                      : 'focus:ring-[#0066A1]/30'
+                    } disabled:cursor-not-allowed disabled:opacity-50 h-10`}
+                  placeholder="Confirm your password"
+                  onFocus={handleInputFocus}
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((v) => !v)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-[#6C757D] hover:text-[#212529]"
+                  tabIndex={-1}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
               {errors.confirmPassword && (
                 <p className="mt-1 text-xs text-[#DC3545]">
                   {errors.confirmPassword}

@@ -25,12 +25,21 @@ interface OnboardingStep {
 const onboardingSteps: OnboardingStep[] = [
   {
     id: 'welcome',
-    title: 'Welcome to SureBank Stores',
-    description: 'Your trusted partner for digital savings and financial growth. Start your journey to financial freedom today.',
-    icon: <OptimizedImage src="/favicon.png" alt="SureBank Logo" className="w-20 h-20" />,
+    title: 'Welcome to SurebankStores',
+    description: 'Your trusted partner for smart savings and smarter shopping. Start your journey to financial freedom today.',
+    icon: (
+      <div className="flex items-center justify-center w-32 h-40">
+        <OptimizedImage 
+          src="/logo-vertical.svg" 
+          alt="SurebankStores Logo" 
+          className="w-full h-full object-contain" 
+        />
+      </div>
+    ),
     features: [
-      'Secure digital banking',
+      'Smart Savings, Smarter Shopping',
       'High-yield savings packages',
+      'Secure digital banking',
       'Flexible investment options'
     ]
   },

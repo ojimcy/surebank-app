@@ -8,6 +8,7 @@ interface LoadingOverlayProps {
   className?: string;
   spinnerSize?: 'sm' | 'md' | 'lg';
   spinnerColor?: 'primary' | 'white' | 'gray';
+  showLogo?: boolean;
 }
 
 export function LoadingOverlay({
@@ -17,6 +18,7 @@ export function LoadingOverlay({
   className,
   spinnerSize = 'md',
   spinnerColor = 'primary',
+  showLogo = false,
 }: LoadingOverlayProps) {
   if (!isLoading) return null;
 
@@ -29,6 +31,15 @@ export function LoadingOverlay({
       )}
     >
       <div className="flex flex-col items-center p-4 rounded-lg text-center">
+        {showLogo && (
+          <div className="mb-4">
+            <img 
+              src="/logo-compact.svg" 
+              alt="SurebankStores" 
+              className="w-32 h-auto"
+            />
+          </div>
+        )}
         <Spinner size={spinnerSize} color={spinnerColor} />
         {message && (
           <p className="mt-3 text-sm font-medium text-gray-700">{message}</p>
