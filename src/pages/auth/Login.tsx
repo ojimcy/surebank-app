@@ -1,42 +1,65 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/auth-provider';
+import { useToast } from '@/lib/toast-provider';
 import { shouldShowOnboarding } from '@/hooks/useOnboarding';
 import { Button } from '@/components/ui/button';
+import { FormInput } from '@/components/ui/form-input';
 import AuthLayout from '@/components/layout/AuthLayout';
 import Spinner from '@/components/ui/Spinner';
-import { Eye, EyeOff } from 'lucide-react';
+import { User, Lock } from 'lucide-react';
 
 function Login() {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{
     identifier?: string;
     password?: string;
-    general?: string;
   }>({});
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const { success: showSuccess, error: showError } = useToast();
 
   const { login, isLoginLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Load saved identifier from sessionStorage
+  useEffect(() => {
+    const savedIdentifier = sessionStorage.getItem('login-identifier');
+    if (savedIdentifier) {
+      setIdentifier(savedIdentifier);
+    }
+  }, []);
+
   // Check for success message in location state (e.g., from password reset)
   useEffect(() => {
     if (location.state?.message) {
-      setSuccessMessage(location.state.message);
+      showSuccess({
+        title: 'Success',
+        description: location.state.message,
+        duration: 6000
+      });
       // Note: We don't manipulate history here to avoid refresh issues
     }
-  }, [location]);
+  }, [location, showSuccess]);
+
+  // Save identifier to sessionStorage as user types
+  const handleIdentifierChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setIdentifier(value);
+    if (value.trim()) {
+      sessionStorage.setItem('login-identifier', value);
+    } else {
+      sessionStorage.removeItem('login-identifier');
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    // Clear previous errors and messages
+    // Clear previous errors
     setErrors({});
-    setSuccessMessage(null);
 
     // Validate fields
     const newErrors: {
@@ -61,6 +84,8 @@ function Login() {
 
     try {
       await login(identifier, password);
+      // Clear saved identifier on successful login
+      sessionStorage.removeItem('login-identifier');
       // Check if user needs to see welcome screen first
       if (shouldShowOnboarding()) {
         navigate('/welcome');
@@ -80,18 +105,23 @@ function Login() {
         errorMessage.includes('locked') ||
         errorMessage.includes('disabled')
       ) {
-        setErrors({
-          general:
-            'Your account has been temporarily locked. Please contact support.',
+        showError({
+          title: 'Account Locked',
+          description: 'Your account has been temporarily locked. Please contact support.',
+          duration: 8000
         });
       } else if (
         errorMessage.includes('verification') ||
         errorMessage.includes('verify')
       ) {
-        setErrors({
-          general:
-            'Your account is not verified. Please verify your account first.',
+        // Instead of blocking login, allow user to proceed with a warning
+        // The backend should still allow login for unverified users
+        showError({
+          title: 'Email Verification Pending',
+          description: 'Your email is not verified yet. You can still login but some features may be limited.',
+          duration: 8000
         });
+        // Note: If backend blocks login for unverified users, we need to handle it server-side
       } else if (errorMessage.includes('user not found. Please check your email or phone number')) {
         setErrors({
           identifier:
@@ -102,14 +132,23 @@ function Login() {
           password: 'Incorrect password. Please try again.',
         });
       } else if (errorMessage.includes('credentials')) { // Handles generic "credentials" error
-        setErrors({
-          general: 'Invalid email/phone number or password. Please check your details and try again.',
+        showError({
+          title: 'Login Failed',
+          description: 'Invalid email/phone number or password. Please check your details and try again.',
+          duration: 8000
         });
       } else {
-        setErrors({
-          general: errorMessage,
+        showError({
+          title: 'Login Error',
+          description: errorMessage,
+          duration: 8000
         });
       }
+      
+      // Focus password field after login failure for better UX
+      setTimeout(() => {
+        passwordRef.current?.focus();
+      }, 100);
     }
   };
 
@@ -119,17 +158,6 @@ function Login() {
       title="Welcome back"
       subtitle="Sign in to your account to continue"
     >
-      {successMessage && (
-        <div className="mb-6 p-3 bg-[#d1e7dd] border border-[#badbcc] text-[#28A745] rounded-md text-sm">
-          {successMessage}
-        </div>
-      )}
-
-      {errors.general && (
-        <div className="mb-6 p-3 bg-[#f8d7da] border border-[#f5c2c7] text-[#DC3545] rounded-md text-sm">
-          {errors.general}
-        </div>
-      )}
 
       <form className="space-y-5 relative" onSubmit={handleSubmit}>
         {isLoginLoading && (
@@ -143,75 +171,34 @@ function Login() {
           </div>
         )}
 
-        <div className="space-y-1">
-          <label
-            htmlFor="identifier"
-            className="block text-sm font-medium text-[#212529]"
-          >
-            Email or Phone Number
-          </label>
-          <input
-            type="text"
-            id="identifier"
-            value={identifier}
-            onChange={(e) => setIdentifier(e.target.value)}
-            className={`block w-full rounded-md border ${
-              errors.identifier ? 'border-[#DC3545]' : 'border-[#E5E8ED]'
-            } bg-white px-3 py-2 text-sm text-[#212529] placeholder:text-[#6C757D] focus:outline-none focus:ring-2 ${
-              errors.identifier
-                ? 'focus:ring-[#DC3545]/30'
-                : 'focus:ring-[#0066A1]/30'
-            } disabled:cursor-not-allowed disabled:opacity-50 h-12`}
-            placeholder="Enter your email or phone"
-            disabled={isLoginLoading}
-            autoComplete="username"
-          />
-          {errors.identifier && (
-            <p className="mt-1 text-xs text-[#DC3545]">{errors.identifier}</p>
-          )}
-        </div>
+        <FormInput
+          id="identifier"
+          type="text"
+          label="Email or Phone Number"
+          placeholder="Enter your email or phone"
+          value={identifier}
+          onChange={handleIdentifierChange}
+          error={errors.identifier}
+          leftIcon={<User className="h-4 w-4" />}
+          disabled={isLoginLoading}
+          autoComplete="username"
+          autoFocus
+        />
 
-        <div className="space-y-1">
-          <label
-            htmlFor="password"
-            className="block text-sm font-medium text-[#212529]"
-          >
-            Password
-          </label>
-          <div className="relative">
-            <input
-              type={showPassword ? "text" : "password"}
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={`block w-full rounded-md border ${
-                errors.password ? 'border-[#DC3545]' : 'border-[#E5E8ED]'
-              } bg-white px-3 py-2 pr-10 text-sm text-[#212529] placeholder:text-[#6C757D] focus:outline-none focus:ring-2 ${
-                errors.password
-                  ? 'focus:ring-[#DC3545]/30'
-                  : 'focus:ring-[#0066A1]/30'
-              } disabled:cursor-not-allowed disabled:opacity-50 h-12`}
-              placeholder="Enter your password"
-              disabled={isLoginLoading}
-              autoComplete="current-password"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              disabled={isLoginLoading}
-              className="absolute inset-y-0 right-0 flex items-center pr-3 text-[#6C757D] hover:text-[#212529] disabled:cursor-not-allowed"
-            >
-              {showPassword ? (
-                <EyeOff className="h-4 w-4" />
-              ) : (
-                <Eye className="h-4 w-4" />
-              )}
-            </button>
-          </div>
-          {errors.password && (
-            <p className="mt-1 text-xs text-[#DC3545]">{errors.password}</p>
-          )}
-        </div>
+        <FormInput
+          ref={passwordRef}
+          id="password"
+          type="password"
+          label="Password"
+          placeholder="Enter your password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          error={errors.password}
+          leftIcon={<Lock className="h-4 w-4" />}
+          showPasswordToggle
+          disabled={isLoginLoading}
+          autoComplete="current-password"
+        />
 
         <div className="text-right">
           <Link
@@ -225,8 +212,8 @@ function Login() {
 
         <Button
           type="submit"
-          className="w-full py-3 font-semibold h-12 bg-[#0066A1] text-white hover:bg-[#0066A1]/90 flex items-center justify-center gap-2"
-          disabled={isLoginLoading}
+          className="w-full py-3 font-semibold h-12 bg-[#0066A1] text-white hover:bg-[#0066A1]/90 flex items-center justify-center gap-2 transition-all duration-200 disabled:opacity-60"
+          disabled={isLoginLoading || (!identifier.trim() || !password.trim())}
         >
           {isLoginLoading && <Spinner size="sm" color="white" />}
           <span>{isLoginLoading ? 'Signing in...' : 'Sign in'}</span>

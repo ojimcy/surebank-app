@@ -15,7 +15,7 @@ export interface KycIdVerificationPayload {
 
 export interface KycResponse {
   success: boolean;
-  message: string;
+  message?: string;
   id?: string;
   status?: string;
 }
@@ -25,10 +25,20 @@ const kycApi = {
    * Submit ID verification request
    */
   submitIdVerification: async (data: KycIdVerificationPayload): Promise<KycResponse> => {
-    const response = await api.post<KycResponse>('/kyc', data);
-    return response.data;
+    const response = await api.post<{ _id?: string; id?: string; status?: string }>(
+      '/kyc',
+      data
+    );
+    // Backend returns the created KYC document, not a { success } wrapper
+    // Normalize to the shape the UI expects
+    const kyc = response.data;
+    return {
+      success: true,
+      id: (kyc.id as string | undefined) || (kyc._id as string | undefined),
+      status: kyc.status,
+    };
   },
-  
+
   /**
    * Get KYC verification status
    */

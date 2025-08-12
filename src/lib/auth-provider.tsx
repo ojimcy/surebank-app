@@ -108,10 +108,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         address: params.address,
       };
 
-      await auth.register(apiParams);
-
+      const result = await auth.register(apiParams);
+      
+      // Registration was successful, even if verification email failed
+      // Store verification details for later use
       setVerificationEmail(identifier);
-      setPendingVerification(true);
+      
+      // Only set pending verification if the backend indicates it's needed
+      // The backend might have failed to send verification but user is registered
+      if (result.success) {
+        setPendingVerification(true);
+      }
     } catch (err: unknown) {
       console.error('Registration failed', err);
       const errorMessage = extractErrorMessage(err);

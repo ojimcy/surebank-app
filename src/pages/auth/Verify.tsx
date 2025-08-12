@@ -17,14 +17,17 @@ function Verify() {
     isResendLoading,
     pendingVerification,
     verificationEmail,
+    user,
   } = useAuth();
   const navigate = useNavigate();
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // Countdown timer for resend button - moved outside conditional
   useEffect(() => {
-    // Only run the effect if we're in verification mode
-    if (pendingVerification && verificationEmail) {
+    // Only run the effect if we're in verification mode or user has unverified email
+    const needsVerification = (pendingVerification && verificationEmail) || 
+                             (user && !user.isEmailVerified);
+    if (needsVerification) {
       const timer =
         countdown > 0 && setInterval(() => setCountdown(countdown - 1), 1000);
       if (countdown === 0) setCanResend(true);
@@ -32,7 +35,7 @@ function Verify() {
         if (timer) clearInterval(timer);
       };
     }
-  }, [countdown, pendingVerification, verificationEmail]);
+  }, [countdown, pendingVerification, verificationEmail, user]);
 
   // // Redirect if not in verification flow
   // if (!pendingVerification || !verificationEmail) {
@@ -88,17 +91,20 @@ function Verify() {
 
   // Mask identifier for display
   const maskIdentifier = (identifier?: string) => {
-    if (!identifier) return '';
+    // If no identifier from verification flow, try to get from user
+    const displayIdentifier = identifier || user?.email || user?.phoneNumber;
+    
+    if (!displayIdentifier) return '';
 
-    if (identifier.includes('@')) {
+    if (displayIdentifier.includes('@')) {
       // For email: show first 3 chars and domain, hide the rest
-      const [username, domain] = identifier.split('@');
+      const [username, domain] = displayIdentifier.split('@');
       const maskedUsername =
         username.slice(0, 3) + '*'.repeat(username.length - 3);
       return `${maskedUsername}@${domain}`;
     } else {
       // For phone: show last 4 digits, hide the rest
-      return '*'.repeat(identifier.length - 4) + identifier.slice(-4);
+      return '*'.repeat(displayIdentifier.length - 4) + displayIdentifier.slice(-4);
     }
   };
 
@@ -136,7 +142,16 @@ function Verify() {
 
     try {
       await verifyCode(code.join(''));
-      navigate('/');
+      // Navigate to home if user is logged in, otherwise to login
+      if (user) {
+        navigate('/');
+      } else {
+        navigate('/auth/login', { 
+          state: { 
+            message: 'Your email has been successfully verified. Please login to continue.' 
+          } 
+        });
+      }
     } catch (error: unknown) {
       const axiosError = error as {
         response?: { data?: { message?: string } };

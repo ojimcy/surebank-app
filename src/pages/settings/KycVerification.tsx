@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Stepper, StepContent } from '@/components/ui/stepper';
+import { DateInput } from '@/components/ui/date-input';
 import { useAuth } from '@/hooks/useAuth';
 import { useS3Upload } from '@/hooks/useS3Upload';
 import kycApi from '@/lib/api/kyc';
@@ -122,6 +123,24 @@ function KycIdVerification() {
     }
   };
 
+  const handleDateOfBirthChange = (value: string) => {
+    setPersonalInfo(prev => ({
+      ...prev,
+      dateOfBirth: value
+    }));
+    
+    // Clear error when user types
+    if (errors.personal?.dateOfBirth) {
+      setErrors(prev => ({
+        ...prev,
+        personal: {
+          ...prev.personal,
+          dateOfBirth: undefined
+        }
+      }));
+    }
+  };
+
   const handleIdInfoChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
@@ -146,6 +165,24 @@ function KycIdVerification() {
         id: {
           ...prev.id,
           [name]: undefined
+        }
+      }));
+    }
+  };
+
+  const handleExpiryDateChange = (value: string) => {
+    setIdInfo(prev => ({
+      ...prev,
+      expiryDate: value
+    }));
+    
+    // Clear error when user types
+    if (errors.id?.expiryDate) {
+      setErrors(prev => ({
+        ...prev,
+        id: {
+          ...prev.id,
+          expiryDate: undefined
         }
       }));
     }
@@ -552,28 +589,20 @@ function KycIdVerification() {
               </div>
               
               <div>
-                <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700 mb-1">
-                  Date of Birth <span className="text-xs text-gray-500">(Minimum age: 13)</span>
-                </label>
-                <input
-                  type="date"
+                <DateInput
                   id="dateOfBirth"
-                  name="dateOfBirth"
+                  label="Date of Birth"
                   value={personalInfo.dateOfBirth}
-                  onChange={handlePersonalInfoChange}
+                  onChange={handleDateOfBirthChange}
+                  error={errors.personal?.dateOfBirth}
                   max={(() => {
                     const today = new Date();
                     // Calculate 13 years ago in UTC
                     const thirteenYearsAgoUTC = new Date(Date.UTC(today.getUTCFullYear() - 13, today.getUTCMonth(), today.getUTCDate()));
                     return thirteenYearsAgoUTC.toISOString().split('T')[0];
                   })()}
-                  className={`w-full border ${
-                    errors.personal?.dateOfBirth ? 'border-red-500' : 'border-gray-300'
-                  } rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  min="1900-01-01"
                 />
-                {errors.personal?.dateOfBirth && (
-                  <p className="mt-1 text-sm text-red-500">{errors.personal.dateOfBirth}</p>
-                )}
               </div>
               
               <div>
@@ -673,26 +702,19 @@ function KycIdVerification() {
               </div>
               
               <div>
-                <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-700 mb-1">
-                  Expiry Date <span className="text-xs text-gray-500">(Min: 1 month from now)</span>
-                </label>
-                <input
-                  type="date"
+                <DateInput
                   id="expiryDate"
-                  name="expiryDate"
+                  label="Expiry Date"
+                  helperText="Click to select expiry date (minimum: 1 month from now)"
                   value={idInfo.expiryDate}
-                  onChange={handleIdInfoChange}
+                  onChange={handleExpiryDateChange}
+                  error={errors.id?.expiryDate}
                   min={(() => {
                     const today = new Date();
                     return today.toISOString().split('T')[0];
                   })()}
-                  className={`w-full border ${
-                    errors.id?.expiryDate ? 'border-red-500' : 'border-gray-300'
-                  } rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  max="2050-12-31"
                 />
-                {errors.id?.expiryDate && (
-                  <p className="mt-1 text-sm text-red-500">{errors.id.expiryDate}</p>
-                )}
               </div>
             </div>
           </div>

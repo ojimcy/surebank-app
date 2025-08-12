@@ -57,14 +57,9 @@ export const uploadFileToS3 = async (
       
       // Start the upload - for presigned PUT URLs
       xhr.open('PUT', uploadUrl);
-      xhr.setRequestHeader('Content-Type', file.type);
       
-      // Add required metadata headers
-      if (userId) {
-        xhr.setRequestHeader('x-amz-meta-user-id', userId);
-      }
-      xhr.setRequestHeader('x-amz-meta-document-type', type);
-      xhr.setRequestHeader('x-amz-meta-original-name', encodeURIComponent(file.name));
+      // Set Content-Type header - it's required when it's included in the presigned URL signature
+      xhr.setRequestHeader('Content-Type', file.type);
       
       xhr.send(file);
     });

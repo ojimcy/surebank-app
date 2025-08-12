@@ -1,8 +1,6 @@
-import { useNavigate } from 'react-router-dom';
 import NestedHeader from '@/components/layout/NestedHeader';
 
 function KycSuccess() {
-  const navigate = useNavigate();
 
   return (
     <div className="space-y-6">
@@ -63,12 +61,6 @@ function KycSuccess() {
           </div>
         </div>
         
-        <button
-          onClick={() => navigate('/settings')}
-          className="px-6 py-2 rounded-md font-medium bg-[#0066A1] text-white hover:bg-[#005085]"
-        >
-          Back to Settings
-        </button>
       </div>
     </div>
   );

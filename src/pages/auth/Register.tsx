@@ -158,6 +158,23 @@ function Register() {
           phone:
             'This phone number is already registered. Please use a different number or sign in.',
         });
+      } else if (errorMessage.includes('verification') && errorMessage.includes('failed')) {
+        // If email verification failed, show a message but still allow navigation
+        setErrors({
+          general: 'Account created successfully, but email verification failed. You can still login and verify your email later.',
+        });
+        // Store the credentials for easy login
+        sessionStorage.setItem('login-identifier', formData.email || formData.phone);
+        // Navigate to login page after a delay
+        setTimeout(() => {
+          navigate('/auth/login', { 
+            state: { 
+              message: 'Your account has been created. Please login to continue. You can verify your email from your account settings.',
+              needsVerification: true,
+              identifier: formData.email || formData.phone
+            } 
+          });
+        }, 3000);
       } else {
         setErrors({
           general: errorMessage,
@@ -417,8 +434,8 @@ function Register() {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   className={`mt-1 block w-full rounded-md border ${errors.confirmPassword
-                      ? 'border-[#DC3545]'
-                      : 'border-[#E5E8ED]'
+                    ? 'border-[#DC3545]'
+                    : 'border-[#E5E8ED]'
                     } bg-white px-3 py-2 pr-10 text-sm text-[#212529] placeholder:text-[#6C757D] focus:outline-none focus:ring-2 ${errors.confirmPassword
                       ? 'focus:ring-[#DC3545]/30'
                       : 'focus:ring-[#0066A1]/30'

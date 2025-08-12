@@ -106,13 +106,13 @@ const authApi = {
 
   // Verify account with code
   verifyAccount: async (payload: VerifyPayload): Promise<User> => {
-    const response = await api.post<{ user: User; tokens: TokenResponse }>(
+    const response = await api.post<{ user: User; tokens?: TokenResponse }>(
       '/auth/verify-email',
       { otp: payload.code }
     );
 
-    // Store tokens using cross-platform storage
-    if (response.data.tokens.access.token) {
+    // Store tokens using cross-platform storage (if provided)
+    if (response.data.tokens?.access?.token) {
       await storage.setItem(STORAGE_KEYS.AUTH_TOKEN, response.data.tokens.access.token);
       await storage.setItem(STORAGE_KEYS.REFRESH_TOKEN, response.data.tokens.refresh.token);
     }
