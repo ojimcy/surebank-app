@@ -3,8 +3,7 @@ import { useAuth } from '@/lib/auth-provider';
 import { useToast } from '@/lib/toast-provider';
 import { useLoader } from '@/lib/loader-provider';
 import packagesApi, {
-  InitiateIBPackageParams,
-  InitiateIBPackageResponse,
+  InterestRateOption,
 } from '@/lib/api/packages';
 import { StyledButton } from '@/components/ui/styled-button';
 import { getUserAccountByType, createAccount } from '@/lib/api/accounts';
@@ -29,15 +28,6 @@ const lockPeriodOptions = [
 ];
 
 const IBS_PACKAGE_DATA_KEY = 'ibsPackageData';
-
-interface InterestRateOption {
-  id: string;
-  name: string;
-  rate: number;
-  lockPeriod: number;
-  minLockPeriod?: number;
-  maxLockPeriod?: number;
-}
 
 function NewIBSPackage() {
   const toast = useToast();
@@ -75,24 +65,20 @@ function NewIBSPackage() {
     },
   });
 
-  // Load interest rate options
+  // Load interest rate options from server
   useEffect(() => {
     const fetchInterestRates = async () => {
       try {
-        // Mock interest rates since the API doesn't have this endpoint
-        const mockRates = [
-          { id: '1', name: '10% Annual', rate: 10, lockPeriod: 365 },
-          { id: '2', name: '12% Annual', rate: 12, lockPeriod: 365 },
-          { id: '3', name: '15% Annual', rate: 15, lockPeriod: 365 },
-        ];
-        setInterestRates(mockRates);
+        const rates = await packagesApi.getInterestRateOptions();
+        setInterestRates(rates);
       } catch (error) {
         console.error('Error fetching interest rates:', error);
+        toast.error({ title: 'Failed to load interest rate options' });
       }
     };
 
     fetchInterestRates();
-  }, []);
+  }, [toast]);
 
   // Handle input change
   const handleChange = (
@@ -102,24 +88,32 @@ function NewIBSPackage() {
 
     if (name === 'principalAmount' || name === 'lockPeriod') {
       const newValue = Number(value);
-      setFormData({
-        ...formData,
-        [name]: newValue,
-      });
 
-      // If lock period changed, update the interest rate
+      // If lock period changed, update the interest rate automatically based on server config
       if (name === 'lockPeriod' && newValue > 0) {
-        const matchingRate = interestRates.find(() =>
-          isValidLockPeriod(newValue)
+        // Find the appropriate interest rate based on lock period from server data
+        const matchingRate = interestRates.find(rate => 
+          newValue >= rate.minLockPeriod && newValue <= rate.maxLockPeriod
         );
 
         if (matchingRate) {
-          setFormData((prev) => ({
-            ...prev,
+          setFormData({
+            ...formData,
             [name]: newValue,
             interestRate: matchingRate.rate,
-          }));
+          });
+        } else {
+          // Just update lock period if no matching rate found
+          setFormData({
+            ...formData,
+            [name]: newValue,
+          });
         }
+      } else {
+        setFormData({
+          ...formData,
+          [name]: newValue,
+        });
       }
     } else {
       setFormData({
@@ -129,32 +123,19 @@ function NewIBSPackage() {
     }
   };
 
+
   // Get current interest rate information
   const getCurrentInterestRate = () => {
-    if (!formData.lockPeriod) return null;
+    if (!formData.lockPeriod || !formData.interestRate) return null;
 
-    return getSelectedRate();
+    // Return a simplified rate object based on current form data
+    return {
+      rate: formData.interestRate,
+      lockPeriod: formData.lockPeriod,
+    };
   };
 
   const currentRate = getCurrentInterestRate();
-
-  const isValidLockPeriod = (newValue: number): boolean => {
-    const selectedRate = interestRates.find(rate => rate.rate === formData.interestRate);
-    if (!selectedRate) return true;
-
-    const minPeriod = selectedRate.minLockPeriod || selectedRate.lockPeriod;
-    const maxPeriod = selectedRate.maxLockPeriod || selectedRate.lockPeriod;
-
-    return newValue >= minPeriod && newValue <= maxPeriod;
-  };
-
-  const getSelectedRate = (): InterestRateOption | null => {
-    return interestRates.find(rate =>
-      rate.rate === formData.interestRate &&
-      formData.lockPeriod >= (rate.minLockPeriod || rate.lockPeriod) &&
-      formData.lockPeriod <= (rate.maxLockPeriod || rate.lockPeriod)
-    ) || null;
-  };
 
   // Validate form
   const validateForm = () => {
@@ -201,12 +182,14 @@ function NewIBSPackage() {
       const platformInfo = getPlatformInfo();
       ibsLogger.info('Platform info:', platformInfo);
 
-      const paymentData: InitiateIBPackageParams = {
+      const paymentData = {
+        contributionType: 'interest_package' as const,
+        amount: formData.principalAmount,
         name: formData.name,
         principalAmount: formData.principalAmount,
         interestRate: formData.interestRate,
         lockPeriod: formData.lockPeriod,
-
+        redirect_url: getPaymentSuccessUrl(),
       };
 
       // Log payment initialization
@@ -217,10 +200,10 @@ function NewIBSPackage() {
         redirectUrl: getPaymentSuccessUrl()
       });
 
-      // Initiate payment
-      const response: InitiateIBPackageResponse = await packagesApi.initiateIBPackagePayment(paymentData);
+      // Initiate payment using the universal init-contribution endpoint
+      const response = await packagesApi.initializeContribution(paymentData);
       console.log('Payment initiation response:', response);
-      paymentLogger.logApiResponse('/interest-savings/package/init-payment', response);
+      paymentLogger.logApiResponse('/payments/init-contribution', response);
 
       // Store package details using cross-platform storage
       await storage.setItem(
@@ -233,7 +216,7 @@ function NewIBSPackage() {
       ibsLogger.info('IBS package data stored successfully');
 
       // Get the correct authorization URL (supporting both snake_case and camelCase formats)
-      const paymentUrl = response.authorization_url;
+      const paymentUrl = response.authorization_url || response.authorizationUrl;
 
       if (!paymentUrl) {
         paymentLogger.logError('No payment URL received', response);

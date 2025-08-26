@@ -1,5 +1,6 @@
 import { ACCOUNT_TYPE_DISPLAY } from '@/lib/api/accounts';
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 interface SelectAccountTypeProps {
   onSelect: (accountType: 'ds' | 'sb' | 'ibs') => void;
@@ -31,29 +32,29 @@ export function SelectAccountType({
     icon: string;
     color: string;
   }> = [
-    {
-      id: 'ds',
-      name: ACCOUNT_TYPE_DISPLAY.ds,
-      description:
-        'Save regularly with flexible daily, weekly, or monthly deposits',
-      icon: 'calendar',
-      color: '#0066A1',
-    },
-    {
-      id: 'sb',
-      name: ACCOUNT_TYPE_DISPLAY.sb,
-      description: 'Save towards specific goals with SureBank packages',
-      icon: 'target',
-      color: '#7952B3',
-    },
-    {
-      id: 'ibs',
-      name: ACCOUNT_TYPE_DISPLAY.ibs,
-      description: 'Earn competitive interest rates on your locked savings',
-      icon: 'trending-up',
-      color: '#28A745',
-    },
-  ];
+      {
+        id: 'ds',
+        name: ACCOUNT_TYPE_DISPLAY.ds,
+        description:
+          'Save regularly with flexible daily, weekly, or monthly deposits',
+        icon: 'calendar',
+        color: '#0066A1',
+      },
+      {
+        id: 'sb',
+        name: ACCOUNT_TYPE_DISPLAY.sb,
+        description: 'Save towards specific goals with SureBank packages',
+        icon: 'target',
+        color: '#7952B3',
+      },
+      {
+        id: 'ibs',
+        name: ACCOUNT_TYPE_DISPLAY.ibs,
+        description: 'Earn competitive interest rates on your locked savings',
+        icon: 'trending-up',
+        color: '#28A745',
+      },
+    ];
 
   const handleSelect = (type: 'ds' | 'sb' | 'ibs') => {
     if (isLoading) return;
@@ -127,7 +128,7 @@ export function SelectAccountType({
     }
   };
 
-  return (
+  const modalContent = (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 animate-fadeIn">
       <div className="w-full max-w-md bg-white rounded-lg shadow-xl overflow-hidden">
         <div className="bg-gradient-to-r from-[#0066A1] to-[#0088CC] text-white p-6">
@@ -145,18 +146,16 @@ export function SelectAccountType({
                 key={type.id}
                 onClick={() => handleSelect(type.id)}
                 disabled={isLoading}
-                className={`w-full flex items-center p-4 border-2 rounded-lg transition-all duration-200 ${
-                  selectedType === type.id
+                className={`w-full flex items-center p-4 border-2 rounded-lg transition-all duration-200 ${selectedType === type.id
                     ? `border-[${type.color}] bg-[${type.color}]/10`
                     : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                } disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden`}
+                  } disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden`}
               >
                 <div
-                  className={`mr-4 p-3 rounded-full ${
-                    selectedType === type.id
+                  className={`mr-4 p-3 rounded-full ${selectedType === type.id
                       ? `bg-[${type.color}] text-white`
                       : 'bg-gray-100 text-gray-600'
-                  }`}
+                    }`}
                   style={
                     selectedType === type.id
                       ? { backgroundColor: type.color }
@@ -240,4 +239,6 @@ export function SelectAccountType({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }

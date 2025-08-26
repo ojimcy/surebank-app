@@ -135,6 +135,15 @@ export interface ChangeProductParams {
   newProductId: string;
 }
 
+export interface InterestRateOption {
+  id: string;
+  rate: number;
+  name: string;
+  description: string;
+  minLockPeriod: number;
+  maxLockPeriod: number;
+}
+
 
 // Packages API functions
 const packagesApi = {
@@ -338,6 +347,14 @@ console.log('all', dsResponse);
     const response = await api.patch<DailySavingsPackage>(
       `/daily-savings/package/${packageId}`,
       data
+    );
+    return response.data;
+  },
+
+  // Get available interest rate options
+  getInterestRateOptions: async (): Promise<InterestRateOption[]> => {
+    const response = await api.get<InterestRateOption[]>(
+      '/interest-savings/rate-options'
     );
     return response.data;
   },
