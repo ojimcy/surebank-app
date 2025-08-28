@@ -64,7 +64,6 @@ export function Announcements({ user }: AnnouncementsProps) {
         return 'Complete your KYC verification to unlock all features.';
     }
   };
-
   const announcements: Announcement[] = [
     {
       id: 'verify-email',
