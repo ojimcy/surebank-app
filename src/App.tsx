@@ -62,6 +62,7 @@ import { PinProvider } from '@/lib/pin-provider';
 import { QueryProvider } from '@/lib/query-provider';
 import { ToastProvider } from '@/lib/toast-provider';
 import { LoaderProvider } from '@/lib/loader-provider';
+import { CartProvider } from '@/lib/cart-provider';
 import { setupSafeArea } from '@/lib/safe-area';
 import AuthGuard from '@/components/auth/AuthGuard';
 import PinGuard from '@/components/auth/PinGuard';
@@ -237,7 +238,9 @@ function App() {
             <AuthProvider>
               <PinProvider>
                 <LoaderProvider>
-                  <MainRoutes />
+                  <CartProvider>
+                    <MainRoutes />
+                  </CartProvider>
                 </LoaderProvider>
               </PinProvider>
             </AuthProvider>

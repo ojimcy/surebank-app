@@ -4,6 +4,9 @@ import { ProductCard } from '@/components/ui/product-card';
 import { cn } from '@/lib/utils';
 import axios from 'axios';
 import { useAllCategories } from '@/hooks/queries/useCategories';
+import { useLocalCart } from '@/lib/cart-provider';
+import { useToast } from '@/lib/toast-provider';
+import CartDrawer from '@/components/cart/CartDrawer';
 
 // Server product data interface based on API response
 interface Product {
@@ -90,7 +93,9 @@ function ProductCatalog() {
     totalResults: 0,
     limit: 20,
   });
-  const [cartCount, setCartCount] = useState(0);
+  const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
+  const { addToCart, cartCount } = useLocalCart();
+  const { addToast } = useToast();
 
   // API base URL - you may need to adjust this based on your setup
   const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/v1';
@@ -177,12 +182,25 @@ function ProductCatalog() {
   ];
 
   const handleAddToCart = (id: string) => {
-    // Implementation would go here in a real app
-    console.log(`Added product ${id} to cart`);
-    setCartCount(prev => prev + 1);
-
-    // You can add toast notification here
-    // toast.success('Product added to cart!');
+    // Find the product in our current products list
+    const product = filteredProducts.find(p => (p.id || p._id) === id);
+    
+    if (product) {
+      addToCart({
+        id: product.id || product._id || '',
+        name: product.name,
+        image: product.images && product.images.length > 0 ? product.images[0] : '',
+        sellingPrice: product.sellingPrice,
+        category: product.productId?.categoryId?.title || 'General',
+        averageRating: product.averageRating || 0,
+      });
+      
+      addToast({
+        title: 'Product Added',
+        description: `${product.name} added to your selection.`,
+        variant: 'default',
+      });
+    }
   };
 
   return (
@@ -197,10 +215,13 @@ function ProductCatalog() {
             </p>
           )}
         </div>
-        <button className="p-2 relative rounded-full hover:bg-gray-100 transition-colors">
+        <button 
+          onClick={() => setIsCartDrawerOpen(true)}
+          className="p-2 relative rounded-full hover:bg-gray-100 transition-colors"
+        >
           <ShoppingCart className="h-6 w-6" />
           {cartCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-primary text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+            <span className="absolute -top-1 -right-1 bg-[#0066A1] text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
               {cartCount > 99 ? '99+' : cartCount}
             </span>
           )}
@@ -235,7 +256,7 @@ function ProductCatalog() {
               className={cn(
                 'px-4 py-2 rounded-full text-sm whitespace-nowrap transition-colors',
                 selectedCategory === category._id
-                  ? 'bg-primary text-white'
+                  ? 'bg-[#0066A1] text-white'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               )}
               onClick={() => handleCategoryChange(category._id)}
@@ -324,6 +345,11 @@ function ProductCatalog() {
           </p>
         </div>
       )}
+      {/* Cart Drawer */}
+      <CartDrawer 
+        isOpen={isCartDrawerOpen} 
+        onClose={() => setIsCartDrawerOpen(false)} 
+      />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import NestedHeader from '@/components/layout/NestedHeader';
 import { useMutation, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import packagesApi, { CreateSBPackageParams } from '../../lib/api/packages';
@@ -14,6 +14,7 @@ import { SelectAccountType } from '@/components/accounts/SelectAccountType';
 import { ProductCard } from '@/components/ui/product-card';
 import { cn } from '@/lib/utils';
 import { CheckCircle } from 'lucide-react';
+import { useLocalCart } from '@/lib/cart-provider';
 
 // Error type for API errors
 interface ApiError {
@@ -27,9 +28,12 @@ interface ApiError {
 
 function NewSBPackage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const preSelectedProductId = searchParams.get('productId');
+  const { removeFromCart } = useLocalCart();
   const [hasRequiredAccount, setHasRequiredAccount] = useState<boolean | null>(
     null
   );
@@ -117,6 +121,33 @@ function NewSBPackage() {
   const allProducts = productData?.pages.flatMap((page) => page.results) || [];
   const totalResults = productData?.pages[0]?.totalResults || 0;
 
+  // Effect to handle pre-selected product from URL
+  useEffect(() => {
+    if (preSelectedProductId && hasRequiredAccount === true && productData?.pages) {
+      // Find the product in the current data and select it
+      const findAndSelectProduct = () => {
+        for (const page of productData.pages) {
+          const product = page.results.find(
+            (p) => p.id === preSelectedProductId || p._id === preSelectedProductId
+          );
+          if (product) {
+            setSelectedProduct(product);
+            // Scroll to the product or show it's selected
+            setTimeout(() => {
+              const element = document.getElementById(`product-${product.id || product._id}`);
+              if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }
+            }, 100);
+            break;
+          }
+        }
+      };
+      
+      findAndSelectProduct();
+    }
+  }, [preSelectedProductId, productData, hasRequiredAccount]);
+
   // Intersection observer for infinite scroll
   const observer = useRef<IntersectionObserver | null>(null);
   const lastProductRef = useCallback(
@@ -140,6 +171,11 @@ function NewSBPackage() {
     mutationFn: (data: CreateSBPackageParams) =>
       packagesApi.createSBPackage(data),
     onSuccess: () => {
+      // Remove the product from local cart if it was pre-selected from cart
+      if (preSelectedProductId && selectedProduct) {
+        removeFromCart(preSelectedProductId);
+      }
+      
       toast.success('SB package created successfully!');
       navigate('/packages/new/success', {
         state: {
@@ -351,6 +387,7 @@ function NewSBPackage() {
                     return (
                       <div
                         key={product._id}
+                        id={`product-${product._id || product.id}`}
                         ref={isLastProduct ? lastProductRef : null}
                       >
                         <div
@@ -368,14 +405,14 @@ function NewSBPackage() {
                               'cursor-pointer transition-all duration-200',
                               selectedProduct &&
                                 (selectedProduct as Product)._id === product._id
-                                ? 'ring-2 ring-primary transform scale-[1.02]'
+                                ? 'ring-2 ring-[#0066A1] transform scale-[1.02]'
                                 : 'hover:scale-[1.01]'
                             )}
                           />
                           {selectedProduct &&
                             (selectedProduct as Product)._id ===
                               product._id && (
-                              <div className="absolute top-3 right-3 bg-primary text-white p-1 rounded-full">
+                              <div className="absolute top-3 right-3 bg-[#0066A1] text-white p-1 rounded-full">
                                 <CheckCircle className="h-5 w-5" />
                               </div>
                             )}

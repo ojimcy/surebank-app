@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Plus, Star, Image } from 'lucide-react';
+import { Plus, Star, Image, Package } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export interface ProductCardProps {
   id: string;
@@ -26,6 +27,7 @@ export function ProductCard({
   className,
 }: ProductCardProps) {
   const [imageError, setImageError] = useState(false);
+  const navigate = useNavigate();
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-NG', {
@@ -39,6 +41,11 @@ export function ProductCard({
     if (onAddToCart) {
       onAddToCart(id);
     }
+  };
+
+  const handleCreateSBPackage = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent event bubbling
+    navigate(`/packages/new/sb?productId=${id}`);
   };
 
   const handleImageError = () => {
@@ -66,13 +73,28 @@ export function ProductCard({
             <span className="text-xs font-medium">{name.split(' ')[0]}</span>
           </div>
         )}
-        <button
-          onClick={handleAddToCart}
-          className="absolute bottom-3 right-3 bg-white rounded-full p-2 shadow-md hover:bg-primary hover:text-white transition-colors duration-200 opacity-90 hover:opacity-100"
-          aria-label="Add to cart"
-        >
-          <Plus className="h-5 w-5" />
-        </button>
+        {/* Action Buttons */}
+        <div className="absolute bottom-3 right-3 flex flex-col space-y-2">
+          {/* Create SB Package Button */}
+          <button
+            onClick={handleCreateSBPackage}
+            className="bg-[#0066A1] text-white rounded-full p-2 shadow-md hover:bg-[#0066A1]/90 transition-colors duration-200 opacity-90 hover:opacity-100"
+            aria-label="Create SB Package"
+            title="Create SB Package"
+          >
+            <Package className="h-4 w-4" />
+          </button>
+          
+          {/* Add to Cart Button */}
+          <button
+            onClick={handleAddToCart}
+            className="bg-white rounded-full p-2 shadow-md hover:bg-gray-50 transition-colors duration-200 opacity-90 hover:opacity-100"
+            aria-label="Add to selection"
+            title="Add to selection"
+          >
+            <Plus className="h-4 w-4 text-gray-700" />
+          </button>
+        </div>
         {category && (
           <span className="absolute top-3 left-3 bg-black/60 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">
             {category}
@@ -107,7 +129,7 @@ export function ProductCard({
           </div>
         )}
         <div className="mt-auto">
-          <p className="font-bold text-primary text-lg">{formatPrice(price)}</p>
+          <p className="font-bold text-[#0066A1] text-lg">{formatPrice(price)}</p>
         </div>
       </div>
     </div>
