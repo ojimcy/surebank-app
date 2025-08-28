@@ -239,7 +239,7 @@ function Footer() {
           </li>
           <li className="flex flex-col items-center">
             <NavLink
-              to="/packages/new/sb"
+              to="/products"
               className={({ isActive }) =>
                 `p-2 flex flex-col items-center transition-all duration-200 ${isActive
                   ? 'text-[#0066A1]'

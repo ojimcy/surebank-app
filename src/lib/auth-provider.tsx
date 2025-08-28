@@ -70,11 +70,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await auth.login({ identifier, password });
     } catch (err: unknown) {
       console.error('Login failed', err);
-      const errorMessage = extractErrorMessage(err);
-      showError({
-        title: 'Login Failed',
-        description: errorMessage,
-      });
+      // Don't show error toast here - let the Login component handle error display
+      // This prevents double error handling and ensures errors remain visible
       throw err;
     }
   };

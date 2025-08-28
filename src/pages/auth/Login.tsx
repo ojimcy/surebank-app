@@ -55,6 +55,7 @@ function Login() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    // Prevent default form submission to avoid page refresh
     e.preventDefault();
     e.stopPropagation();
     
@@ -79,7 +80,7 @@ function Login() {
     // If there are validation errors, stop form submission
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      return;
+      return false;
     }
 
     try {
@@ -150,6 +151,9 @@ function Login() {
         passwordRef.current?.focus();
       }, 100);
     }
+    
+    // Always return false to prevent any form submission
+    return false;
   };
 
 
@@ -159,7 +163,7 @@ function Login() {
       subtitle="Sign in to your account to continue"
     >
 
-      <form className="space-y-5 relative" onSubmit={handleSubmit}>
+      <form className="space-y-5 relative" onSubmit={handleSubmit} noValidate>
         {isLoginLoading && (
           <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] rounded-md flex items-center justify-center z-10">
             <div className="flex flex-col items-center">
