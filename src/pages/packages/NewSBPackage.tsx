@@ -128,13 +128,13 @@ function NewSBPackage() {
       const findAndSelectProduct = () => {
         for (const page of productData.pages) {
           const product = page.results.find(
-            (p) => p.id === preSelectedProductId || p._id === preSelectedProductId
+            (p) => p._id === preSelectedProductId
           );
           if (product) {
             setSelectedProduct(product);
             // Scroll to the product or show it's selected
             setTimeout(() => {
-              const element = document.getElementById(`product-${product.id || product._id}`);
+              const element = document.getElementById(`product-${product._id}`);
               if (element) {
                 element.scrollIntoView({ behavior: 'smooth', block: 'center' });
               }
@@ -387,7 +387,7 @@ function NewSBPackage() {
                     return (
                       <div
                         key={product._id}
-                        id={`product-${product._id || product.id}`}
+                        id={`product-${product._id}`}
                         ref={isLastProduct ? lastProductRef : null}
                       >
                         <div

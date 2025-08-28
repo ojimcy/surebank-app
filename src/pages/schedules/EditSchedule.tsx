@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import NestedHeader from '@/components/layout/NestedHeader';
 import { useScheduleQueries } from '@/hooks/queries/useScheduleQueries';
-import { useCardQueries } from '@/hooks/queries/useCardQueries';
+// import { useCardQueries } from '@/hooks/queries/useCardQueries';
 import { ScheduledContribution, UpdateSchedulePayload } from '@/lib/api/scheduledContributions';
 import { formatCurrency, formatDateTime } from '@/lib/utils';
 import { usePinVerification } from '@/hooks/usePinVerification';
@@ -65,7 +65,7 @@ function EditSchedule() {
         isCancelScheduleLoading,
     } = useScheduleQueries();
 
-    const { } = useCardQueries();
+    // const { } = useCardQueries();
 
     useEffect(() => {
         const fetchSchedule = async () => {

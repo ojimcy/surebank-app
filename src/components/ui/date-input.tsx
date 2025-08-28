@@ -1,5 +1,4 @@
 import * as React from "react";
-import { Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface DateInputProps
@@ -25,25 +24,12 @@ const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
     id,
     ...props 
   }, ref) => {
-    // Format date from YYYY-MM-DD to DD/MM/YYYY for display
-    const formatDateForDisplay = (dateStr: string): string => {
-      if (!dateStr) return '';
-      const date = new Date(dateStr + 'T00:00:00'); // Avoid timezone issues
-      if (isNaN(date.getTime())) return '';
-      
-      const day = date.getDate().toString().padStart(2, '0');
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
-      const year = date.getFullYear();
-      
-      return `${day}/${month}/${year}`;
-    };
 
     const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const isoDate = e.target.value;
       onChange(isoDate);
     };
 
-    const displayValue = value ? formatDateForDisplay(value) : '';
     const hasError = !!error;
 
     return (

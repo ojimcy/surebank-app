@@ -10,7 +10,6 @@ export const uploadFileToS3 = async (
   file: File,
   type: 'id-document' | 'selfie',
   onProgress?: (progress: number) => void,
-  userId?: string
 ): Promise<{ key: string; url: string }> => {
   try {
     // Get a presigned URL from the backend
