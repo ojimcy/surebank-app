@@ -77,13 +77,7 @@ function Layout({ children }: LayoutProps) {
   const shouldHideHeader = isNestedRoute || isPackageDetail;
   
   return (
-    <div
-      className={cn(
-        'flex flex-col min-h-screen bg-[--background] transition-colors duration-300',
-        safeAreaClasses.paddingLeft,
-        safeAreaClasses.paddingRight
-      )}
-    >
+    <div className="flex flex-col min-h-screen bg-[--background] transition-colors duration-300">
       {!shouldHideHeader && <Header />}
       <main className="flex-1 container mx-auto px-4 py-6 pb-28 overflow-auto">
         {children}

@@ -17,11 +17,11 @@ function Settings() {
   };
 
   return (
-    <div className="space-y-6 pb-6">
+    <div className="max-w-4xl mx-auto space-y-6 pb-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-        <div className="h-8 w-8 bg-[#0066A1] rounded-full flex items-center justify-center">
+      <div className="flex items-center justify-between px-1">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Settings</h1>
+        <div className="h-10 w-10 bg-[#0066A1] rounded-full flex items-center justify-center shadow-sm">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             className="h-5 w-5 text-white"
@@ -46,12 +46,12 @@ function Settings() {
       </div>
 
       {/* Enhanced Profile Section */}
-      <div className="bg-gradient-to-r from-[#0066A1] to-[#0056A1] rounded-xl shadow-lg p-6 text-white">
-        <div className="flex items-center">
-          <div className="h-20 w-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mr-4 border-2 border-white/30">
+      <div className="bg-gradient-to-r from-[#0066A1] to-[#0056A1] rounded-xl shadow-lg p-4 sm:p-6 text-white">
+        <div className="flex items-start sm:items-center flex-col sm:flex-row gap-4">
+          <div className="h-16 w-16 sm:h-20 sm:w-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border-2 border-white/30 shrink-0">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-10 w-10 text-white"
+              className="h-8 w-8 sm:h-10 sm:w-10 text-white"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -64,23 +64,23 @@ function Settings() {
               />
             </svg>
           </div>
-          <div className="flex-1">
-            <h2 className="font-bold text-xl text-white mb-1">
+          <div className="flex-1 min-w-0">
+            <h2 className="font-bold text-lg sm:text-xl text-white mb-1 truncate">
               {user ? `${user.firstName} ${user.lastName}` : 'User'}
             </h2>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-white/90">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-white/90 text-sm sm:text-base truncate">
                 {user?.email || 'No email'}
               </span>
               {user?.email && (
                 user?.isEmailVerified ? (
-                  <CheckCircle className="h-4 w-4 text-green-300" />
+                  <CheckCircle className="h-4 w-4 text-green-300 shrink-0" />
                 ) : (
-                  <AlertCircle className="h-4 w-4 text-yellow-300" />
+                  <AlertCircle className="h-4 w-4 text-yellow-300 shrink-0" />
                 )
               )}
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
               <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm rounded-full px-2 py-1">
                 <div className="h-2 w-2 bg-green-300 rounded-full"></div>
                 <span className="text-xs text-white/90">Active</span>
@@ -100,7 +100,7 @@ function Settings() {
           </div>
           <button
             onClick={() => navigate('/settings/personal-information')}
-            className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white rounded-lg p-3 transition-all duration-200 border border-white/30"
+            className="bg-white/20 backdrop-blur-sm hover:bg-white/30 active:bg-white/40 text-white rounded-lg p-3 transition-all duration-200 border border-white/30 shrink-0 touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
             aria-label="Edit Profile"
           >
             <Edit2 className="h-5 w-5" />
@@ -109,10 +109,10 @@ function Settings() {
       </div>
 
       {/* Settings Groups */}
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
         {/* Account Settings */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-          <div className="p-4 pb-2">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 h-fit">
+          <div className="p-4 sm:p-5 pb-2">
             <div className="flex items-center gap-2 mb-4">
               <div className="h-8 w-8 bg-[#0066A1]/10 rounded-lg flex items-center justify-center">
                 <svg
@@ -136,9 +136,9 @@ function Settings() {
               <li>
                 <button
                   onClick={() => navigate('/settings/personal-information')}
-                  className="w-full flex items-center justify-between py-3 px-3 hover:bg-gray-50 rounded-lg transition-colors"
+                  className="w-full flex items-center justify-between py-3 px-3 hover:bg-gray-50 active:bg-gray-100 rounded-lg transition-colors touch-manipulation min-h-[44px]"
                 >
-                  <div className="flex items-center text-left">
+                  <div className="flex items-center text-left flex-1 min-w-0">
                     <div className="h-10 w-10 bg-[#0066A1]/10 rounded-lg flex items-center justify-center mr-3">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -155,16 +155,16 @@ function Settings() {
                         />
                       </svg>
                     </div>
-                    <div>
-                      <span className="block font-medium">Personal Information</span>
-                      <span className="text-sm text-gray-500">
+                    <div className="min-w-0">
+                      <span className="block font-medium text-gray-900">Personal Information</span>
+                      <span className="text-sm text-gray-500 line-clamp-2">
                         View and update your personal information
                       </span>
                     </div>
                   </div>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-gray-400"
+                    className="h-5 w-5 text-gray-400 shrink-0"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -181,9 +181,9 @@ function Settings() {
               <li>
                 <button
                   onClick={() => navigate('/settings/kyc')}
-                  className="w-full flex items-center justify-between py-3 px-3 hover:bg-gray-50 rounded-lg transition-colors"
+                  className="w-full flex items-center justify-between py-3 px-3 hover:bg-gray-50 active:bg-gray-100 rounded-lg transition-colors touch-manipulation min-h-[44px]"
                 >
-                  <div className="flex items-center text-left">
+                  <div className="flex items-center text-left flex-1 min-w-0">
                     <div className="h-10 w-10 bg-[#0066A1]/10 rounded-lg flex items-center justify-center mr-3">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -200,16 +200,16 @@ function Settings() {
                         />
                       </svg>
                     </div>
-                    <div>
-                      <span className="block font-medium">KYC & Verification</span>
-                      <span className="text-sm text-gray-500">
+                    <div className="min-w-0">
+                      <span className="block font-medium text-gray-900">KYC & Verification</span>
+                      <span className="text-sm text-gray-500 line-clamp-2">
                         Complete identity verification
                       </span>
                     </div>
                   </div>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-gray-400"
+                    className="h-5 w-5 text-gray-400 shrink-0"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -228,8 +228,8 @@ function Settings() {
         </div>
 
         {/* Security Settings */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-          <div className="p-4 pb-2">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 h-fit">
+          <div className="p-4 sm:p-5 pb-2">
             <div className="flex items-center gap-2 mb-4">
               <div className="h-8 w-8 bg-red-100 rounded-lg flex items-center justify-center">
                 <svg
@@ -253,9 +253,9 @@ function Settings() {
               <li>
                 <button
                   onClick={() => navigate('/settings/setup-pin')}
-                  className="w-full flex items-center justify-between py-3 px-3 hover:bg-gray-50 rounded-lg transition-colors"
+                  className="w-full flex items-center justify-between py-3 px-3 hover:bg-gray-50 active:bg-gray-100 rounded-lg transition-colors touch-manipulation min-h-[44px]"
                 >
-                  <div className="flex items-center text-left">
+                  <div className="flex items-center text-left flex-1 min-w-0">
                     <div className="h-10 w-10 bg-[#0066A1]/10 rounded-lg flex items-center justify-center mr-3">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -272,16 +272,16 @@ function Settings() {
                         />
                       </svg>
                     </div>
-                    <div>
-                      <span className="block font-medium">Security PIN</span>
-                      <span className="text-sm text-gray-500">
+                    <div className="min-w-0">
+                      <span className="block font-medium text-gray-900">Security PIN</span>
+                      <span className="text-sm text-gray-500 line-clamp-2">
                         {isPinSet ? 'PIN is configured' : 'Set up a PIN for app security'}
                       </span>
                     </div>
                   </div>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-gray-400"
+                    className="h-5 w-5 text-gray-400 shrink-0"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -300,9 +300,9 @@ function Settings() {
                 <li>
                   <button
                     onClick={handleLockApp}
-                    className="w-full flex items-center justify-between py-3 px-3 hover:bg-gray-50 rounded-lg transition-colors"
+                    className="w-full flex items-center justify-between py-3 px-3 hover:bg-gray-50 active:bg-gray-100 rounded-lg transition-colors touch-manipulation min-h-[44px]"
                   >
-                    <div className="flex items-center text-left">
+                    <div className="flex items-center text-left flex-1 min-w-0">
                       <div className="h-10 w-10 bg-[#0066A1]/10 rounded-lg flex items-center justify-center mr-3">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -321,7 +321,7 @@ function Settings() {
                       </div>
                       <div>
                         <span className="block font-medium">Lock App Now</span>
-                        <span className="text-sm text-gray-500">
+                        <span className="text-sm text-gray-500 line-clamp-2">
                           Immediately lock the app with your PIN
                         </span>
                       </div>
@@ -347,9 +347,9 @@ function Settings() {
               <li>
                 <button
                   onClick={() => navigate('/auth/forgot-password')}
-                  className="w-full flex items-center justify-between py-3 px-3 hover:bg-gray-50 rounded-lg transition-colors"
+                  className="w-full flex items-center justify-between py-3 px-3 hover:bg-gray-50 active:bg-gray-100 rounded-lg transition-colors touch-manipulation min-h-[44px]"
                 >
-                  <div className="flex items-center text-left">
+                  <div className="flex items-center text-left flex-1 min-w-0">
                     <div className="h-10 w-10 bg-[#0066A1]/10 rounded-lg flex items-center justify-center mr-3">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -366,16 +366,16 @@ function Settings() {
                         />
                       </svg>
                     </div>
-                    <div>
-                      <span className="block font-medium">Password</span>
-                      <span className="text-sm text-gray-500">
+                    <div className="min-w-0">
+                      <span className="block font-medium text-gray-900">Password</span>
+                      <span className="text-sm text-gray-500 line-clamp-2">
                         Change your account password
                       </span>
                     </div>
                   </div>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-gray-400"
+                    className="h-5 w-5 text-gray-400 shrink-0"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -392,7 +392,7 @@ function Settings() {
 
               <li>
                 <button className="w-full flex items-center justify-between py-3 px-3 hover:bg-gray-50 rounded-lg transition-colors">
-                  <div className="flex items-center text-left">
+                  <div className="flex items-center text-left flex-1 min-w-0">
                     <div className="h-10 w-10 bg-[#0066A1]/10 rounded-lg flex items-center justify-center mr-3">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -409,16 +409,16 @@ function Settings() {
                         />
                       </svg>
                     </div>
-                    <div>
-                      <span className="block font-medium">Two-Factor Authentication</span>
-                      <span className="text-sm text-gray-500">
+                    <div className="min-w-0">
+                      <span className="block font-medium text-gray-900">Two-Factor Authentication</span>
+                      <span className="text-sm text-gray-500 line-clamp-2">
                         Add an extra layer of security
                       </span>
                     </div>
                   </div>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-gray-400"
+                    className="h-5 w-5 text-gray-400 shrink-0"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -437,8 +437,8 @@ function Settings() {
         </div>
 
         {/* Financial Management */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-          <div className="p-4 pb-2">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 h-fit">
+          <div className="p-4 sm:p-5 pb-2">
             <div className="flex items-center gap-2 mb-4">
               <div className="h-8 w-8 bg-green-100 rounded-lg flex items-center justify-center">
                 <svg
@@ -461,10 +461,10 @@ function Settings() {
             <ul className="space-y-3 px-4 pb-4">
               <li>
                 <button 
-                  className="w-full flex items-center justify-between py-3 px-3 hover:bg-gray-50 rounded-lg transition-colors" 
+                  className="w-full flex items-center justify-between py-3 px-3 hover:bg-gray-50 active:bg-gray-100 rounded-lg transition-colors touch-manipulation min-h-[44px]" 
                   onClick={() => navigate('/transactions')}
                 >
-                  <div className="flex items-center text-left">
+                  <div className="flex items-center text-left flex-1 min-w-0">
                     <div className="h-10 w-10 bg-[#0066A1]/10 rounded-lg flex items-center justify-center mr-3">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -481,16 +481,16 @@ function Settings() {
                         />
                       </svg>
                     </div>
-                    <div>
-                      <span className="block font-medium">Transaction History</span>
-                      <span className="text-sm text-gray-500">
+                    <div className="min-w-0">
+                      <span className="block font-medium text-gray-900">Transaction History</span>
+                      <span className="text-sm text-gray-500 line-clamp-2">
                         View all your transactions and payments
                       </span>
                     </div>
                   </div>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-gray-400"
+                    className="h-5 w-5 text-gray-400 shrink-0"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -506,10 +506,10 @@ function Settings() {
               </li>
               <li>
                 <button 
-                  className="w-full flex items-center justify-between py-3 px-3 hover:bg-gray-50 rounded-lg transition-colors" 
+                  className="w-full flex items-center justify-between py-3 px-3 hover:bg-gray-50 active:bg-gray-100 rounded-lg transition-colors touch-manipulation min-h-[44px]" 
                   onClick={() => navigate('/settings/payment-methods')}
                 >
-                  <div className="flex items-center text-left">
+                  <div className="flex items-center text-left flex-1 min-w-0">
                     <div className="h-10 w-10 bg-[#0066A1]/10 rounded-lg flex items-center justify-center mr-3">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -526,16 +526,16 @@ function Settings() {
                         />
                       </svg>
                     </div>
-                    <div>
-                      <span className="block font-medium">Payment Methods</span>
-                      <span className="text-sm text-gray-500">
+                    <div className="min-w-0">
+                      <span className="block font-medium text-gray-900">Payment Methods</span>
+                      <span className="text-sm text-gray-500 line-clamp-2">
                         Manage cards and payment options
                       </span>
                     </div>
                   </div>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-gray-400"
+                    className="h-5 w-5 text-gray-400 shrink-0"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -551,10 +551,10 @@ function Settings() {
               </li>
               <li>
                 <button 
-                  className="w-full flex items-center justify-between py-3 px-3 hover:bg-gray-50 rounded-lg transition-colors" 
+                  className="w-full flex items-center justify-between py-3 px-3 hover:bg-gray-50 active:bg-gray-100 rounded-lg transition-colors touch-manipulation min-h-[44px]" 
                   onClick={() => navigate('/settings/statements')}
                 >
-                  <div className="flex items-center text-left">
+                  <div className="flex items-center text-left flex-1 min-w-0">
                     <div className="h-10 w-10 bg-[#0066A1]/10 rounded-lg flex items-center justify-center mr-3">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -571,16 +571,16 @@ function Settings() {
                         />
                       </svg>
                     </div>
-                    <div>
-                      <span className="block font-medium">Statements & Reports</span>
-                      <span className="text-sm text-gray-500">
+                    <div className="min-w-0">
+                      <span className="block font-medium text-gray-900">Statements & Reports</span>
+                      <span className="text-sm text-gray-500 line-clamp-2">
                         Download account statements
                       </span>
                     </div>
                   </div>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-gray-400"
+                    className="h-5 w-5 text-gray-400 shrink-0"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -599,8 +599,8 @@ function Settings() {
         </div>
 
         {/* Order Management */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-          <div className="p-4 pb-2">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 h-fit">
+          <div className="p-4 sm:p-5 pb-2">
             <div className="flex items-center gap-2 mb-4">
               <div className="h-8 w-8 bg-purple-100 rounded-lg flex items-center justify-center">
                 <svg
@@ -623,10 +623,10 @@ function Settings() {
             <ul className="space-y-3 px-4 pb-4">
               <li>
                 <button 
-                  className="w-full flex items-center justify-between py-3 px-3 hover:bg-gray-50 rounded-lg transition-colors" 
+                  className="w-full flex items-center justify-between py-3 px-3 hover:bg-gray-50 active:bg-gray-100 rounded-lg transition-colors touch-manipulation min-h-[44px]" 
                   onClick={() => navigate('/orders')}
                 >
-                  <div className="flex items-center text-left">
+                  <div className="flex items-center text-left flex-1 min-w-0">
                     <div className="h-10 w-10 bg-[#0066A1]/10 rounded-lg flex items-center justify-center mr-3">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -643,16 +643,16 @@ function Settings() {
                         />
                       </svg>
                     </div>
-                    <div>
-                      <span className="block font-medium">Order Management</span>
-                      <span className="text-sm text-gray-500">
+                    <div className="min-w-0">
+                      <span className="block font-medium text-gray-900">Order Management</span>
+                      <span className="text-sm text-gray-500 line-clamp-2">
                         View and manage your orders
                       </span>
                     </div>
                   </div>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-gray-400"
+                    className="h-5 w-5 text-gray-400 shrink-0"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -671,8 +671,8 @@ function Settings() {
         </div>
 
         {/* App Preferences */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-          <div className="p-4 pb-2">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 h-fit">
+          <div className="p-4 sm:p-5 pb-2">
             <div className="flex items-center gap-2 mb-4">
               <div className="h-8 w-8 bg-blue-100 rounded-lg flex items-center justify-center">
                 <svg
@@ -702,9 +702,9 @@ function Settings() {
               <li>
                 <Link 
                   to="/settings/notifications" 
-                  className="w-full flex items-center justify-between py-3 px-3 hover:bg-gray-50 rounded-lg transition-colors"
+                  className="w-full flex items-center justify-between py-3 px-3 hover:bg-gray-50 active:bg-gray-100 rounded-lg transition-colors touch-manipulation min-h-[44px]"
                 >
-                  <div className="flex items-center text-left">
+                  <div className="flex items-center text-left flex-1 min-w-0">
                     <div className="h-10 w-10 bg-[#0066A1]/10 rounded-lg flex items-center justify-center mr-3">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -721,16 +721,16 @@ function Settings() {
                         />
                       </svg>
                     </div>
-                    <div>
-                      <span className="block font-medium">Notifications</span>
-                      <span className="text-sm text-gray-500">
+                    <div className="min-w-0">
+                      <span className="block font-medium text-gray-900">Notifications</span>
+                      <span className="text-sm text-gray-500 line-clamp-2">
                         Manage notification preferences
                       </span>
                     </div>
                   </div>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-gray-400"
+                    className="h-5 w-5 text-gray-400 shrink-0"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -749,8 +749,8 @@ function Settings() {
         </div>
 
         {/* Support & About */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-          <div className="p-4 pb-2">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 h-fit">
+          <div className="p-4 sm:p-5 pb-2">
             <div className="flex items-center gap-2 mb-4">
               <div className="h-8 w-8 bg-orange-100 rounded-lg flex items-center justify-center">
                 <svg
@@ -776,9 +776,9 @@ function Settings() {
                   href="https://surebankstores.ng/support"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full flex items-center justify-between py-3 px-3 hover:bg-gray-50 rounded-lg transition-colors"
+                  className="w-full flex items-center justify-between py-3 px-3 hover:bg-gray-50 active:bg-gray-100 rounded-lg transition-colors touch-manipulation min-h-[44px]"
                 >
-                  <div className="flex items-center text-left">
+                  <div className="flex items-center text-left flex-1 min-w-0">
                     <div className="h-10 w-10 bg-[#0066A1]/10 rounded-lg flex items-center justify-center mr-3">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -795,9 +795,9 @@ function Settings() {
                         />
                       </svg>
                     </div>
-                    <div>
-                      <span className="block font-medium">Help & Support</span>
-                      <span className="text-sm text-gray-500">
+                    <div className="min-w-0">
+                      <span className="block font-medium text-gray-900">Help & Support</span>
+                      <span className="text-sm text-gray-500 line-clamp-2">
                         Get help with your account
                       </span>
                     </div>
@@ -823,9 +823,9 @@ function Settings() {
                   href="https://surebankstores.ng/about"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full flex items-center justify-between py-3 px-3 hover:bg-gray-50 rounded-lg transition-colors"
+                  className="w-full flex items-center justify-between py-3 px-3 hover:bg-gray-50 active:bg-gray-100 rounded-lg transition-colors touch-manipulation min-h-[44px]"
                 >
-                  <div className="flex items-center text-left">
+                  <div className="flex items-center text-left flex-1 min-w-0">
                     <div className="h-10 w-10 bg-[#0066A1]/10 rounded-lg flex items-center justify-center mr-3">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -842,9 +842,9 @@ function Settings() {
                         />
                       </svg>
                     </div>
-                    <div>
-                      <span className="block font-medium">About SureBank</span>
-                      <span className="text-sm text-gray-500">
+                    <div className="min-w-0">
+                      <span className="block font-medium text-gray-900">About SureBank</span>
+                      <span className="text-sm text-gray-500 line-clamp-2">
                         Learn more about our company
                       </span>
                     </div>

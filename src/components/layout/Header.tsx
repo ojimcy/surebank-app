@@ -26,15 +26,12 @@ function Header() {
 
   return (
     <header
-      className={cn(
-        'sticky top-0 z-40 bg-white border-b border-gray-200 py-4 px-6',
-        safeAreaClasses.paddingTop,
-        safeAreaClasses.paddingX
-      )}
+      className="sticky top-0 z-40 bg-white border-b border-gray-200"
       style={{
         paddingTop: `calc(1rem + env(safe-area-inset-top, 0px))`,
-        paddingLeft: `env(safe-area-inset-left, 0px)`,
-        paddingRight: `calc(0.5rem + env(safe-area-inset-right, 0px))`
+        paddingLeft: `calc(1.5rem + env(safe-area-inset-left, 0px))`,
+        paddingRight: `calc(1.5rem + env(safe-area-inset-right, 0px))`,
+        paddingBottom: '1rem'
       }}
     >
       <div className="container mx-auto flex justify-between items-center">

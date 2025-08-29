@@ -13,13 +13,9 @@ function Footer() {
 
   return (
     <footer
-      className={cn(
-        'fixed bottom-0 left-0 right-0 bg-white border-t border-[#e5e8ed] py-2 z-30 shadow-sm',
-        safeAreaClasses.paddingBottom,
-        safeAreaClasses.paddingLeft,
-        safeAreaClasses.paddingRight
-      )}
+      className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#e5e8ed] z-30 shadow-sm"
       style={{
+        paddingTop: '0.5rem',
         paddingBottom: `calc(0.5rem + env(safe-area-inset-bottom, 0px))`,
         paddingLeft: `env(safe-area-inset-left, 0px)`,
         paddingRight: `env(safe-area-inset-right, 0px)`
