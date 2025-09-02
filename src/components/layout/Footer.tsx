@@ -1,6 +1,4 @@
 import { NavLink, Link } from 'react-router-dom';
-import { safeAreaClasses } from '@/lib/safe-area';
-import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 

@@ -1,6 +1,4 @@
 import { Link } from 'react-router-dom';
-import { safeAreaClasses } from '@/lib/safe-area';
-import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotifications } from '@/hooks/useNotifications';
 import { User, Bell } from 'lucide-react';
